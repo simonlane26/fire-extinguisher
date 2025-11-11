@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run seed:auth:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma migrate deploy:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run backend:*)",
+      "Bash(npm run prisma:push:*)",
+      "Bash(taskkill:*)",
+      "Bash(nul)",
+      "Bash(timeout /t 10 /nobreak)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(del .gitindex.lock)",
+      "Bash(if exist .gitindex.lock del /f .gitindex.lock)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

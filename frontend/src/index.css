@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* optional global defaults; v4 likes these inside a layer */
+@layer base {
+  body { @apply text-gray-900 bg-gray-50; }
+}
