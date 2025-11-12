@@ -12,6 +12,7 @@ import { ReportsModule } from './reports/reports.module';
 import { StorageModule } from './storage/storage.module';
 import { VisionModule } from './vision/vision.module';
 import { AuthModule } from './auth/auth.module';
+import { QrCodesModule } from './qr-codes/qr-codes.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuthModule } from './auth/auth.module';
     AssistantModule,
     ReportsModule,
     StorageModule,
+    QrCodesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   Plus,
   AlertTriangle,
@@ -12,16 +12,20 @@ import {
   Shield,
   Flame,
   Settings as SettingsIcon,
+  Download,
+  Upload,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
 import AddExtinguisherModal from './components/AddExtinguisherModal';
-import ExtinguisherDetails from './components/ExtinguisherDetails.jsx'; // JS file is fine
+import ExtinguisherDetails from './components/ExtinguisherDetails';
 import SettingsPage from './pages/SettingsPage';
 import UsersPage from './pages/UsersPage';
+import QrCodesPage from './pages/QrCodesPage';
 import RoleSwitcherModal from './components/RoleSwitcher';
 import GenerateReportButton from './components/GenerateReportButton';
-import { addExtinguisher, fetchExtinguishers } from './lib/api';
+import TabButton from './components/TabButton';
+import { addExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv } from './lib/api';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
   Extinguisher,
@@ -205,7 +209,7 @@ const FireExtinguisherApp: React.FC = () => {
   const { currentUser, setCurrentUser, hasPermission } = actx;
 
   const [activeTab, setActiveTab] =
-    useState<'overview' | 'users' | 'settings'>('overview');
+    useState<'overview' | 'users' | 'settings' | 'qr-codes'>('overview');
 
   // Extinguishers state (seed with demo; will be replaced by API load)
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([
@@ -315,6 +319,12 @@ const FireExtinguisherApp: React.FC = () => {
   const [openAdd, setOpenAdd] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
 
+  // CSV import/export
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; errors: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Role switcher
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
   const handleSelectRole = (role: RoleKey) => {
@@ -324,6 +334,52 @@ const FireExtinguisherApp: React.FC = () => {
       name: `Demo ${USER_ROLES[role].name}`,
     });
     setShowRoleSwitcher(false);
+  };
+
+  // CSV Export handler
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      await exportExtinguishersCsv();
+    } catch (err) {
+      alert(`Export failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // CSV Import handlers
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setImporting(true);
+      setImportResult(null);
+      const result = await importExtinguishersCsv(file);
+      setImportResult({ imported: result.imported, errors: result.errors });
+
+      if (result.imported > 0) {
+        // Refresh the extinguishers list
+        const data = await fetchExtinguishers();
+        setExtinguishers(data);
+      }
+
+      if (result.errors > 0) {
+        console.error('Import errors:', result.details);
+      }
+    } catch (err) {
+      alert(`Import failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const { total, active, needs, planLimit } = computeKpis(extinguishers);
@@ -405,7 +461,9 @@ const FireExtinguisherApp: React.FC = () => {
       {/* Header */}
       <header
   className="p-4 text-white"
-  style={{ backgroundColor: tenant.primaryColor }}
+  style={{
+    backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' && tenant.primaryColor !== 'white' ? tenant.primaryColor : '#7c3aed'
+  }}
 >
   <div className="flex items-center justify-between mx-auto max-w-7xl">
     {/* Left: Logo + Titles */}
@@ -480,67 +538,56 @@ const FireExtinguisherApp: React.FC = () => {
         </section>
 
         {/* Tabs */}
-        <div className="flex space-x-1">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={
-              activeTab === 'overview'
-                ? 'rounded-lg px-4 py-2 text-white'
-                : 'rounded-lg bg-white px-4 py-2 text-gray-700 hover:bg-gray-100'
-            }
-            style={
-              activeTab === 'overview' ? { backgroundColor: tenant.primaryColor } : {}
-            }
-          >
-            Overview
-          </button>
-
-          {hasPermission('VIEW_USERS') && (
-            <button
-              onClick={() => setActiveTab('users')}
-              className={
-                activeTab === 'users'
-                  ? 'rounded-lg px-4 py-2 text-white'
-                  : 'rounded-lg bg-white px-4 py-2 text-gray-700 hover:bg-gray-100'
-              }
-              style={
-                activeTab === 'users' ? { backgroundColor: tenant.primaryColor } : {}
-              }
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            <TabButton
+              active={activeTab === 'overview'}
+              onClick={() => setActiveTab('overview')}
+              primaryColor={tenant.primaryColor}
             >
-              <UsersIcon size={16} className="inline mr-1" />
-              Users
-            </button>
-          )}
+              Overview
+            </TabButton>
 
-          {hasPermission('MANAGE_SETTINGS') && (
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={
-                activeTab === 'settings'
-                  ? 'rounded-lg px-4 py-2 text-white'
-                  : 'rounded-lg bg-white px-4 py-2 text-gray-700 hover:bg-gray-100'
-              }
-              style={
-                activeTab === 'settings' ? { backgroundColor: tenant.primaryColor } : {}
-              }
+            {hasPermission('VIEW_USERS') && (
+              <TabButton
+                active={activeTab === 'users'}
+                onClick={() => setActiveTab('users')}
+                primaryColor={tenant.primaryColor}
+              >
+                <UsersIcon size={16} />
+                <span>Users</span>
+              </TabButton>
+            )}
+
+            <TabButton
+              active={activeTab === 'qr-codes'}
+              onClick={() => setActiveTab('qr-codes')}
+              primaryColor={tenant.primaryColor}
             >
-              <SettingsIcon size={16} className="inline mr-1" />
-              Settings
-            </button>
-      
-          )}
-          <div className="flex mb-6 space-x-3">
-  {/* existing buttons… */}
-  <GenerateReportButton
-    tenantId={tenant.id}
-    primaryColor={tenant.primaryColor}
-    // Optional: pass selected jobIds/photoIds when you have selection UI
-    jobIds={[]} 
-    photoIds={[]}
-    technicianName={currentUser.name}
-  />
+              <QrCode size={16} />
+              <span>QR Codes</span>
+            </TabButton>
+
+            {hasPermission('MANAGE_SETTINGS') && (
+              <TabButton
+                active={activeTab === 'settings'}
+                onClick={() => setActiveTab('settings')}
+                primaryColor={tenant.primaryColor}
+              >
+                <SettingsIcon size={16} />
+                <span>Settings</span>
+              </TabButton>
+            )}
+          </div>
+
+          <GenerateReportButton
+            tenantId={tenant.id}
+            primaryColor={tenant.primaryColor}
+            jobIds={[]}
+            photoIds={[]}
+            technicianName={currentUser.name}
+          />
         </div>
-</div>
         {/* Users tab */}
         {activeTab === 'users' && (
           <UsersPage
@@ -560,27 +607,67 @@ const FireExtinguisherApp: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => setShowQrScanner(true)}
-                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
-                style={{ backgroundColor: tenant.primaryColor }}
+                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm hover:opacity-90"
+                style={{
+                  backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' ? tenant.primaryColor : '#7c3aed',
+                  color: '#ffffff'
+                }}
               >
                 <QrCode size={18} /> Scan QR
               </button>
 
               <button
+                onClick={handleExport}
+                disabled={exporting || extinguishers.length === 0}
+                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: '#16a34a', color: '#ffffff' }}
+              >
+                <Download size={18} /> {exporting ? 'Exporting...' : 'Export CSV'}
+              </button>
+
+              <button
+                onClick={handleImportClick}
+                disabled={importing}
+                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: '#9333ea', color: '#ffffff' }}
+              >
+                <Upload size={18} /> {importing ? 'Importing...' : 'Import CSV'}
+              </button>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+
+              <button
                 onClick={() => setOpenAdd(true)}
-                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
-                style={{ backgroundColor: tenant.primaryColor }}
+                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm hover:opacity-90"
+                style={{
+                  backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' ? tenant.primaryColor : '#7c3aed',
+                  color: '#ffffff'
+                }}
               >
                 <Plus size={18} /> Add Extinguisher
               </button>
 
               <button
                 onClick={() => setShowRoleSwitcher(true)}
-                className="flex items-center gap-2 px-4 py-2 text-white bg-gray-700 rounded-lg hover:bg-gray-800"
+                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm"
+                style={{ backgroundColor: '#374151', color: '#ffffff' }}
               >
                 <Shield size={18} /> Switch Role (Demo)
               </button>
             </div>
+
+            {importResult && (
+              <div className={`p-4 rounded-lg ${importResult.errors > 0 ? 'bg-yellow-50 text-yellow-800' : 'bg-green-50 text-green-800'}`}>
+                Import complete: {importResult.imported} extinguishers imported
+                {importResult.errors > 0 && `, ${importResult.errors} errors occurred (check console)`}
+              </div>
+            )}
 
             <div className="overflow-hidden bg-white shadow rounded-2xl">
               <table className="min-w-full">
@@ -648,6 +735,11 @@ const FireExtinguisherApp: React.FC = () => {
               </table>
             </div>
           </>
+        )}
+
+        {/* QR Codes tab */}
+        {activeTab === 'qr-codes' && (
+          <QrCodesPage primaryColor={tenant.primaryColor} />
         )}
 
         {/* Settings tab */}

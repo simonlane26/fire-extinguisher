@@ -93,7 +93,10 @@ export default function UsersPage({
             <button
               onClick={() => setOpenAdd(true)}
               className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
-              style={{ backgroundColor: primaryColor }}
+              style={{
+                backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#7c3aed',
+                color: '#ffffff'
+              }}
             >
               <Plus className="w-4 h-4" />
               Add User
@@ -101,7 +104,7 @@ export default function UsersPage({
           ) : (
             <button
               className="px-4 py-2 text-gray-500 bg-gray-200 rounded-lg cursor-not-allowed"
-              title="You don’t have permission to add users"
+              title="You don't have permission to add users"
               disabled
             >
               Add User
