@@ -8,7 +8,17 @@ export class ExtinguishersService {
   constructor(private prisma: PrismaService) {}
 
   create(tenantId: string, dto: CreateExtinguisherDto) {
-    return this.prisma.extinguisher.create({ data: { ...dto, tenantId } });
+    const data: any = { ...dto, tenantId };
+
+    // Convert date strings to DateTime objects
+    if (data.installDate) data.installDate = new Date(data.installDate);
+    if (data.expiryDate) data.expiryDate = new Date(data.expiryDate);
+    if (data.lastInspection) data.lastInspection = new Date(data.lastInspection);
+    if (data.nextInspection) data.nextInspection = new Date(data.nextInspection);
+    if (data.lastMaintenance) data.lastMaintenance = new Date(data.lastMaintenance);
+    if (data.nextMaintenance) data.nextMaintenance = new Date(data.nextMaintenance);
+
+    return this.prisma.extinguisher.create({ data });
   }
 
   findAll(tenantId: string) {

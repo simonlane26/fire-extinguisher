@@ -54,7 +54,7 @@ export class StripeService {
       return;
     }
     this.stripe = new Stripe(secretKey, {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2025-10-29.clover',
     });
   }
 
@@ -267,7 +267,7 @@ export class StripeService {
       where: { id: tenantId },
     });
 
-    const limits = this.getPlanLimits(tenant.subscriptionPlan);
+    const limits = this.getPlanLimits(tenant.subscriptionPlan as SubscriptionPlan);
     const currentCount = await this.prisma.extinguisher.count({
       where: { tenantId },
     });
@@ -283,7 +283,7 @@ export class StripeService {
       where: { id: tenantId },
     });
 
-    const limits = this.getPlanLimits(tenant.subscriptionPlan);
+    const limits = this.getPlanLimits(tenant.subscriptionPlan as SubscriptionPlan);
 
     // Unlimited users
     if (limits.maxUsers === -1) {

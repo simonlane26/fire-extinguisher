@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -12,4 +9,168 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id                 String            @id @default(cuid())
+  companyName        String
+  subdomain          String            @unique
+  logoUrl            String?
+  subscriptionPlan   String            @default("trial")
+  subscriptionStatus String            @default("trial")
+  createdAt          DateTime          @default(now())
+  users              User[]
+  extinguishers      Extinguisher[]
+  inspections        Inspection[]
+  subscriptions      Subscription[]
+  invoices           Invoice[]
+  serviceJobs        ServiceJob[]
+  inspectionPhotos   InspectionPhoto[]
+  serviceReports     ServiceReport[]
+
+  @@map("Tenant")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String
+  status       String   @default("active")
+  createdAt    DateTime @default(now())
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("User")
+}
+
+model Extinguisher {
+  id              String       @id @default(cuid())
+  tenantId        String
+  externalId      String?
+  location        String
+  building        String
+  floor           String?
+  type            String
+  capacity        String?
+  manufacturer    String?
+  model           String?
+  serialNumber    String?
+  installDate     DateTime?
+  expiryDate      DateTime?
+  lastInspection  DateTime?
+  nextInspection  DateTime?
+  lastMaintenance DateTime?
+  nextMaintenance DateTime?
+  status          String       @default("Active")
+  condition       String       @default("Good")
+  serviceType     String?
+  inspector       String?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inspections     Inspection[]
+
+  @@index([tenantId])
+  @@map("Extinguisher")
+}
+
+model Inspection {
+  id              String       @id @default(cuid())
+  tenantId        String
+  extinguisherId  String
+  serviceDate     DateTime
+  serviceType     String
+  technician      String?
+  condition       String
+  notes           String?
+  partsReplaced   String?
+  nextServiceDate DateTime?
+  createdAt       DateTime     @default(now())
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  extinguisher    Extinguisher @relation(fields: [extinguisherId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, extinguisherId])
+  @@map("Inspection")
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  tenantId             String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  plan                 String
+  status               String
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  trialEnd             DateTime?
+  createdAt            DateTime  @default(now())
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("Subscription")
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  tenantId        String
+  stripeInvoiceId String?
+  amount          Int
+  status          String
+  createdAt       DateTime @default(now())
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("Invoice")
+}
+
+model ServiceJob {
+  id             String    @id @default(cuid())
+  tenantId       String
+  extinguisherId String?
+  location       String
+  building       String
+  type           String
+  serviceType    String
+  status         String    @default("pending")
+  notes          String?
+  scheduledDate  DateTime?
+  completedDate  DateTime?
+  technician     String?
+  createdAt      DateTime  @default(now())
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("ServiceJob")
+}
+
+model InspectionPhoto {
+  id             String   @id @default(cuid())
+  tenantId       String
+  extinguisherId String?
+  inspectionId   String?
+  photoUrl       String
+  caption        String?
+  uploadedBy     String?
+  createdAt      DateTime @default(now())
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("InspectionPhoto")
+}
+
+model ServiceReport {
+  id         String   @id @default(cuid())
+  tenantId   String
+  visitDate  DateTime
+  technician String?
+  jobIds     String[]
+  pdfUrl     String
+  createdAt  DateTime @default(now())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("ServiceReport")
 }

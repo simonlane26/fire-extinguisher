@@ -19,6 +19,10 @@ export class AssistantController {
       data: {
         tenantId,
         extinguisherId: body.extinguisherId ?? null,
+        location: structured?.location || 'Unknown',
+        building: structured?.building || 'Unknown',
+        type: structured?.type || 'Unknown',
+        serviceType: structured?.serviceType || 'Unknown',
         rawInput: body.text,
         structured,
         createdByUserId: body.createdByUserId ?? null,

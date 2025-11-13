@@ -35,8 +35,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
   const loadPlans = async () => {
     try {
       const response = await fetch('http://localhost:3000/api/v1/billing/get-prices', {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
       });
       const data = await response.json();
@@ -63,7 +64,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify({
           priceId,
@@ -98,7 +99,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify({
           returnUrl: window.location.href,

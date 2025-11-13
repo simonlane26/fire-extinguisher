@@ -119,7 +119,7 @@ const PERMISSIONS: Record<PermissionKey, RoleKey[]> = {
   PERFORM_INSPECTIONS: ['super_admin', 'admin', 'manager', 'inspector'],
   VIEW_INSPECTIONS: ['super_admin', 'admin', 'manager', 'inspector', 'viewer'],
   VIEW_REPORTS: ['super_admin', 'admin', 'manager'],
-  VIEW_BILLING: ['super_admin'],
+  VIEW_BILLING: ['super_admin', 'admin'],
   MANAGE_SETTINGS: ['super_admin', 'admin'],
 };
 
