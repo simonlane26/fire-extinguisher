@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, UseInterceptors, UploadedFile, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ExtinguishersService } from './extinguishers.service';
@@ -6,14 +6,26 @@ import { CreateExtinguisherDto } from './dto/create-extinguisher.dto';
 import { UpdateExtinguisherDto } from './dto/update-extinguisher.dto';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
 import { TenantGuard } from '../auth/tenant.guard';
+import { StripeService } from '../stripe/stripe.service';
 
 @Controller('extinguishers')
 @UseGuards(TenantGuard)
 export class ExtinguishersController {
-  constructor(private readonly service: ExtinguishersService) {}
+  constructor(
+    private readonly service: ExtinguishersService,
+    private readonly stripeService: StripeService,
+  ) {}
 
   @Post()
-  create(@CurrentUser() user: CurrentUserData, @Body() dto: CreateExtinguisherDto) {
+  async create(@CurrentUser() user: CurrentUserData, @Body() dto: CreateExtinguisherDto) {
+    // Check if tenant can add more extinguishers
+    if (this.stripeService.isConfigured()) {
+      const canAdd = await this.stripeService.canAddExtinguisher(user.tenantId);
+      if (!canAdd) {
+        throw new ForbiddenException('Extinguisher limit reached for your plan. Please upgrade to add more.');
+      }
+    }
+
     return this.service.create(user.tenantId, dto);
   }
 

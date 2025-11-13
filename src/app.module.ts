@@ -13,6 +13,7 @@ import { StorageModule } from './storage/storage.module';
 import { VisionModule } from './vision/vision.module';
 import { AuthModule } from './auth/auth.module';
 import { QrCodesModule } from './qr-codes/qr-codes.module';
+import { StripeModule } from './stripe/stripe.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { QrCodesModule } from './qr-codes/qr-codes.module';
     ReportsModule,
     StorageModule,
     QrCodesModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [

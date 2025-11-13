@@ -22,6 +22,7 @@ import ExtinguisherDetails from './components/ExtinguisherDetails';
 import SettingsPage from './pages/SettingsPage';
 import UsersPage from './pages/UsersPage';
 import QrCodesPage from './pages/QrCodesPage';
+import BillingPage from './pages/BillingPage';
 import RoleSwitcherModal from './components/RoleSwitcher';
 import GenerateReportButton from './components/GenerateReportButton';
 import TabButton from './components/TabButton';
@@ -209,7 +210,7 @@ const FireExtinguisherApp: React.FC = () => {
   const { currentUser, setCurrentUser, hasPermission } = actx;
 
   const [activeTab, setActiveTab] =
-    useState<'overview' | 'users' | 'settings' | 'qr-codes'>('overview');
+    useState<'overview' | 'users' | 'settings' | 'qr-codes' | 'billing'>('overview');
 
   // Extinguishers state (seed with demo; will be replaced by API load)
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([
@@ -568,6 +569,17 @@ const FireExtinguisherApp: React.FC = () => {
               <span>QR Codes</span>
             </TabButton>
 
+            {hasPermission('VIEW_BILLING') && (
+              <TabButton
+                active={activeTab === 'billing'}
+                onClick={() => setActiveTab('billing')}
+                primaryColor={tenant.primaryColor}
+              >
+                <Crown size={16} />
+                <span>Billing</span>
+              </TabButton>
+            )}
+
             {hasPermission('MANAGE_SETTINGS') && (
               <TabButton
                 active={activeTab === 'settings'}
@@ -740,6 +752,11 @@ const FireExtinguisherApp: React.FC = () => {
         {/* QR Codes tab */}
         {activeTab === 'qr-codes' && (
           <QrCodesPage primaryColor={tenant.primaryColor} />
+        )}
+
+        {/* Billing tab */}
+        {activeTab === 'billing' && (
+          <BillingPage tenant={tenant} primaryColor={tenant.primaryColor} />
         )}
 
         {/* Settings tab */}
