@@ -14,6 +14,8 @@ import { VisionModule } from './vision/vision.module';
 import { AuthModule } from './auth/auth.module';
 import { QrCodesModule } from './qr-codes/qr-codes.module';
 import { StripeModule } from './stripe/stripe.module';
+import { EmailModule } from './email/email.module';
+import { SchedulerModule } from './scheduler/scheduler.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { StripeModule } from './stripe/stripe.module';
     StorageModule,
     QrCodesModule,
     StripeModule,
+    EmailModule,
+    SchedulerModule,
   ],
   controllers: [AppController],
   providers: [
