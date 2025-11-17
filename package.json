@@ -9,6 +9,7 @@
     "preview": "vite preview --config frontend/vite.config.ts",
     "backend": "nest start --watch",
     "backend:prod": "node dist/main",
+    "start:prod": "nest build && npx prisma migrate deploy && node dist/main",
     "seed:auth": "tsx prisma/seed-auth.ts",
     "prisma:generate": "prisma generate --schema=generated/prisma/schema.prisma",
     "prisma:push": "prisma db push --schema=generated/prisma/schema.prisma"
@@ -50,6 +51,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "stripe": "^19.3.1",
+    "web-push": "^3.6.7",
     "zod": "^4.1.11"
   },
   "devDependencies": {

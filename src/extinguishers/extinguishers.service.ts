@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateExtinguisherDto } from './dto/create-extinguisher.dto';
 import { UpdateExtinguisherDto } from './dto/update-extinguisher.dto';
 
 @Injectable()
 export class ExtinguishersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   create(tenantId: string, dto: CreateExtinguisherDto) {
     const data: any = { ...dto, tenantId };
@@ -22,7 +26,17 @@ export class ExtinguishersService {
   }
 
   findAll(tenantId: string) {
-    return this.prisma.extinguisher.findMany({ where: { tenantId } });
+    return this.prisma.extinguisher.findMany({
+      where: { tenantId },
+      include: {
+        site: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
   }
 
   async findOne(tenantId: string, id: string) {
@@ -37,9 +51,140 @@ export class ExtinguishersService {
     return extinguisher;
   }
 
+  /**
+   * Public method to find extinguisher by ID without tenant filtering
+   * Used for public QR code verification
+   */
+  async findOneById(id: string) {
+    const extinguisher = await this.prisma.extinguisher.findUnique({
+      where: { id },
+      include: {
+        tenant: {
+          select: {
+            companyName: true,
+            logoUrl: true,
+          },
+        },
+      },
+    });
+
+    return extinguisher;
+  }
+
   async update(tenantId: string, id: string, dto: UpdateExtinguisherDto) {
-    await this.findOne(tenantId, id); // Verify ownership
-    return this.prisma.extinguisher.update({ where: { id }, data: dto });
+    const existing = await this.findOne(tenantId, id); // Verify ownership
+
+    // Convert date strings to DateTime objects
+    const updateData: any = { ...dto };
+    if (updateData.installDate) updateData.installDate = new Date(updateData.installDate);
+    if (updateData.expiryDate) updateData.expiryDate = new Date(updateData.expiryDate);
+    if (updateData.lastInspection) updateData.lastInspection = new Date(updateData.lastInspection);
+    if (updateData.nextInspection) updateData.nextInspection = new Date(updateData.nextInspection);
+    if (updateData.lastMaintenance) updateData.lastMaintenance = new Date(updateData.lastMaintenance);
+    if (updateData.nextMaintenance) updateData.nextMaintenance = new Date(updateData.nextMaintenance);
+
+    const updated = await this.prisma.extinguisher.update({ where: { id }, data: updateData });
+
+    // Send notifications for important status changes
+    await this.sendUpdateNotifications(existing, updated, tenantId);
+
+    return updated;
+  }
+
+  /**
+   * Send push notifications when extinguisher status changes
+   */
+  private async sendUpdateNotifications(oldExt: any, newExt: any, tenantId: string) {
+    try {
+      // Get all users for this tenant
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        include: { users: true }
+      });
+
+      if (!tenant || tenant.users.length === 0) return;
+
+      // Notify if condition changed to critical states
+      if (oldExt.condition !== newExt.condition) {
+        if (newExt.condition === 'Needs Attention') {
+          for (const user of tenant.users) {
+            await this.notificationsService.sendToUser(user.id, {
+              title: '⚠️ Extinguisher Needs Attention',
+              body: `${newExt.building} - ${newExt.location} requires attention`,
+              icon: '/icon-192x192.png',
+              badge: '/badge-72x72.png',
+              data: {
+                type: 'condition_change',
+                extinguisherId: newExt.id,
+                url: `/extinguishers/${newExt.id}`
+              },
+              tag: `condition-${newExt.id}`,
+              requireInteraction: true,
+            });
+          }
+        } else if (newExt.condition === 'Out of Service') {
+          for (const user of tenant.users) {
+            await this.notificationsService.sendToUser(user.id, {
+              title: '❌ Extinguisher Out of Service',
+              body: `${newExt.building} - ${newExt.location} is out of service`,
+              icon: '/icon-192x192.png',
+              badge: '/badge-72x72.png',
+              data: {
+                type: 'out_of_service',
+                extinguisherId: newExt.id,
+                url: `/extinguishers/${newExt.id}`
+              },
+              tag: `out-of-service-${newExt.id}`,
+              requireInteraction: true,
+            });
+          }
+        }
+      }
+
+      // Notify if status changed to Inactive
+      if (oldExt.status !== newExt.status && newExt.status === 'Inactive') {
+        for (const user of tenant.users) {
+          await this.notificationsService.sendToUser(user.id, {
+            title: 'ℹ️ Extinguisher Deactivated',
+            body: `${newExt.building} - ${newExt.location} has been marked as inactive`,
+            icon: '/icon-192x192.png',
+            badge: '/badge-72x72.png',
+            data: {
+              type: 'status_change',
+              extinguisherId: newExt.id,
+              url: `/extinguishers/${newExt.id}`
+            },
+            tag: `status-${newExt.id}`,
+            requireInteraction: false,
+          });
+        }
+      }
+
+      // Notify if inspection or maintenance was completed (dates changed to future)
+      const inspectionCompleted = oldExt.lastInspection && newExt.lastInspection &&
+        new Date(newExt.lastInspection) > new Date(oldExt.lastInspection);
+
+      if (inspectionCompleted) {
+        for (const user of tenant.users) {
+          await this.notificationsService.sendToUser(user.id, {
+            title: '✅ Inspection Completed',
+            body: `${newExt.building} - ${newExt.location} inspection completed`,
+            icon: '/icon-192x192.png',
+            badge: '/badge-72x72.png',
+            data: {
+              type: 'inspection_completed',
+              extinguisherId: newExt.id,
+              url: `/extinguishers/${newExt.id}`
+            },
+            tag: `inspection-complete-${newExt.id}`,
+            requireInteraction: false,
+          });
+        }
+      }
+    } catch (error) {
+      // Don't fail the update if notification fails
+      console.error('Failed to send update notification:', error);
+    }
   }
 
   async remove(tenantId: string, id: string) {

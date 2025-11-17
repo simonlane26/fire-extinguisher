@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { Tenant } from '../types';
 import { extractAverageColor } from '../utils/extractAccent';
 import { Upload, X, Image as ImageIcon, Palette } from 'lucide-react';
+import NotificationSettings from '../components/NotificationSettings';
 
 type Props = {
   tenant: Tenant;
@@ -327,6 +328,15 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
               Reset to Company Defaults
             </button>
           </div>
+        </section>
+
+        {/* Notifications Section */}
+        <section className="p-4 bg-white border rounded-xl">
+          <h2 className="mb-2 text-lg font-semibold">Notifications</h2>
+          <p className="mb-4 text-sm text-gray-500">
+            Configure push notifications for inspections, maintenance, and alerts
+          </p>
+          <NotificationSettings />
         </section>
       </form>
     </div>

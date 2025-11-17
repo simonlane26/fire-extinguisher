@@ -1,13 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import type { Extinguisher, Site } from '../types';
-import { fetchSites } from '../lib/api';
+import type { Extinguisher, Site, InventoryItem } from '../types';
+import { fetchSites, fetchInventoryItems, recordPartUsage } from '../lib/api';
+import { Plus, Trash2 } from 'lucide-react';
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  /** parent handles id, state update, and optional API call */
-  onCreate: (payload: Partial<Extinguisher>) => Promise<void> | void;
-  /** optional accent color for the primary button */
+  extinguisher: Extinguisher | null;
+  onUpdate: (id: string, payload: Partial<Extinguisher>) => Promise<void> | void;
   primaryColor?: string;
 };
 
@@ -31,7 +31,7 @@ const TYPES = [
 ];
 
 const CONDITIONS = ['Excellent', 'Good', 'Fair', 'Needs Attention', 'Out of Service'] as const;
-const STATUSES = ['Active', 'Inactive'] as const;
+const STATUSES = ['Active', 'Out of Service'] as const;
 const SERVICE_TYPES = [
   'Commission Service',
   'Extended Service',
@@ -45,102 +45,72 @@ const SERVICE_TYPES = [
 
 // --- helpers ---
 const iso = (d: Date) => d.toISOString().split('T')[0];
-const addDays = (base: Date, days: number) => {
-  const dt = new Date(base);
-  dt.setDate(dt.getDate() + days);
-  return dt;
-};
-const addYears = (base: Date, years: number) => {
-  const dt = new Date(base);
-  dt.setFullYear(dt.getFullYear() + years);
-  return dt;
-};
-const isCO2 = (t?: string) => t?.toLowerCase().startsWith('co2');
 
-const AddExtinguisherModal: React.FC<Props> = ({
+const EditExtinguisherModal: React.FC<Props> = ({
   open,
   onClose,
-  onCreate,
+  extinguisher,
+  onUpdate,
   primaryColor = '#7c3aed',
 }) => {
-  const today = useMemo(() => new Date(), []);
-  const todayISO = useMemo(() => iso(today), [today]);
-
-  const defaultNextInspection = useMemo(() => iso(addDays(today, 30)), [today]);
-  const defaultNextMaintenance = useMemo(() => iso(addDays(today, 365)), [today]);
-
-  const [form, setForm] = useState<Partial<Extinguisher>>({
-    location: '',
-    building: '',
-    floor: '',
-    type: '',
-    capacity: '',
-    weight: '',
-    manufacturer: '',
-    model: '',
-    serialNumber: '',
-    installDate: todayISO,
-    expiryDate: '', // gets auto-set from installDate + type
-    lastInspection: todayISO, // use "extended" wording in label below
-    nextInspection: defaultNextInspection,
-    lastMaintenance: todayISO,
-    nextMaintenance: defaultNextMaintenance,
-    status: 'Active',
-    condition: 'Good',
-    serviceType: 'Commission Service',
-    inspector: '',
-    notes: '',
-    siteId: '',
-  });
-
+  const [form, setForm] = useState<Partial<Extinguisher>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sites, setSites] = useState<Site[]>([]);
   const [loadingSites, setLoadingSites] = useState(false);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [partsUsed, setPartsUsed] = useState<Array<{ itemId: string; quantity: number; notes?: string }>>([]);
 
-  // Load sites when modal opens
+  // Load sites and populate form when modal opens
   useEffect(() => {
-    if (open) {
+    if (open && extinguisher) {
       loadSites();
+      // Pre-fill form with current extinguisher data
+      setForm({
+        location: extinguisher.location || '',
+        building: extinguisher.building || '',
+        floor: extinguisher.floor || '',
+        type: extinguisher.type || '',
+        capacity: extinguisher.capacity || '',
+        manufacturer: extinguisher.manufacturer || '',
+        model: extinguisher.model || '',
+        serialNumber: extinguisher.serialNumber || '',
+        installDate: extinguisher.installDate || '',
+        expiryDate: extinguisher.expiryDate || '',
+        lastInspection: extinguisher.lastInspection || '',
+        nextInspection: extinguisher.nextInspection || '',
+        lastMaintenance: extinguisher.lastMaintenance || '',
+        nextMaintenance: extinguisher.nextMaintenance || '',
+        status: extinguisher.status || 'Active',
+        condition: extinguisher.condition || 'Good',
+        serviceType: extinguisher.serviceType || 'Annual Inspection',
+        inspector: extinguisher.inspector || '',
+        notes: extinguisher.notes || '',
+        siteId: extinguisher.siteId || '',
+      });
     }
-  }, [open]);
+  }, [open, extinguisher]);
 
   async function loadSites() {
     try {
       setLoadingSites(true);
-      const data = await fetchSites();
-      setSites(data.filter(site => site.status === 'active'));
+      const [sitesData, inventoryData] = await Promise.all([
+        fetchSites(),
+        fetchInventoryItems()
+      ]);
+      setSites(sitesData.filter(site => site.status === 'active'));
+      setInventoryItems(inventoryData);
     } catch (err) {
-      console.error('Failed to load sites:', err);
+      console.error('Failed to load data:', err);
     } finally {
       setLoadingSites(false);
     }
   }
 
-  if (!open) return null;
-
-  const patch = (kv: Partial<Extinguisher>) => setForm((prev) => ({ ...prev, ...kv }));
+  if (!open || !extinguisher) return null;
 
   const handleChange = (key: keyof Extinguisher, value: string) => {
-    patch({ [key]: value } as Partial<Extinguisher>);
-  };
-
-  // Keep expiry date up-to-date when install date or type changes
-  const updateExpiry = (nextType = form.type, nextInstall = form.installDate) => {
-    if (!nextInstall) return;
-    const base = new Date(nextInstall);
-    const yearsToAdd = isCO2(nextType) ? 10 : 20;
-    patch({ expiryDate: iso(addYears(base, yearsToAdd)) });
-  };
-
-  const handleInstallDate = (value: string) => {
-    patch({ installDate: value });
-    updateExpiry(form.type, value);
-  };
-
-  const handleType = (value: string) => {
-    patch({ type: value });
-    if (form.installDate) updateExpiry(value, form.installDate);
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSave = async () => {
@@ -151,9 +121,6 @@ const AddExtinguisherModal: React.FC<Props> = ({
       return;
     }
 
-    // Ensure expiry is populated
-    if (!form.expiryDate && form.installDate) updateExpiry();
-
     // Prepare payload - convert empty siteId to undefined
     const payload = { ...form };
     if (!payload.siteId) {
@@ -162,12 +129,28 @@ const AddExtinguisherModal: React.FC<Props> = ({
 
     try {
       setSubmitting(true);
-      await onCreate(payload);
+
+      // Update extinguisher
+      await onUpdate(extinguisher.id, payload);
+
+      // Record parts usage if any
+      for (const part of partsUsed) {
+        if (part.itemId && part.quantity > 0) {
+          await recordPartUsage({
+            inventoryItemId: part.itemId,
+            extinguisherId: extinguisher.id,
+            quantityUsed: part.quantity,
+            usedBy: form.inspector || undefined,
+            notes: part.notes,
+          });
+        }
+      }
+
       setSubmitting(false);
       onClose();
     } catch (e: any) {
       setSubmitting(false);
-      setError(e?.message ?? 'Failed to add extinguisher');
+      setError(e?.message ?? 'Failed to update extinguisher');
     }
   };
 
@@ -176,14 +159,14 @@ const AddExtinguisherModal: React.FC<Props> = ({
       <div className="w-full max-w-3xl bg-white shadow-xl rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="text-lg font-semibold">Add New Extinguisher</h3>
+          <h3 className="text-lg font-semibold">Edit Extinguisher - {extinguisher.id}</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-800" aria-label="Close">
             ✕
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-5">
+        <div className="p-5 space-y-5 max-h-[70vh] overflow-y-auto">
           {error && (
             <div className="p-2 text-sm text-red-700 border border-red-200 rounded bg-red-50">
               {error}
@@ -241,7 +224,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
               <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 value={form.type || ''}
-                onChange={(e) => handleType(e.target.value)}
+                onChange={(e) => handleChange('type', e.target.value)}
               >
                 <option value="" disabled>
                   Select type…
@@ -271,16 +254,6 @@ const AddExtinguisherModal: React.FC<Props> = ({
                 placeholder="e.g., 2kg, 6kg, 9kg"
                 value={form.weight || ''}
                 onChange={(e) => handleChange('weight', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1 text-sm text-gray-600">Install Date</label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                value={form.installDate || ''}
-                onChange={(e) => handleInstallDate(e.target.value)}
               />
             </div>
           </div>
@@ -349,7 +322,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
               <label className="block mb-1 text-sm text-gray-600">Service Type</label>
               <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                value={form.serviceType || 'Commission Service'}
+                value={form.serviceType || 'Annual Inspection'}
                 onChange={(e) => handleChange('serviceType', e.target.value)}
               >
                 {SERVICE_TYPES.map((st) => (
@@ -371,14 +344,14 @@ const AddExtinguisherModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Service & Extended Inspection block */}
+          {/* Service & Extended Inspection dates */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <label className="block mb-1 text-sm text-gray-600">Last Service Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                value={form.lastMaintenance || todayISO}
+                value={form.lastMaintenance || ''}
                 onChange={(e) => handleChange('lastMaintenance', e.target.value)}
               />
             </div>
@@ -387,7 +360,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                value={form.nextMaintenance || defaultNextMaintenance}
+                value={form.nextMaintenance || ''}
                 onChange={(e) => handleChange('nextMaintenance', e.target.value)}
               />
             </div>
@@ -402,13 +375,13 @@ const AddExtinguisherModal: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <label className="block mb-1 text-sm text-gray-600">Last Extended Inspection</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                value={form.lastInspection || todayISO}
+                value={form.lastInspection || ''}
                 onChange={(e) => handleChange('lastInspection', e.target.value)}
               />
             </div>
@@ -417,22 +390,101 @@ const AddExtinguisherModal: React.FC<Props> = ({
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                value={form.nextInspection || defaultNextInspection}
+                value={form.nextInspection || ''}
                 onChange={(e) => handleChange('nextInspection', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-sm text-gray-600">Install Date</label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                value={form.installDate || ''}
+                onChange={(e) => handleChange('installDate', e.target.value)}
               />
             </div>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block mb-1 text-sm text-gray-600">Notes</label>
+            <label className="block mb-1 text-sm text-gray-600">Service Notes</label>
             <textarea
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              placeholder="Additional notes…"
+              placeholder="Add service notes…"
               value={form.notes || ''}
               onChange={(e) => handleChange('notes', e.target.value)}
             />
+          </div>
+
+          {/* Parts Used */}
+          <div className="pt-4 border-t">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-medium text-gray-700">Parts Used During Service</label>
+              <button
+                type="button"
+                onClick={() => setPartsUsed([...partsUsed, { itemId: '', quantity: 1 }])}
+                className="flex items-center gap-1 px-3 py-1 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+              >
+                <Plus size={14} />
+                Add Part
+              </button>
+            </div>
+
+            {partsUsed.length === 0 && (
+              <p className="text-sm text-gray-500 italic">No parts used yet. Click "Add Part" to record usage.</p>
+            )}
+
+            <div className="space-y-2">
+              {partsUsed.map((part, idx) => (
+                <div key={idx} className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <select
+                      className="w-full px-3 py-2 mb-2 text-sm border border-gray-300 rounded-lg"
+                      value={part.itemId}
+                      onChange={(e) => {
+                        const updated = [...partsUsed];
+                        updated[idx].itemId = e.target.value;
+                        setPartsUsed(updated);
+                      }}
+                    >
+                      <option value="">Select part...</option>
+                      {inventoryItems.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.partNumber} - {item.partName} (Stock: {item.quantityInStock})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="w-24">
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                      placeholder="Qty"
+                      value={part.quantity}
+                      onChange={(e) => {
+                        const updated = [...partsUsed];
+                        updated[idx].quantity = parseInt(e.target.value) || 1;
+                        setPartsUsed(updated);
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPartsUsed(partsUsed.filter((_, i) => i !== idx));
+                    }}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded"
+                    title="Remove"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -451,7 +503,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
             className="px-4 py-2 text-white rounded-lg hover:opacity-90"
             style={{ backgroundColor: primaryColor }}
           >
-            {submitting ? 'Saving…' : 'Add Extinguisher'}
+            {submitting ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -459,4 +511,4 @@ const AddExtinguisherModal: React.FC<Props> = ({
   );
 };
 
-export default AddExtinguisherModal;
+export default EditExtinguisherModal;

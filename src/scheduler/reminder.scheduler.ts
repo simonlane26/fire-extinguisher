@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ReminderScheduler {
@@ -11,6 +12,7 @@ export class ReminderScheduler {
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
+    private notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -69,6 +71,7 @@ export class ReminderScheduler {
 
         if (shouldSendReminder && ext.tenant.users.length > 0) {
           for (const user of ext.tenant.users) {
+            // Send email reminder
             const sent = await this.emailService.sendInspectionReminder({
               extinguisherId: ext.id,
               extinguisherLocation: ext.location,
@@ -82,6 +85,18 @@ export class ReminderScheduler {
 
             if (sent) {
               emailsSent++;
+            }
+
+            // Send push notification
+            try {
+              await this.notificationsService.sendInspectionReminder(user.id, {
+                id: ext.id,
+                location: ext.location,
+                building: ext.building,
+                nextInspection,
+              });
+            } catch (error) {
+              this.logger.warn(`Failed to send push notification to user ${user.id}: ${error.message}`);
             }
           }
 
@@ -153,6 +168,7 @@ export class ReminderScheduler {
 
         if (shouldSendReminder && ext.tenant.users.length > 0) {
           for (const user of ext.tenant.users) {
+            // Send email reminder
             const sent = await this.emailService.sendMaintenanceReminder({
               extinguisherId: ext.id,
               extinguisherLocation: ext.location,
@@ -166,6 +182,18 @@ export class ReminderScheduler {
 
             if (sent) {
               emailsSent++;
+            }
+
+            // Send push notification
+            try {
+              await this.notificationsService.sendMaintenanceAlert(user.id, {
+                id: ext.id,
+                location: ext.location,
+                building: ext.building,
+                nextMaintenance,
+              });
+            } catch (error) {
+              this.logger.warn(`Failed to send push notification to user ${user.id}: ${error.message}`);
             }
           }
 
