@@ -1,8 +1,4 @@
-[build]
-command = "npm install && npx prisma generate"
-
 [deploy]
-startCommand = "npm run start:prod"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 healthcheckPath = "/api/v1/health"
