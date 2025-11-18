@@ -3,7 +3,7 @@ nixPkgs = ["nodejs_20", "openssl"]
 
 [phases.install]
 cmds = [
-  "npm ci --include=dev",
+  "npm install",
   "npx prisma generate"
 ]
 
