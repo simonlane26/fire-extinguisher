@@ -14,19 +14,26 @@ import {
   Settings as SettingsIcon,
   Download,
   Upload,
+  Package,
+  HelpCircle,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
 import AddExtinguisherModal from './components/AddExtinguisherModal';
+import EditExtinguisherModal from './components/EditExtinguisherModal';
 import ExtinguisherDetails from './components/ExtinguisherDetails';
 import SettingsPage from './pages/SettingsPage';
 import UsersPage from './pages/UsersPage';
+import SitesPage from './pages/SitesPage';
 import QrCodesPage from './pages/QrCodesPage';
 import BillingPage from './pages/BillingPage';
+import InventoryPage from './pages/InventoryPage';
+import HelpPage from './pages/HelpPage';
 import RoleSwitcherModal from './components/RoleSwitcher';
 import GenerateReportButton from './components/GenerateReportButton';
 import TabButton from './components/TabButton';
-import { addExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv } from './lib/api';
+import Footer from './components/Footer';
+import { addExtinguisher, updateExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv } from './lib/api';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
   Extinguisher,
@@ -210,7 +217,7 @@ const FireExtinguisherApp: React.FC = () => {
   const { currentUser, setCurrentUser, hasPermission } = actx;
 
   const [activeTab, setActiveTab] =
-    useState<'overview' | 'users' | 'settings' | 'qr-codes' | 'billing'>('overview');
+    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing'>('overview');
 
   // Extinguishers state (seed with demo; will be replaced by API load)
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([
@@ -319,6 +326,8 @@ const FireExtinguisherApp: React.FC = () => {
   // Add modal + QR
   const [openAdd, setOpenAdd] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editingExtinguisher, setEditingExtinguisher] = useState<Extinguisher | null>(null);
 
   // CSV import/export
   const [importing, setImporting] = useState(false);
@@ -392,6 +401,25 @@ const FireExtinguisherApp: React.FC = () => {
       .filter((n) => Number.isFinite(n));
     const next = (nums.length ? Math.max(...nums) : 0) + 1;
     return `FE${String(next).padStart(3, '0')}`;
+  };
+
+  // Update extinguisher after service
+  const handleUpdate = async (id: string, payload: Partial<Extinguisher>) => {
+    try {
+      const updated = await updateExtinguisher(id, payload);
+      // Update in local state
+      setExtinguishers((prev) => prev.map((e) => (e.id === id ? updated : e)));
+    } catch (err) {
+      console.error('Failed to update extinguisher:', err);
+      alert('Failed to update extinguisher. Please try again.');
+      throw err;
+    }
+  };
+
+  // Handle edit button from details modal
+  const handleEdit = (ext: Extinguisher) => {
+    setEditingExtinguisher(ext);
+    setOpenEdit(true);
   };
 
   // Create with optimistic UI + server reconcile
@@ -482,7 +510,11 @@ const FireExtinguisherApp: React.FC = () => {
   />
   <div>
     <h1 className="text-xl font-bold">{tenant.companyName}</h1>
-    <div className="text-sm opacity-75">Fire Safety Management System</div>
+    <div className="flex items-center gap-2 text-sm opacity-75">
+      <span>Fire Safety Management System</span>
+      <span className="opacity-50">•</span>
+      <span className="font-medium">Fireexcheck.com</span>
+    </div>
   </div>
 </div>
 
@@ -549,6 +581,24 @@ const FireExtinguisherApp: React.FC = () => {
               Overview
             </TabButton>
 
+            <TabButton
+              active={activeTab === 'sites'}
+              onClick={() => setActiveTab('sites')}
+              primaryColor={tenant.primaryColor}
+            >
+              <Building2 size={16} />
+              <span>Sites</span>
+            </TabButton>
+
+            <TabButton
+              active={activeTab === 'stock'}
+              onClick={() => setActiveTab('stock')}
+              primaryColor={tenant.primaryColor}
+            >
+              <Package size={16} />
+              <span>Stock</span>
+            </TabButton>
+
             {hasPermission('VIEW_USERS') && (
               <TabButton
                 active={activeTab === 'users'}
@@ -590,6 +640,15 @@ const FireExtinguisherApp: React.FC = () => {
                 <span>Settings</span>
               </TabButton>
             )}
+
+            <TabButton
+              active={activeTab === 'help'}
+              onClick={() => setActiveTab('help')}
+              primaryColor={tenant.primaryColor}
+            >
+              <HelpCircle size={16} />
+              <span>Help</span>
+            </TabButton>
           </div>
 
           <GenerateReportButton
@@ -600,6 +659,12 @@ const FireExtinguisherApp: React.FC = () => {
             technicianName={currentUser.name}
           />
         </div>
+        {/* Sites tab */}
+        {activeTab === 'sites' && <SitesPage />}
+
+        {/* Stock tab */}
+        {activeTab === 'stock' && <InventoryPage />}
+
         {/* Users tab */}
         {activeTab === 'users' && (
           <UsersPage
@@ -763,6 +828,9 @@ const FireExtinguisherApp: React.FC = () => {
         {activeTab === 'settings' && (
           <SettingsPage tenant={tenant} updateTenant={updateTenant} />
         )}
+
+        {/* Help tab */}
+        {activeTab === 'help' && <HelpPage />}
       </div>
 
       {/* Modals / overlays */}
@@ -777,6 +845,15 @@ const FireExtinguisherApp: React.FC = () => {
         open={showDetails}
         onClose={() => setShowDetails(false)}
         data={selectedExtinguisher}
+        primaryColor={tenant.primaryColor}
+        onEdit={handleEdit}
+      />
+
+      <EditExtinguisherModal
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        extinguisher={editingExtinguisher}
+        onUpdate={handleUpdate}
         primaryColor={tenant.primaryColor}
       />
 
@@ -806,6 +883,9 @@ const FireExtinguisherApp: React.FC = () => {
         roles={USER_ROLES}
         onSelect={handleSelectRole}
       />
+
+      {/* Footer */}
+      <Footer primaryColor={tenant.primaryColor} />
     </div>
   );
 };
