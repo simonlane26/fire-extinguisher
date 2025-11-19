@@ -1,0 +1,311 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id                   String            @id @default(cuid())
+  companyName          String
+  subdomain            String            @unique
+  logoUrl              String?
+  contactEmail         String?
+  stripeCustomerId     String?           @unique
+  stripeSubscriptionId String?           @unique
+  subscriptionPlan     String            @default("trial")
+  subscriptionStatus   String            @default("trial")
+  createdAt            DateTime          @default(now())
+  users                User[]
+  sites                Site[]
+  extinguishers        Extinguisher[]
+  inspections          Inspection[]
+  subscriptions        Subscription[]
+  invoices             Invoice[]
+  serviceJobs          ServiceJob[]
+  inspectionPhotos     InspectionPhoto[]
+  serviceReports       ServiceReport[]
+  inventoryItems       InventoryItem[]
+  partUsages           PartUsage[]
+
+  @@index([subdomain])
+  @@index([stripeCustomerId])
+  @@index([subscriptionStatus])
+  @@map("Tenant")
+}
+
+model Site {
+  id            String         @id @default(cuid())
+  tenantId      String
+  name          String         // e.g., "London Office", "Wales Warehouse"
+  address       String?
+  city          String?
+  postcode      String?
+  country       String?        @default("UK")
+  contactName   String?
+  contactPhone  String?
+  contactEmail  String?
+  status        String         @default("active")
+  createdAt     DateTime       @default(now())
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  extinguishers Extinguisher[]
+
+  @@index([tenantId])
+  @@map("Site")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  tenantId          String
+  name              String
+  email             String    @unique
+  passwordHash      String
+  role              String
+  status            String    @default("active")
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  createdAt         DateTime  @default(now())
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  verificationTokens VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([tenantId])
+  @@index([email])
+  @@index([tenantId, status])
+  @@map("User")
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("VerificationToken")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("PasswordResetToken")
+}
+
+model Extinguisher {
+  id              String       @id @default(cuid())
+  tenantId        String
+  siteId          String?      // Optional - for multi-site support
+  externalId      String?
+  location        String
+  building        String
+  floor           String?
+  type            String
+  capacity        String?
+  weight          String?      // Weight category (e.g., "2kg", "6kg", "9kg")
+  manufacturer    String?
+  model           String?
+  serialNumber    String?
+  installDate     DateTime?
+  expiryDate      DateTime?
+  lastInspection  DateTime?
+  nextInspection  DateTime?
+  lastMaintenance DateTime?
+  nextMaintenance DateTime?
+  status          String       @default("Active")
+  condition       String       @default("Good")
+  serviceType     String?
+  inspector       String?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site            Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  inspections     Inspection[]
+
+  @@index([tenantId])
+  @@index([siteId])
+  @@index([tenantId, status])
+  @@index([tenantId, nextInspection])
+  @@index([tenantId, nextMaintenance])
+  @@index([tenantId, expiryDate])
+  @@map("Extinguisher")
+}
+
+model Inspection {
+  id              String        @id @default(cuid())
+  tenantId        String
+  extinguisherId  String
+  serviceDate     DateTime
+  serviceType     String
+  technician      String?
+  condition       String
+  notes           String?
+  partsReplaced   String?
+  nextServiceDate DateTime?
+  createdAt       DateTime      @default(now())
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  extinguisher    Extinguisher  @relation(fields: [extinguisherId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, extinguisherId])
+  @@index([tenantId, serviceDate])
+  @@index([tenantId, nextServiceDate])
+  @@map("Inspection")
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  tenantId             String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  plan                 String
+  status               String
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  trialEnd             DateTime?
+  createdAt            DateTime  @default(now())
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("Subscription")
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  tenantId        String
+  stripeInvoiceId String?
+  amount          Int
+  status          String
+  createdAt       DateTime @default(now())
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("Invoice")
+}
+
+model ServiceJob {
+  id              String   @id @default(cuid())
+  tenantId        String
+  extinguisherId  String?
+  location        String
+  building        String
+  type            String
+  serviceType     String
+  status          String   @default("pending")
+  notes           String?
+  scheduledDate   DateTime?
+  completedDate   DateTime?
+  technician      String?
+  rawInput        String?
+  structured      Json?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("ServiceJob")
+}
+
+model InspectionPhoto {
+  id             String   @id @default(cuid())
+  tenantId       String
+  extinguisherId String?
+  inspectionId   String?
+  url            String
+  caption        String?
+  uploadedBy     String?
+  findings       Json?
+  createdAt      DateTime @default(now())
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("InspectionPhoto")
+}
+
+model ServiceReport {
+  id         String   @id @default(cuid())
+  tenantId   String
+  visitDate  DateTime
+  technician String?
+  jobIds     String[]
+  pdfUrl     String
+  createdAt  DateTime @default(now())
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("ServiceReport")
+}
+
+model InventoryItem {
+  id               String      @id @default(cuid())
+  tenantId         String
+  partNumber       String      // e.g., "SEAL-001", "VALVE-CO2"
+  partName         String      // e.g., "O-Ring Seal", "CO2 Valve"
+  category         String?     // e.g., "Seals", "Valves", "Gauges", "Hoses"
+  description      String?
+  unitPrice        Float?      // Cost per unit in pence/cents
+  quantityInStock  Int         @default(0)
+  minStockLevel    Int         @default(10) // Alert when below this
+  supplier         String?
+  supplierPartNo   String?
+  location         String?     // Storage location
+  notes            String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  tenant           Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  usages           PartUsage[]
+
+  @@unique([tenantId, partNumber])
+  @@index([tenantId])
+  @@map("InventoryItem")
+}
+
+model PartUsage {
+  id              String        @id @default(cuid())
+  tenantId        String
+  inventoryItemId String
+  extinguisherId  String?       // Optional - link to extinguisher
+  inspectionId    String?       // Optional - link to inspection
+  quantityUsed    Int
+  usedBy          String?       // Technician name
+  usedAt          DateTime      @default(now())
+  notes           String?
+  createdAt       DateTime      @default(now())
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@index([extinguisherId])
+  @@map("PartUsage")
+}
+
+model PushSubscription {
+  id           String   @id @default(cuid())
+  userId       String
+  tenantId     String
+  endpoint     String   @unique
+  p256dh       String   // Public key
+  auth         String   // Auth secret
+  deviceName   String?  // Browser/device identifier
+  createdAt    DateTime @default(now())
+  lastUsed     DateTime @default(now())
+
+  @@index([userId])
+  @@index([tenantId])
+  @@map("PushSubscription")
+}
