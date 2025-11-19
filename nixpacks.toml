@@ -4,11 +4,11 @@ nixPkgs = ["nodejs_20", "openssl"]
 [phases.install]
 cmds = [
   "npm install",
-  "npx prisma generate"
+  "npx prisma generate --schema=generated/prisma/schema.prisma"
 ]
 
 [phases.build]
 cmds = ["npm run build:backend"]
 
 [start]
-cmd = "npx prisma migrate deploy && node dist/main"
+cmd = "npx prisma migrate deploy --schema=generated/prisma/schema.prisma && node dist/main"
