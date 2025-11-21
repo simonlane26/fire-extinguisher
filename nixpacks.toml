@@ -8,8 +8,7 @@ cmds = [
 
 [phases.build]
 cmds = [
-  "export DATABASE_URL='postgresql://user:pass@localhost:5432/db' && npx prisma generate",
-  "npm run build:backend"
+  "bash -c 'DATABASE_URL=postgresql://user:pass@localhost:5432/db npx prisma generate && npm run build:backend'"
 ]
 
 [start]
