@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && npx prisma generate && npm run build:backend"
+buildCommand = "DATABASE_URL=postgresql://user:pass@localhost:5432/db npm install && DATABASE_URL=postgresql://user:pass@localhost:5432/db npx prisma generate && npm run build:backend"
 
 [deploy]
 startCommand = "npx prisma migrate deploy && node dist/main"
