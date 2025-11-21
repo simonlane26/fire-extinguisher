@@ -10,20 +10,23 @@ export class NotificationsService {
     // Configure web-push with VAPID keys
     const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-    const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:info@firexcheck.com';
+    const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:noreply@example.com';
 
     if (!vapidPublicKey || !vapidPrivateKey) {
       this.logger.warn('⚠️  VAPID keys not configured. Push notifications will not work.');
       return;
     }
 
-    webpush.setVapidDetails(
-      vapidSubject,
-      vapidPublicKey,
-      vapidPrivateKey
-    );
-
-    this.logger.log('✅ Push notifications configured');
+    try {
+      webpush.setVapidDetails(
+        vapidSubject,
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+      this.logger.log('✅ Push notifications configured');
+    } catch (error) {
+      this.logger.warn(`⚠️  Failed to configure VAPID: ${error.message}. Push notifications will not work.`);
+    }
   }
 
   // ===== SUBSCRIPTION MANAGEMENT =====
