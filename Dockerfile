@@ -2,7 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files (build v2 - exclude all .env files)
+# Copy package files (build v3 - force clean deployment)
 COPY package*.json ./
 
 # Install dependencies
