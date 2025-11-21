@@ -4,11 +4,38 @@ import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AppModule, {
+
+  // Debug: Log environment variables (excluding sensitive ones)
+  console.log('🔍 Environment check:');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+  console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
+  console.log('SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET');
+  console.log('SMTP_PORT:', process.env.SMTP_PORT || 'NOT SET');
+  console.log('S3_REGION:', process.env.S3_REGION || 'NOT SET');
+  console.log('S3_BUCKET:', process.env.S3_BUCKET || 'NOT SET');
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
+
+  // Stripe webhook needs raw body for signature verification
+  // We use a custom middleware to capture raw body before JSON parsing
+  app.use('/api/v1/billing/webhook', bodyParser.raw({ type: 'application/json' }));
+
+  // JSON body parser for all other routes
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
+  // Serve static files from uploads directory
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
   });
 
   // API Versioning - all routes prefixed with /api/v1
