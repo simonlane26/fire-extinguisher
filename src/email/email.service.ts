@@ -31,6 +31,12 @@ export class EmailService {
       return;
     }
 
+    // Validate hostname format to prevent DNS lookup errors
+    if (host.includes('*') || host.includes('placeholder') || host.includes('example')) {
+      console.warn(`⚠️  Invalid SMTP_HOST: ${host}. Email not configured.`);
+      return;
+    }
+
     try {
       this.transporter = nodemailer.createTransport({
         host,
