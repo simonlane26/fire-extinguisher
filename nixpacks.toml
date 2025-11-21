@@ -3,16 +3,14 @@ nixPkgs = ["nodejs_20", "openssl"]
 
 [phases.install]
 cmds = [
-  "echo 'DATABASE_URL=postgresql://user:pass@localhost:5432/db' > .env",
   "npm install"
 ]
 
 [phases.build]
 cmds = [
   "npx prisma generate",
-  "npm run build:backend",
-  "rm -f .env"
+  "npm run build:backend"
 ]
 
 [start]
-cmd = "rm -f .env && npx prisma migrate deploy && node dist/main"
+cmd = "npx prisma migrate deploy && node dist/main"
