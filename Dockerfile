@@ -12,7 +12,8 @@ RUN npm install
 COPY prisma ./prisma/
 
 # Generate Prisma Client with dummy DATABASE_URL
-ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
+# Prisma generate only needs the env var to exist, doesn't validate connection
+ENV DATABASE_URL="postgresql://user:pass@host:5432/db"
 RUN npx prisma generate
 
 # Copy source code
