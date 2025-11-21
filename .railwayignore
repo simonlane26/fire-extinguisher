@@ -1,0 +1,8 @@
+# Files to ignore during Railway deployment
+.git
+.github
+.vscode
+*.md
+!README.md
+.env.local
+.env.development
