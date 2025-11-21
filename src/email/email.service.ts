@@ -31,18 +31,23 @@ export class EmailService {
       return;
     }
 
-    this.transporter = nodemailer.createTransport({
-      host,
-      port: parseInt(port, 10),
-      secure: parseInt(port, 10) === 465, // true for 465, false for other ports
-      auth: {
-        user,
-        pass,
-      },
-    });
+    try {
+      this.transporter = nodemailer.createTransport({
+        host,
+        port: parseInt(port, 10),
+        secure: parseInt(port, 10) === 465, // true for 465, false for other ports
+        auth: {
+          user,
+          pass,
+        },
+      });
 
-    this.isConfigured = true;
-    console.log('✅ Email service configured');
+      this.isConfigured = true;
+      console.log('✅ Email service configured');
+    } catch (error) {
+      console.warn(`⚠️  Failed to configure email service: ${error.message}`);
+      this.isConfigured = false;
+    }
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
@@ -272,6 +277,148 @@ export class EmailService {
 
   private stripHtml(html: string): string {
     return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  // ==================== VERIFICATION & PASSWORD RESET EMAILS ====================
+
+  async sendVerificationEmail(email: string, name: string, token: string): Promise<boolean> {
+    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+  <div style="max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); padding: 40px 30px; text-align: center;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Verify Your Email</h1>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 40px 30px;">
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        Hi ${name},
+      </p>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        Thank you for signing up for our Fire Safety Management System! Please verify your email address by clicking the button below.
+      </p>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+        This link will expire in 24 hours.
+      </p>
+
+      <!-- CTA Button -->
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${verificationUrl}"
+           style="display: inline-block; background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: #ffffff;
+                  text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+          Verify Email Address
+        </a>
+      </div>
+
+      <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 30px 0 0 0;">
+        If you didn't create an account, you can safely ignore this email.
+      </p>
+
+      <p style="color: #6b7280; font-size: 12px; line-height: 1.6; margin: 20px 0 0 0;">
+        Or copy and paste this link: <br/>
+        <a href="${verificationUrl}" style="color: #7c3aed; word-break: break-all;">${verificationUrl}</a>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #f9fafb; padding: 20px; border-radius: 0 0 12px 12px; text-align: center; color: #6b7280; font-size: 14px;">
+      <p style="margin: 0 0 10px 0;">Fire Safety Management System</p>
+      <p style="margin: 0; font-size: 12px;">
+        © ${new Date().getFullYear()} All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject: 'Verify Your Email Address',
+      html,
+    });
+  }
+
+  async sendPasswordResetEmail(email: string, name: string, token: string): Promise<boolean> {
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f3f4f6;">
+  <div style="max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 40px 30px; text-align: center;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Reset Your Password</h1>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 40px 30px;">
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        Hi ${name},
+      </p>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        We received a request to reset your password for your Fire Safety Management account.
+      </p>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+        Click the button below to reset your password. This link will expire in 1 hour.
+      </p>
+
+      <!-- CTA Button -->
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetUrl}"
+           style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: #ffffff;
+                  text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+          Reset Password
+        </a>
+      </div>
+
+      <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 30px 0 0 0;">
+        If you didn't request a password reset, you can safely ignore this email. Your password will not be changed.
+      </p>
+
+      <p style="color: #6b7280; font-size: 12px; line-height: 1.6; margin: 20px 0 0 0;">
+        Or copy and paste this link: <br/>
+        <a href="${resetUrl}" style="color: #dc2626; word-break: break-all;">${resetUrl}</a>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #f9fafb; padding: 20px; border-radius: 0 0 12px 12px; text-align: center; color: #6b7280; font-size: 14px;">
+      <p style="margin: 0 0 10px 0;">Fire Safety Management System</p>
+      <p style="margin: 0; font-size: 12px;">
+        © ${new Date().getFullYear()} All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject: 'Reset Your Password',
+      html,
+    });
   }
 
   getConfigurationStatus(): { configured: boolean; message: string } {
