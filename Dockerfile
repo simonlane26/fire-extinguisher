@@ -2,7 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files (build v2 - exclude all .env files)
 COPY package*.json ./
 
 # Install dependencies
@@ -17,6 +17,9 @@ RUN DATABASE_URL="postgresql://user:pass@host:5432/db" npx prisma generate
 
 # Copy source code
 COPY . .
+
+# Remove any .env files that might have been copied despite .dockerignore
+RUN rm -f .env .env.* || true
 
 # Build the application
 RUN npm run build:backend
