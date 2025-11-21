@@ -22,10 +22,10 @@ COPY . .
 RUN npm run build:backend
 
 # Verify build output
-RUN ls -la dist/ && echo "Build successful - dist/main.js exists"
+RUN ls -la dist/src/ && echo "Build successful - dist/src/main.js exists"
 
 # Expose port
 EXPOSE 3000
 
-# Start command will be provided by Railway
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+# Start command - NestJS builds to dist/src/main.js
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
