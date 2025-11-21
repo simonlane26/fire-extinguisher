@@ -10,7 +10,9 @@ cmds = [
 [phases.build]
 cmds = [
   "npx prisma generate",
-  "npm run build:backend"
+  "npm run build:backend",
+  "ls -la",
+  "ls -la dist/ || echo 'dist directory not found!'"
 ]
 
 [start]
