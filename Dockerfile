@@ -11,10 +11,9 @@ RUN npm install
 # Copy prisma schema
 COPY prisma ./prisma/
 
-# Generate Prisma Client with dummy DATABASE_URL
-# Prisma generate only needs the env var to exist, doesn't validate connection
-ENV DATABASE_URL="postgresql://user:pass@host:5432/db"
-RUN npx prisma generate
+# Generate Prisma Client with dummy DATABASE_URL (only for this build step)
+# Real DATABASE_URL from Railway will be used at runtime
+RUN DATABASE_URL="postgresql://user:pass@host:5432/db" npx prisma generate
 
 # Copy source code
 COPY . .
