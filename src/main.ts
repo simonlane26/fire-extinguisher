@@ -16,10 +16,11 @@ async function bootstrap() {
   console.log('NODE_ENV:', process.env.NODE_ENV);
   console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
   console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
-  console.log('SMTP_HOST:', process.env.SMTP_HOST || 'NOT SET');
+  console.log('SMTP_HOST:', process.env.SMTP_HOST ? `${process.env.SMTP_HOST.substring(0, 10)}...` : 'NOT SET');
   console.log('SMTP_PORT:', process.env.SMTP_PORT || 'NOT SET');
   console.log('S3_REGION:', process.env.S3_REGION || 'NOT SET');
-  console.log('S3_BUCKET:', process.env.S3_BUCKET || 'NOT SET');
+  console.log('S3_BUCKET:', process.env.S3_BUCKET ? `${process.env.S3_BUCKET.substring(0, 10)}...` : 'NOT SET');
+  console.log('All env keys:', Object.keys(process.env).filter(k => k.includes('SMTP') || k.includes('S3') || k.includes('VAPID')).join(', '));
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
