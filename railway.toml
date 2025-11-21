@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "DATABASE_URL=postgresql://user:pass@localhost:5432/db npm install && DATABASE_URL=postgresql://user:pass@localhost:5432/db npx prisma generate && npm run build:backend"
 
 [deploy]
-startCommand = "npx prisma migrate deploy && node dist/main"
+startCommand = "rm -f .env && npx prisma migrate deploy && node dist/main"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 healthcheckPath = "/api/v1/health"
