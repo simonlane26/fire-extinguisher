@@ -4,7 +4,7 @@ nixPkgs = ["nodejs_20", "openssl"]
 [phases.install]
 cmds = [
   "npm install",
-  "npx prisma generate"
+  "DATABASE_URL=postgresql://user:pass@localhost:5432/db npx prisma generate"
 ]
 
 [phases.build]
