@@ -3,7 +3,7 @@ node_modules
 frontend/node_modules
 
 # Build outputs
-dist
+# dist - DO NOT IGNORE, needed for Railway deployment
 frontend/dist
 
 # TypeScript build info
