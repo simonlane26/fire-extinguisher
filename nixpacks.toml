@@ -15,4 +15,4 @@ cmds = [
 ]
 
 [start]
-cmd = "npx prisma migrate deploy && node dist/main"
+cmd = "rm -f .env && npx prisma migrate deploy && node dist/main"
