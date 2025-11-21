@@ -21,6 +21,9 @@ COPY . .
 # Build the application
 RUN npm run build:backend
 
+# Verify build output
+RUN ls -la dist/ && echo "Build successful - dist/main.js exists"
+
 # Expose port
 EXPOSE 3000
 
