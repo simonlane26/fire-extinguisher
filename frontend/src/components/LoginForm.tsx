@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { LogIn, UserPlus, Flame } from 'lucide-react';
 
 interface LoginFormProps {
@@ -48,6 +49,7 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           <p className="text-gray-600 mt-2">
             {isRegister ? 'Create your account' : 'Sign in to your account'}
           </p>
+          <p className="text-sm text-violet-600 font-medium mt-1">Fireexcheck.com</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -84,9 +86,19 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              {!isRegister && (
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-violet-600 hover:text-violet-700 font-medium"
+                >
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <input
               id="password"
               type="password"
@@ -130,18 +142,33 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
         </form>
 
         <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegister(!isRegister);
-              setError('');
-            }}
-            className="text-violet-600 hover:text-violet-700 text-sm font-medium"
-          >
-            {isRegister
-              ? 'Already have an account? Sign in'
-              : "Don't have an account? Register"}
-          </button>
+          <p className="text-sm text-gray-600">
+            {isRegister ? (
+              <>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegister(false);
+                    setError('');
+                  }}
+                  className="text-violet-600 hover:text-violet-700 font-medium"
+                >
+                  Sign in
+                </button>
+              </>
+            ) : (
+              <>
+                New to Fire Extinguisher Manager?{' '}
+                <Link
+                  to="/signup"
+                  className="text-violet-600 hover:text-violet-700 font-medium"
+                >
+                  Create an account
+                </Link>
+              </>
+            )}
+          </p>
         </div>
 
         {!isRegister && (

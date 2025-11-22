@@ -32,8 +32,13 @@ const GenerateReportButton: React.FC<Props> = ({
         photoIds,
       });
 
+      // Construct full URL - pdfUrl is like "/uploads/reports/123-report.pdf"
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+      const baseUrl = API_URL.replace('/api/v1', ''); // Get http://localhost:3000
+      const fullPdfUrl = `${baseUrl}${pdfUrl}`;
+
       // open the generated PDF in a new tab
-      window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      window.open(fullPdfUrl, '_blank', 'noopener,noreferrer');
     } catch (e: any) {
       alert(e?.message || 'Failed to generate report');
     } finally {

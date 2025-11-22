@@ -28,24 +28,29 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadPlans();
-  }, []);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
   const loadPlans = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/v1/billing/get-prices', {
+      const response = await fetch(`${API_URL}/billing/get-prices`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
       });
       const data = await response.json();
+      console.log('Loaded plans data:', data);
+      console.log('Plans object:', data.plans);
       setPlans(data.plans);
     } catch (error) {
       console.error('Failed to load plans:', error);
     }
   };
+
+  useEffect(() => {
+    loadPlans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubscribe = async (planKey: string) => {
     setLoadingPlan(planKey);
@@ -60,7 +65,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
 
       const priceId = billingCycle === 'monthly' ? plan.priceIds.monthly : plan.priceIds.annual;
 
-      const response = await fetch('http://localhost:3000/api/v1/billing/create-checkout-session', {
+      const response = await fetch(`${API_URL}/billing/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +100,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/v1/billing/create-portal-session', {
+      const response = await fetch(`${API_URL}/billing/create-portal-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,7 +179,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         </div>
 
         {tenant.subscriptionStatus === 'past_due' && (
-          <div className="flex items-start gap-2 p-4 mt-4 bg-yellow-50 rounded-lg">
+          <div className="flex items-start gap-2 p-4 mt-4 rounded-lg bg-yellow-50">
             <AlertCircle className="w-5 h-5 text-yellow-600" />
             <div className="text-sm text-yellow-800">
               <div className="font-semibold">Payment overdue</div>
@@ -193,6 +198,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
           onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'annual' : 'monthly')}
           className="relative inline-flex items-center h-6 rounded-full w-11"
           style={{ backgroundColor: billingCycle === 'annual' ? safeColor : '#d1d5db' }}
+          aria-label={`Switch to ${billingCycle === 'monthly' ? 'annual' : 'monthly'} billing`}
+          role="switch"
+          aria-checked={billingCycle === 'annual' ? 'true' : 'false'}
         >
           <span
             className={`inline-block w-4 h-4 transition transform bg-white rounded-full ${
@@ -244,7 +252,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         {/* Professional Plan */}
         {plans.professional && (
           <div className="relative p-6 bg-white border-2 shadow rounded-2xl" style={{ borderColor: safeColor }}>
-            <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold text-white rounded-bl-lg rounded-tr-lg" style={{ backgroundColor: safeColor }}>
+            <div className="absolute top-0 right-0 px-3 py-1 text-xs font-semibold text-white rounded-tr-lg rounded-bl-lg" style={{ backgroundColor: safeColor }}>
               POPULAR
             </div>
             <div className="flex items-center gap-2 mb-4">
@@ -320,7 +328,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
           Enterprise plan available with unlimited extinguishers, SSO, audit logs, and dedicated support.
         </p>
         <a
-          href="mailto:sales@yourcompany.com"
+          href="mailto:sales@firexcheck.com"
           className="inline-block px-6 py-2 text-white rounded-lg hover:opacity-90"
           style={{ backgroundColor: safeColor }}
         >

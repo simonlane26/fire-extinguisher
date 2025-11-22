@@ -18,8 +18,31 @@ export type Tenant = {
   subscriptionStatus: string; createdAt: string;
 };
 
+export type Site = {
+  id: string;
+  tenantId: string;
+  name: string;
+  address?: string;
+  city?: string;
+  postcode?: string;
+  country?: string;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  _count?: {
+    extinguishers: number;
+  };
+};
+
 export type Extinguisher = {
   id: string;
+  siteId?: string;
+  site?: {
+    id: string;
+    name: string;
+  };
   location: string;
   building: string;
   floor?: string;
@@ -39,4 +62,43 @@ export type Extinguisher = {
   serviceType?: string;
   inspector?: string;
   notes?: string;
+};
+
+export type InventoryItem = {
+  id: string;
+  tenantId: string;
+  partNumber: string;
+  partName: string;
+  category?: string;
+  description?: string;
+  unitPrice?: number;
+  quantityInStock: number;
+  minStockLevel: number;
+  supplier?: string;
+  supplierPartNo?: string;
+  location?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  _count?: {
+    usages: number;
+  };
+};
+
+export type PartUsage = {
+  id: string;
+  tenantId: string;
+  inventoryItemId: string;
+  extinguisherId?: string;
+  inspectionId?: string;
+  quantityUsed: number;
+  usedBy?: string;
+  usedAt: string;
+  notes?: string;
+  createdAt: string;
+  inventoryItem?: {
+    partNumber: string;
+    partName: string;
+    category?: string;
+  };
 };

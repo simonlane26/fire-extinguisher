@@ -33,6 +33,7 @@ export interface Extinguisher {
   floor?: string | null;
   type: string;
   capacity?: string | null;
+  weight?: string | null;
   manufacturer?: string | null;
   model?: string | null;
   serialNumber?: string | null;

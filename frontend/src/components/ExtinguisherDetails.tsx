@@ -1,11 +1,13 @@
 import React from 'react';
 import type { Extinguisher } from '../types';
+import { Pencil } from 'lucide-react';
 
 type Props = {
   open: boolean;
   onClose: () => void;
   data: Extinguisher | null;
   primaryColor?: string; // brand color for status badge
+  onEdit?: (extinguisher: Extinguisher) => void; // callback to open edit modal
 };
 
 // --- helpers ---
@@ -53,7 +55,7 @@ const Section: React.FC<{ title: string; className?: string; children?: React.Re
   </section>
 );
 
-const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColor = '#7c3aed' }) => {
+const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColor = '#7c3aed', onEdit }) => {
   if (!open || !data) return null;
 
   return (
@@ -77,6 +79,7 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
           <Section title="Basic Information">
             <Row label="Type" value={data.type} />
             <Row label="Capacity" value={data.capacity} />
+            <Row label="Weight" value={data.weight} />
             <Row label="Manufacturer" value={data.manufacturer} />
             <Row label="Model" value={data.model} />
             <Row label="Serial Number" value={data.serialNumber} />
@@ -130,8 +133,21 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 px-5 py-3 border-t">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+        <div className="flex justify-between gap-2 px-5 py-3 border-t">
+          {onEdit && (
+            <button
+              onClick={() => {
+                onEdit(data);
+                onClose();
+              }}
+              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <Pencil size={16} />
+              Edit After Service
+            </button>
+          )}
+          <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 ml-auto">
             Close
           </button>
         </div>

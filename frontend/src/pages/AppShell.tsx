@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import OverviewPage from './OverviewPage';
 import UsersPage from './UsersPage';
 import SettingsPage from './SettingsPage';
+import SitesPage from './SitesPage';
 import { Tenant } from '../types';
 
 const AppShell: React.FC = () => {
-  const [tab, setTab] = useState<'overview'|'users'|'settings'>('overview');
+  const [tab, setTab] = useState<'overview'|'sites'|'users'|'settings'>('overview');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -14,6 +15,7 @@ const AppShell: React.FC = () => {
           <div className="font-semibold">Fire Safety Management</div>
           <nav className="space-x-2">
             <button onClick={() => setTab('overview')} className="px-3 py-1 rounded hover:bg-white/10">Overview</button>
+            <button onClick={() => setTab('sites')} className="px-3 py-1 rounded hover:bg-white/10">Sites</button>
             <button onClick={() => setTab('users')} className="px-3 py-1 rounded hover:bg-white/10">Users</button>
             <button onClick={() => setTab('settings')} className="px-3 py-1 rounded hover:bg-white/10">Settings</button>
           </nav>
@@ -21,6 +23,7 @@ const AppShell: React.FC = () => {
       </header>
       <main className="max-w-6xl p-6 mx-auto">
         {tab === 'overview' && <OverviewPage />}
+        {tab === 'sites' && <SitesPage />}
         {tab === 'users' && <UsersPage />}
         {tab === 'settings' && <SettingsPage tenant={{
           id: '',

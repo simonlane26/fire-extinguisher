@@ -1,11 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTenant } from '../../../src/api/components/contexts/TenantContext';
 import { useExtinguishers } from '../../../src/api/components/hooks/useExtinguishers';
 import ExtinguisherTable from '../components/extinguishers/ExtinguisherTable';
 import AddExtinguisherModal from '../components/AddExtinguisherModal';
 import type { Extinguisher } from '../../../src/api/components/types';
-import { exportExtinguishersCsv, importExtinguishersCsv } from '../lib/api';
+import { exportExtinguishersCsv, importExtinguishersCsv, fetchSites } from '../lib/api';
 import { Download, Upload } from 'lucide-react';
+import type { Site } from '../types';
 
 const OverviewPage: React.FC = () => {
   const { tenant } = useTenant();
@@ -16,6 +17,27 @@ const OverviewPage: React.FC = () => {
   const [exporting, setExporting] = useState(false);
   const [importResult, setImportResult] = useState<{ imported: number; errors: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [selectedSiteId, setSelectedSiteId] = useState<string>('all');
+
+  // Load sites on mount
+  useEffect(() => {
+    loadSites();
+  }, []);
+
+  async function loadSites() {
+    try {
+      const data = await fetchSites();
+      setSites(data.filter(site => site.status === 'active'));
+    } catch (err) {
+      console.error('Failed to load sites:', err);
+    }
+  }
+
+  // Filter extinguishers by selected site
+  const filteredItems = selectedSiteId === 'all'
+    ? items
+    : items.filter(item => item.siteId === selectedSiteId);
 
   const handleExport = async () => {
     try {
@@ -62,7 +84,24 @@ const OverviewPage: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Extinguishers</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold">Extinguishers</h2>
+          {sites.length > 0 && (
+            <select
+              value={selectedSiteId}
+              onChange={(e) => setSelectedSiteId(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Sites</option>
+              <option value="">No Site Assigned</option>
+              {sites.map((site) => (
+                <option key={site.id} value={site.id}>
+                  {site.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
         <div className="flex gap-2">
           <button
             onClick={handleExport}
@@ -100,7 +139,7 @@ const OverviewPage: React.FC = () => {
           {importResult.errors > 0 && `, ${importResult.errors} errors occurred (check console)`}
         </div>
       )}
-      <ExtinguisherTable items={items} onView={setSelected} />
+      <ExtinguisherTable items={filteredItems} onView={setSelected} />
       <AddExtinguisherModal open={openAdd} onClose={() => setOpenAdd(false)} onCreate={add} />
       {/* You can add a DetailsModal and pass `selected` */}
     </div>
