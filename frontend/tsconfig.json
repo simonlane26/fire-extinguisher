@@ -10,6 +10,6 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "../backend", "../**/src"]   
+  "include": ["src"],
+  "exclude": ["node_modules"]   
 }

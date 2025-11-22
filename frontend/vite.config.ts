@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    host: '0.0.0.0', // Listen on all network interfaces
     proxy: {
       // if your backend runs on 3000:
       // '/api': 'http://localhost:3000'
