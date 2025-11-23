@@ -28,7 +28,7 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     features: ['Advanced analytics', 'Custom branding', 'Export to PDF/CSV', 'Priority email support'],
   },
   enterprise: {
-    maxExtinguishers: 1000,
+    maxExtinguishers: -1, // unlimited
     maxUsers: -1, // unlimited
     features: ['Multi-tenant management', 'API access', 'Custom domain', 'Priority support', 'SSO', 'Audit logs', 'SLA'],
   },
@@ -268,6 +268,12 @@ export class StripeService {
     });
 
     const limits = this.getPlanLimits(tenant.subscriptionPlan as SubscriptionPlan);
+
+    // Unlimited extinguishers
+    if (limits.maxExtinguishers === -1) {
+      return true;
+    }
+
     const currentCount = await this.prisma.extinguisher.count({
       where: { tenantId },
     });
