@@ -3,6 +3,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Shield, CheckCircle, AlertCircle, XCircle, Calendar, MapPin, Building2, Flame, Package } from 'lucide-react';
 
+// Get API base URL - same logic as api.ts
+const getApiBase = () => {
+  if ((import.meta as any).env?.VITE_API_URL) {
+    return (import.meta as any).env.VITE_API_URL;
+  }
+  return 'http://localhost:3000/api/v1';
+};
+
 interface VerificationData {
   id: string;
   location: string;
@@ -44,11 +52,8 @@ const PublicVerificationPage: React.FC = () => {
   useEffect(() => {
     const fetchVerification = async () => {
       try {
-        // Use the same host as the frontend, but port 3000 for backend
-        const backendUrl = window.location.hostname === 'localhost'
-          ? 'http://localhost:3000'
-          : `http://${window.location.hostname}:3000`;
-        const response = await fetch(`${backendUrl}/api/v1/public/extinguishers/${id}/verify`);
+        const apiBase = getApiBase();
+        const response = await fetch(`${apiBase}/public/extinguishers/${id}/verify`);
 
         if (!response.ok) {
           throw new Error('Extinguisher not found');
