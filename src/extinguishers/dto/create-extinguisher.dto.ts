@@ -6,8 +6,10 @@ export class CreateExtinguisherDto {
   @IsString() type: string;
 
   @IsOptional() @IsString() externalId?: string;
+  @IsOptional() @IsString() siteId?: string;
   @IsOptional() @IsString() floor?: string;
   @IsOptional() @IsString() capacity?: string;
+  @IsOptional() @IsString() weight?: string;
   @IsOptional() @IsString() manufacturer?: string;
   @IsOptional() @IsString() model?: string;
   @IsOptional() @IsString() serialNumber?: string;
