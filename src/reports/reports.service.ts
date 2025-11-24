@@ -1,11 +1,19 @@
 // src/reports/reports.service.ts
 import { Injectable } from '@nestjs/common';
 import puppeteer from 'puppeteer';
-import { S3Service } from '../storage/storage.service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ReportsService {
-  constructor(private s3: S3Service) {}
+  private readonly reportsDir = path.join(process.cwd(), 'uploads', 'reports');
+
+  constructor() {
+    // Ensure reports directory exists
+    if (!fs.existsSync(this.reportsDir)) {
+      fs.mkdirSync(this.reportsDir, { recursive: true });
+    }
+  }
 
   async buildReport(params: {
     tenant: { name: string, logoUrl?: string | null };
@@ -14,28 +22,65 @@ export class ReportsService {
     jobs: Array<{ id: string; structured: any }>;
     photos: Array<{ url: string; findings?: any }>;
   }) {
+    console.log('Building report with params:', {
+      tenant: params.tenant,
+      visitDate: params.visitDate,
+      technician: params.technician,
+      jobsCount: params.jobs.length,
+      jobs: params.jobs,
+      photosCount: params.photos.length,
+    });
+
     const html = this.template(params);
+    console.log('Generated HTML length:', html.length);
+
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
     await browser.close();
 
-    const key = `reports/${Date.now()}-report.pdf`;
-    const pdfUrl = await this.s3.uploadBuffer(key, Buffer.from(pdfBuffer), 'application/pdf');
-    return pdfUrl;
+    // Save locally instead of S3
+    const filename = `${Date.now()}-report.pdf`;
+    const filepath = path.join(this.reportsDir, filename);
+    fs.writeFileSync(filepath, pdfBuffer);
+
+    // Return a local URL path that can be served
+    return `/uploads/reports/${filename}`;
   }
 
   private template({ tenant, visitDate, technician, jobs, photos }: any) {
     // keep it simple; style with inline CSS or Tailwind via CDN if you prefer
-    const jobRows = jobs.map(j => `
+    const jobRows = jobs.map((j, index) => {
+      console.log(`Job ${index}:`, JSON.stringify(j, null, 2));
+      const structured = j.structured || {};
+      const defects = Array.isArray(structured.defects) ? structured.defects : [];
+      const actions = Array.isArray(structured.actions) ? structured.actions : [];
+
+      // Handle date formatting
+      const formatDate = (date: any) => {
+        if (!date) return 'N/A';
+        if (date instanceof Date) return date.toISOString().split('T')[0];
+        if (typeof date === 'string') return date.split('T')[0];
+        return 'N/A';
+      };
+
+      const location = j.location || 'Unknown';
+      const building = j.building || '';
+      const serviceType = j.type || structured.type || j.serviceType || 'Inspection';
+      const findings = defects.join(', ') || structured.findings || j.notes || 'Good condition';
+      const recommendations = actions.join(', ') || structured.recommendations || 'N/A';
+      const nextService = formatDate(structured.nextDue || j.scheduledDate);
+
+      return `
       <tr>
-        <td>${j.id}</td>
-        <td>${j.structured?.type ?? ''}</td>
-        <td>${(j.structured?.defects ?? []).join(', ')}</td>
-        <td>${(j.structured?.actions ?? []).join(', ')}</td>
-        <td>${j.structured?.nextDue ?? ''}</td>
-      </tr>`).join('');
+        <td>${location} ${building ? '(' + building + ')' : ''}</td>
+        <td>${serviceType}</td>
+        <td>${findings}</td>
+        <td>${recommendations}</td>
+        <td>${nextService}</td>
+      </tr>`;
+    }).join('');
 
     const photoCards = photos.map(p => `
       <div style="margin:8px; display:inline-block">
@@ -47,15 +92,18 @@ export class ReportsService {
     return `
       <html>
       <body style="font-family: Arial, sans-serif; padding:24px">
-        <div style="display:flex; align-items:center; justify-content:space-between">
-          <h1>${tenant.name} – Service Report</h1>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
+          <div>
+            <h1 style="margin:0">${tenant.name} – Service Report</h1>
+            <p style="margin:4px 0 0 0; font-size:12px; color:#7c3aed">Powered by Fireexcheck.com</p>
+          </div>
           ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height:48px"/>` : ''}
         </div>
         <p><strong>Date:</strong> ${visitDate} &nbsp; <strong>Technician:</strong> ${technician ?? ''}</p>
 
         <h2>Summary</h2>
         <table border="1" cellspacing="0" cellpadding="6" width="100%" style="border-collapse:collapse">
-          <thead><tr><th>Job</th><th>Type</th><th>Non-conformities</th><th>Actions</th><th>Next Due</th></tr></thead>
+          <thead><tr><th>Location</th><th>Service Type</th><th>Findings</th><th>Actions/Recommendations</th><th>Next Service</th></tr></thead>
           <tbody>${jobRows}</tbody>
         </table>
 

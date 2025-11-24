@@ -36,4 +36,46 @@ export class AuthController {
       },
     };
   }
+
+  // ==================== PUBLIC SIGNUP ====================
+
+  @Public()
+  @Post('signup')
+  async signup(@Body() body: {
+    companyName: string;
+    email: string;
+    password: string;
+    name: string;
+    subdomain?: string;
+  }) {
+    return this.authService.signup(body);
+  }
+
+  // ==================== EMAIL VERIFICATION ====================
+
+  @Public()
+  @Post('verify-email')
+  async verifyEmail(@Body('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Public()
+  @Post('resend-verification')
+  async resendVerification(@Body('email') email: string) {
+    return this.authService.resendVerificationEmail(email);
+  }
+
+  // ==================== PASSWORD RESET ====================
+
+  @Public()
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return this.authService.requestPasswordReset(email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token: string; newPassword: string }) {
+    return this.authService.resetPassword(body.token, body.newPassword);
+  }
 }

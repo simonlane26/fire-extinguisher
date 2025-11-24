@@ -121,58 +121,11 @@ export class QrCodesService {
 
   /**
    * Build QR data for an extinguisher
+   * Returns a URL to the public verification page
    */
   private buildExtinguisherQrData(ext: any): string {
-    const formatDate = (d?: string | Date) => {
-      if (!d) return '—';
-      const dateStr = d instanceof Date ? d.toISOString() : d;
-      if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return dateStr.slice(0, 10);
-      return '—';
-    };
-
-    const safe = (v?: string | null) => (v === undefined || v === null || v === '' ? '—' : v);
-
-    return `🔥 FIRE EXTINGUISHER
-
-━━━━━━━━━━━━━━━━━━━━
-📋 BASIC INFORMATION
-━━━━━━━━━━━━━━━━━━━━
-ID: ${safe(ext.id)}
-Type: ${safe(ext.type)}
-Capacity: ${safe(ext.capacity)}
-Manufacturer: ${safe(ext.manufacturer)}
-Model: ${safe(ext.model)}
-Serial Number: ${safe(ext.serialNumber)}
-
-━━━━━━━━━━━━━━━━━━━━
-📍 LOCATION
-━━━━━━━━━━━━━━━━━━━━
-Location: ${safe(ext.location)}
-Building: ${safe(ext.building)}
-Floor: ${safe(ext.floor)}
-
-━━━━━━━━━━━━━━━━━━━━
-🔧 SERVICE & INSPECTION
-━━━━━━━━━━━━━━━━━━━━
-Last Service: ${formatDate(ext.lastMaintenance)}
-Next Service: ${formatDate(ext.nextMaintenance)}
-Last Inspection: ${formatDate(ext.lastInspection)}
-Next Inspection: ${formatDate(ext.nextInspection)}
-Commission Date: ${formatDate(ext.installDate)}
-Expiry Date: ${formatDate(ext.expiryDate)}
-Service Type: ${safe(ext.serviceType)}
-
-━━━━━━━━━━━━━━━━━━━━
-✓ STATUS & CONDITION
-━━━━━━━━━━━━━━━━━━━━
-Status: ${safe(ext.status)}
-Condition: ${safe(ext.condition)}
-Inspector: ${safe(ext.inspector)}
-
-━━━━━━━━━━━━━━━━━━━━
-📝 NOTES
-━━━━━━━━━━━━━━━━━━━━
-${safe(ext.notes)}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    return `${frontendUrl}/verify/${ext.id}`;
   }
 
   /**

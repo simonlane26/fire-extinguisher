@@ -23,9 +23,48 @@ export class ReportsController {
       where: { id: tenantId },
     });
 
-    const jobs = await this.prisma.serviceJob.findMany({
-      where: { tenantId, id: { in: body.jobIds } },
-    });
+    // If no jobIds provided, fetch all jobs for the tenant (for quick testing)
+    // In production, you'd want to add date filters or a limit
+    console.log('Fetching jobs for tenantId:', tenantId, 'jobIds:', body.jobIds);
+    let jobs = body.jobIds && body.jobIds.length > 0
+      ? await this.prisma.serviceJob.findMany({
+          where: { tenantId, id: { in: body.jobIds } },
+        })
+      : await this.prisma.serviceJob.findMany({
+          where: { tenantId },
+          orderBy: { createdAt: 'desc' },
+          take: 50, // Limit to most recent 50 jobs
+        });
+
+    console.log('Found jobs:', jobs.length);
+
+    // If no service jobs, try to use extinguisher data as a fallback
+    if (jobs.length === 0) {
+      console.log('No service jobs found, fetching extinguishers instead...');
+      const extinguishers = await this.prisma.extinguisher.findMany({
+        where: { tenantId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      });
+      console.log('Found extinguishers:', extinguishers.length);
+
+      // Transform extinguishers to match the job structure for the report
+      jobs = extinguishers.map(ext => ({
+        id: ext.id,
+        location: ext.location,
+        building: ext.building,
+        type: ext.type,
+        serviceType: ext.serviceType || 'Inspection',
+        notes: ext.notes,
+        scheduledDate: ext.nextInspection || ext.nextMaintenance,
+        structured: {
+          type: ext.type,
+          findings: ext.condition,
+          recommendations: ext.status === 'Active' ? 'Continue regular maintenance' : 'Requires attention',
+          nextDue: ext.nextInspection || ext.nextMaintenance,
+        }
+      } as any));
+    }
 
     const photos = body.photoIds?.length
       ? await this.prisma.inspectionPhoto.findMany({
@@ -51,7 +90,7 @@ export class ReportsController {
       },
     });
 
-    return { report };
+    return { report, pdfUrl };
   }
 }
 

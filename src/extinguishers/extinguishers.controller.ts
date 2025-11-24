@@ -58,7 +58,32 @@ export class ExtinguishersController {
   }
 
   @Post('import/csv')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB max for CSV files
+    },
+    fileFilter: (req, file, callback) => {
+      // Validate MIME type for CSV
+      const allowedMimeTypes = ['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel'];
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        return callback(
+          new BadRequestException('Invalid file type. Only CSV files are allowed.'),
+          false
+        );
+      }
+
+      // Validate file extension
+      const ext = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+      if (ext !== '.csv') {
+        return callback(
+          new BadRequestException('Invalid file extension. Only .csv files are allowed.'),
+          false
+        );
+      }
+
+      callback(null, true);
+    },
+  }))
   async importCsv(
     @CurrentUser() user: CurrentUserData,
     @UploadedFile() file: Express.Multer.File,

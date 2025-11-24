@@ -16,6 +16,9 @@ import { QrCodesModule } from './qr-codes/qr-codes.module';
 import { StripeModule } from './stripe/stripe.module';
 import { EmailModule } from './email/email.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
+import { SitesModule } from './sites/sites.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -38,6 +41,9 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     StripeModule,
     EmailModule,
     SchedulerModule,
+    SitesModule,
+    InventoryModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

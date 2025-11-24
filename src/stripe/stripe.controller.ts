@@ -1,7 +1,8 @@
 // src/stripe/stripe.controller.ts
-import { Body, Controller, Post, Headers, RawBodyRequest, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Headers, Req, UseGuards } from '@nestjs/common';
 import { StripeService, STRIPE_PRICE_IDS } from './stripe.service';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { TenantGuard } from '../auth/tenant.guard';
 import { Request } from 'express';
 import Stripe from 'stripe';
@@ -48,9 +49,10 @@ export class StripeController {
     return { url: session.url };
   }
 
+  @Public()
   @Post('webhook')
   async handleWebhook(
-    @Req() req: RawBodyRequest<Request>,
+    @Req() req: Request,
     @Headers('stripe-signature') signature: string
   ) {
     if (!this.stripeService.isConfigured()) {
@@ -69,13 +71,21 @@ export class StripeController {
         apiVersion: '2025-10-29.clover',
       });
 
+      // The raw body parser middleware in main.ts provides req.body as a Buffer
+      if (!Buffer.isBuffer(req.body)) {
+        console.error('❌ Body is not a Buffer:', typeof req.body);
+        throw new Error('Webhook body must be raw Buffer for signature verification');
+      }
+
       event = stripe.webhooks.constructEvent(
-        req.rawBody!,
+        req.body,
         signature,
         webhookSecret
       );
+
+      console.log('✅ Webhook signature verified:', event.type);
     } catch (err) {
-      console.error('Webhook signature verification failed:', err);
+      console.error('❌ Webhook signature verification failed:', err);
       throw new Error('Invalid signature');
     }
 
@@ -93,6 +103,10 @@ export class StripeController {
           name: 'Starter',
           monthlyPrice: '£19/mo',
           annualPrice: '£190/yr',
+          priceIds: {
+            monthly: STRIPE_PRICE_IDS.starter_monthly,
+            annual: STRIPE_PRICE_IDS.starter_annual,
+          },
           limits: {
             extinguishers: 50,
             users: 3,
@@ -110,6 +124,10 @@ export class StripeController {
           name: 'Professional',
           monthlyPrice: '£49/mo',
           annualPrice: '£490/yr',
+          priceIds: {
+            monthly: STRIPE_PRICE_IDS.professional_monthly,
+            annual: STRIPE_PRICE_IDS.professional_annual,
+          },
           limits: {
             extinguishers: 250,
             users: 10,
@@ -127,6 +145,10 @@ export class StripeController {
           name: 'Business',
           monthlyPrice: '£99/mo',
           annualPrice: '£990/yr',
+          priceIds: {
+            monthly: STRIPE_PRICE_IDS.enterprise_monthly,
+            annual: STRIPE_PRICE_IDS.enterprise_annual,
+          },
           limits: {
             extinguishers: 1000,
             users: 'Unlimited',
