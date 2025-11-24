@@ -16,6 +16,7 @@ async function bootstrap() {
   console.log('NODE_ENV:', process.env.NODE_ENV);
   console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
   console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
+  console.log('ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS || 'NOT SET');
   console.log('SMTP_HOST:', process.env.SMTP_HOST ? `${process.env.SMTP_HOST.substring(0, 10)}...` : 'NOT SET');
   console.log('SMTP_PORT:', process.env.SMTP_PORT || 'NOT SET');
   console.log('S3_REGION:', process.env.S3_REGION || 'NOT SET');
