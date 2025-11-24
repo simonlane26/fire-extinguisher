@@ -1,8 +1,8 @@
--- AlterTable User - Add email verification fields
-ALTER TABLE "public"."User" ADD COLUMN IF NOT EXISTS "emailVerified" BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE "public"."User" ADD COLUMN IF NOT EXISTS "emailVerifiedAt" TIMESTAMP(3);
-
 -- AlterTable Tenant - Add contact and Stripe fields
 ALTER TABLE "public"."Tenant" ADD COLUMN IF NOT EXISTS "contactEmail" TEXT;
 ALTER TABLE "public"."Tenant" ADD COLUMN IF NOT EXISTS "stripeCustomerId" TEXT;
 ALTER TABLE "public"."Tenant" ADD COLUMN IF NOT EXISTS "stripeSubscriptionId" TEXT;
+
+-- Create unique indexes for Stripe fields
+CREATE UNIQUE INDEX IF NOT EXISTS "Tenant_stripeCustomerId_key" ON "public"."Tenant"("stripeCustomerId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Tenant_stripeSubscriptionId_key" ON "public"."Tenant"("stripeSubscriptionId");
