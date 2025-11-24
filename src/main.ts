@@ -47,6 +47,8 @@ async function bootstrap() {
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
     'http://localhost:5173',  // Vite dev server
     'http://localhost:3000',
+    'https://www.firexcheck.com',  // Production frontend
+    'https://fire-extinguisher-production.up.railway.app', // Railway backend URL (for testing)
   ];
 
   app.enableCors({
