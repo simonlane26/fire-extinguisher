@@ -2,6 +2,7 @@ import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/c
 import { NotificationsService } from './notifications.service';
 import { TenantGuard } from '../auth/tenant.guard';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('notifications')
 @UseGuards(TenantGuard)
@@ -9,6 +10,7 @@ export class NotificationsController {
   constructor(private notificationsService: NotificationsService) {}
 
   // Get VAPID public key for frontend
+  @Public()
   @Get('public-key')
   getPublicKey() {
     return {
