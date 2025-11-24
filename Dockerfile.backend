@@ -31,4 +31,5 @@ RUN ls -la dist/src/ && echo "Build successful - dist/src/main.js exists"
 EXPOSE 3000
 
 # Start command - NestJS builds to dist/src/main.js
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]
+# Resolve any failed migrations before deploying new ones
+CMD ["sh", "-c", "npx prisma migrate resolve --applied 20251124202400_add_extinguisher_fields || true && npx prisma migrate deploy && node dist/src/main"]
