@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LogIn, UserPlus, Flame } from 'lucide-react';
+import { LogIn, UserPlus, Flame, AlertCircle, X } from 'lucide-react';
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -115,8 +115,20 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
+            <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 flex items-start gap-3 shadow-sm animate-shake">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800">Authentication Failed</p>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setError('')}
+                className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                aria-label="Dismiss error"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 
