@@ -102,8 +102,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-# Expose port
-EXPOSE 3000
+# Expose port (Railway will override with PORT env var, but we expose a default)
+EXPOSE 8080
 
 # Start command with Chrome verification
 CMD ["sh", "-c", "echo 'Chrome version:' && google-chrome-stable --version && echo 'PUPPETEER_EXECUTABLE_PATH='$PUPPETEER_EXECUTABLE_PATH && npx prisma migrate resolve --applied 20251124202400_add_extinguisher_fields || true && npx prisma migrate deploy && node dist/src/main"]
