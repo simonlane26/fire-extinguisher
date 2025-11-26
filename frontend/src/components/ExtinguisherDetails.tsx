@@ -58,6 +58,18 @@ const Section: React.FC<{ title: string; className?: string; children?: React.Re
 const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColor = '#7c3aed', onEdit }) => {
   if (!open || !data) return null;
 
+  // Determine if primary color is effectively white
+  const isWhitePrimary =
+    !primaryColor ||
+    primaryColor === '#ffffff' ||
+    primaryColor === '#fff' ||
+    primaryColor === 'white' ||
+    primaryColor === '#FFFFFF' ||
+    primaryColor === '#FFF' ||
+    primaryColor.match(/^rgba?\(255,\s*255,\s*255/);
+
+  const effectiveColor = isWhitePrimary ? '#7c3aed' : primaryColor;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="w-full max-w-3xl overflow-hidden bg-white shadow-xl rounded-xl">
@@ -111,7 +123,7 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
               value={
                 <span
                   className="px-2 py-1 text-xs text-white rounded-full"
-                  style={{ backgroundColor: primaryColor }}
+                  style={{ backgroundColor: effectiveColor }}
                 >
                   {safe(data.status)}
                 </span>
@@ -141,7 +153,7 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
                 onClose();
               }}
               className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
-              style={{ backgroundColor: primaryColor }}
+              style={{ backgroundColor: effectiveColor }}
             >
               <Pencil size={16} />
               Edit After Service

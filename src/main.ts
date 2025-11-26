@@ -40,22 +40,6 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  // Serve frontend static files in production
-  if (process.env.NODE_ENV === 'production') {
-    const frontendPath = join(process.cwd(), 'frontend', 'dist');
-    app.useStaticAssets(frontendPath);
-    app.setBaseViewsDir(frontendPath);
-
-    // Serve index.html for all non-API routes (SPA routing)
-    app.use((req, res, next) => {
-      if (!req.url.startsWith('/api/') && !req.url.startsWith('/uploads/')) {
-        res.sendFile(join(frontendPath, 'index.html'));
-      } else {
-        next();
-      }
-    });
-  }
-
   // API Versioning - all routes prefixed with /api/v1
   app.setGlobalPrefix('api/v1');
 
@@ -102,6 +86,23 @@ async function bootstrap() {
   // Global JWT Authentication (routes must use @Public() to opt-out)
   const reflector = app.get(Reflector);
   app.useGlobalGuards(new JwtAuthGuard(reflector));
+
+  // Serve frontend static files in production (after all middleware/guards)
+  if (process.env.NODE_ENV === 'production') {
+    const frontendPath = join(process.cwd(), 'frontend', 'dist');
+    logger.log(`📦 Serving frontend from: ${frontendPath}`);
+
+    app.useStaticAssets(frontendPath);
+
+    // SPA fallback: serve index.html for all non-API, non-upload routes
+    app.use((req: any, res: any, next: any) => {
+      if (!req.url.startsWith('/api/') && !req.url.startsWith('/uploads/')) {
+        res.sendFile(join(frontendPath, 'index.html'));
+      } else {
+        next();
+      }
+    });
+  }
 
   const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
   const HOST = process.env.HOST || '0.0.0.0';
