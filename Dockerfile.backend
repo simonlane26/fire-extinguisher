@@ -1,18 +1,69 @@
-FROM node:20-alpine
+# Use Node.js 20 base image (NOT alpine, we need full apt-get support for Chrome)
+FROM node:20-slim
+
+# Install Chrome and dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    ca-certificates \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libc6 \
+    libcairo2 \
+    libcups2 \
+    libdbus-1-3 \
+    libexpat1 \
+    libfontconfig1 \
+    libgbm1 \
+    libgcc1 \
+    libglib2.0-0 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libstdc++6 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
+    libxrandr2 \
+    libxrender1 \
+    libxss1 \
+    libxtst6 \
+    lsb-release \
+    xdg-utils \
+    --no-install-recommends \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verify Chrome installation
+RUN google-chrome-stable --version
 
 WORKDIR /app
 
-# Copy package files (build v3 - force clean deployment)
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (skip Puppeteer's Chromium download since we have Chrome)
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 RUN npm install
 
 # Copy prisma schema
 COPY prisma ./prisma/
 
 # Generate Prisma Client with dummy DATABASE_URL (only for this build step)
-# Real DATABASE_URL from Railway will be used at runtime
 RUN DATABASE_URL="postgresql://user:pass@host:5432/db" npx prisma generate
 
 # Copy source code
@@ -27,9 +78,12 @@ RUN npm run build:backend
 # Verify build output
 RUN ls -la dist/src/ && echo "Build successful - dist/src/main.js exists"
 
+# Set environment variables
+ENV NODE_ENV=production
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+
 # Expose port
 EXPOSE 3000
 
-# Start command - NestJS builds to dist/src/main.js
-# Resolve any failed migrations before deploying new ones
-CMD ["sh", "-c", "npx prisma migrate resolve --applied 20251124202400_add_extinguisher_fields || true && npx prisma migrate deploy && node dist/src/main"]
+# Start command with Chrome verification
+CMD ["sh", "-c", "echo 'Chrome version:' && google-chrome-stable --version && echo 'PUPPETEER_EXECUTABLE_PATH='$PUPPETEER_EXECUTABLE_PATH && npx prisma migrate resolve --applied 20251124202400_add_extinguisher_fields || true && npx prisma migrate deploy && node dist/src/main"]
