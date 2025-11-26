@@ -36,9 +36,15 @@ export class ReportsService {
 
     let browser: Browser | undefined;
     try {
+      // Determine which Chrome executable to use
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
+      console.log('Attempting to launch browser with executable:', executablePath);
+      console.log('PUPPETEER_EXECUTABLE_PATH env var:', process.env.PUPPETEER_EXECUTABLE_PATH);
+
       // Production-ready Puppeteer configuration
       browser = await puppeteer.launch({
         headless: true,
+        executablePath: executablePath,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -48,8 +54,6 @@ export class ReportsService {
           '--no-zygote',
           '--disable-gpu',
         ],
-        // Use bundled Chromium in production
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       });
 
       const page = await browser.newPage();

@@ -26,4 +26,4 @@ PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
 PUPPETEER_EXECUTABLE_PATH = "/usr/bin/google-chrome-stable"
 
 [start]
-cmd = "rm -f .env && npx prisma migrate deploy && node dist/main"
+cmd = "rm -f .env && export PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable && npx prisma migrate deploy && node dist/main"
