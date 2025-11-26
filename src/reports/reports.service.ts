@@ -1,6 +1,6 @@
 // src/reports/reports.service.ts
 import { Injectable } from '@nestjs/common';
-import puppeteer from 'puppeteer';
+import puppeteer, { Browser } from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -34,19 +34,43 @@ export class ReportsService {
     const html = this.template(params);
     console.log('Generated HTML length:', html.length);
 
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-    await browser.close();
+    let browser: Browser | undefined;
+    try {
+      // Production-ready Puppeteer configuration
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+        ],
+        // Use bundled Chromium in production
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      });
 
-    // Save locally instead of S3
-    const filename = `${Date.now()}-report.pdf`;
-    const filepath = path.join(this.reportsDir, filename);
-    fs.writeFileSync(filepath, pdfBuffer);
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
 
-    // Return a local URL path that can be served
-    return `/uploads/reports/${filename}`;
+      // Save locally instead of S3
+      const filename = `${Date.now()}-report.pdf`;
+      const filepath = path.join(this.reportsDir, filename);
+      fs.writeFileSync(filepath, pdfBuffer);
+
+      // Return a local URL path that can be served
+      return `/uploads/reports/${filename}`;
+    } catch (error) {
+      console.error('Error generating PDF report:', error);
+      throw new Error(`Failed to generate PDF report: ${error.message}`);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
   }
 
   private template({ tenant, visitDate, technician, jobs, photos }: any) {
