@@ -8,11 +8,18 @@ const getApiBase = () => {
     return (import.meta as any).env.VITE_API_URL;
   }
 
-  // In development, use current hostname with port 3000
-  // This allows the app to work on localhost, IP address, or any other hostname
+  // Check if we're on localhost (development)
   const hostname = window.location.hostname;
-  const protocol = window.location.protocol; // http: or https:
-  return `${protocol}//${hostname}:3000/api/v1`;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+  if (isLocalhost) {
+    // In development, use current hostname with port 3000
+    const protocol = window.location.protocol; // http: or https:
+    return `${protocol}//${hostname}:3000/api/v1`;
+  } else {
+    // In production (Railway), use relative path (same domain, different path)
+    return '/api/v1';
+  }
 };
 
 const API_BASE = getApiBase();
