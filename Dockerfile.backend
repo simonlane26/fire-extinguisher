@@ -80,6 +80,15 @@ RUN ls -la dist/src/ && echo "Build successful - dist/src/main.js exists"
 
 # Build frontend
 WORKDIR /app/frontend
+
+# Verify source files exist before building
+RUN echo "=== Checking frontend source files ===" && \
+    ls -la src/pages/ && \
+    echo "=== OverviewPage.tsx first 30 lines ===" && \
+    head -30 src/pages/OverviewPage.tsx && \
+    echo "=== UsersPage.tsx lines 92-112 ===" && \
+    sed -n '92,112p' src/pages/UsersPage.tsx
+
 RUN npm install && npm run build
 
 # Verify frontend build output
