@@ -91,10 +91,19 @@ export default function UsersPage({
 
           {canAdd ? (
             <button
+              type="button"
               onClick={() => setOpenAdd(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
+              className="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90 shadow-sm transition-all hover:shadow-md"
               style={{
-                backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#7c3aed',
+                backgroundColor: primaryColor &&
+                  primaryColor !== '#ffffff' &&
+                  primaryColor !== '#fff' &&
+                  primaryColor !== 'white' &&
+                  primaryColor !== '#FFFFFF' &&
+                  primaryColor !== '#FFF' &&
+                  !primaryColor.match(/^rgba?\(255,\s*255,\s*255/)
+                    ? primaryColor
+                    : '#7c3aed',
                 color: '#ffffff'
               }}
             >
@@ -103,6 +112,7 @@ export default function UsersPage({
             </button>
           ) : (
             <button
+              type="button"
               className="px-4 py-2 text-gray-500 bg-gray-200 rounded-lg cursor-not-allowed"
               title="You don't have permission to add users"
               disabled
@@ -137,6 +147,7 @@ export default function UsersPage({
                 <td className="px-6 py-4">{u.lastLogin || '—'}</td>
                 <td className="px-6 py-4">
                   <button
+                    type="button"
                     onClick={() => setSelectedId(u.id)}
                     className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
                     title="View details"
