@@ -40,6 +40,22 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  // Serve frontend static files in production
+  if (process.env.NODE_ENV === 'production') {
+    const frontendPath = join(process.cwd(), 'frontend', 'dist');
+    app.useStaticAssets(frontendPath);
+    app.setBaseViewsDir(frontendPath);
+
+    // Serve index.html for all non-API routes (SPA routing)
+    app.use((req, res, next) => {
+      if (!req.url.startsWith('/api/') && !req.url.startsWith('/uploads/')) {
+        res.sendFile(join(frontendPath, 'index.html'));
+      } else {
+        next();
+      }
+    });
+  }
+
   // API Versioning - all routes prefixed with /api/v1
   app.setGlobalPrefix('api/v1');
 

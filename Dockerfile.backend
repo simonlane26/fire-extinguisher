@@ -78,6 +78,13 @@ RUN npm run build:backend
 # Verify build output
 RUN ls -la dist/src/ && echo "Build successful - dist/src/main.js exists"
 
+# Build frontend
+WORKDIR /app/frontend
+RUN npm install && npm run build
+
+# Return to app root
+WORKDIR /app
+
 # Set environment variables
 ENV NODE_ENV=production
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
