@@ -9,6 +9,25 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   canActivate(context: ExecutionContext) {
+    const request = context.switchToHttp().getRequest();
+    const path = request.url;
+
+    // Allow static files and assets (frontend)
+    if (
+      path.startsWith('/assets/') ||
+      path.endsWith('.js') ||
+      path.endsWith('.css') ||
+      path.endsWith('.html') ||
+      path.endsWith('.ico') ||
+      path.endsWith('.png') ||
+      path.endsWith('.jpg') ||
+      path.endsWith('.svg') ||
+      path === '/' ||
+      (!path.startsWith('/api/') && !path.startsWith('/uploads/'))
+    ) {
+      return true;
+    }
+
     // Check if route is marked as public
     const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
       context.getHandler(),
