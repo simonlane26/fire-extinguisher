@@ -83,5 +83,9 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 # Expose port
 EXPOSE 3000
 
+# Copy and make start script executable
+COPY start.sh .
+RUN chmod +x start.sh
+
 # Start command: run migrations then start the app
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["./start.sh"]
