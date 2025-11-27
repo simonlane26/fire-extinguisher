@@ -3,7 +3,7 @@
 FROM node:20-slim
 
 # Cache-busting argument to force rebuild of frontend layers
-ARG CACHEBUST=1
+ARG CACHEBUST=2
 
 # Install Chrome and dependencies
 RUN apt-get update && apt-get install -y \
@@ -69,6 +69,9 @@ COPY prisma ./prisma/
 
 # Generate Prisma Client with dummy DATABASE_URL (only for this build step)
 RUN DATABASE_URL="postgresql://user:pass@host:5432/db" npx prisma generate
+
+# Cache bust to force fresh copy of source code
+RUN echo "Forcing fresh copy: $CACHEBUST"
 
 # Copy source code
 COPY . .
