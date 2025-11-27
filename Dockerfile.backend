@@ -83,8 +83,8 @@ RUN ls -la dist/src/ && echo "Build successful - dist/src/main.js exists"
 WORKDIR /app/frontend
 
 # Force cache invalidation - rebuild frontend with filtering feature
-# Updated: 2025-11-26 22:30 - Include filtering and Add User button fixes
-RUN echo "Building frontend with latest code..."
+# Updated: 2025-11-27 21:05 - Rebuild with filtering, Add User fixes, and database connected
+RUN echo "Building frontend with latest code - build timestamp 2025-11-27-21:05..."
 
 # Verify source files exist before building
 RUN echo "=== Checking frontend source files ===" && \
