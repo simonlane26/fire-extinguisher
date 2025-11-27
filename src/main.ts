@@ -97,6 +97,10 @@ async function bootstrap() {
     // SPA fallback: serve index.html for all non-API, non-upload routes
     app.use((req: any, res: any, next: any) => {
       if (!req.url.startsWith('/api/') && !req.url.startsWith('/uploads/')) {
+        // Prevent caching of index.html to ensure users always get the latest version
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         res.sendFile(join(frontendPath, 'index.html'));
       } else {
         next();
