@@ -103,7 +103,18 @@ export default function AddUserModal({
             onClick={handleSave}
             disabled={saving}
             className="px-4 py-2 text-white rounded-lg hover:opacity-90"
-            style={{ backgroundColor: primaryColor }}
+            style={{
+              backgroundColor: primaryColor &&
+                primaryColor !== '#ffffff' &&
+                primaryColor !== '#fff' &&
+                primaryColor !== 'white' &&
+                primaryColor !== '#FFFFFF' &&
+                primaryColor !== '#FFF' &&
+                !primaryColor.match(/^rgba?\(255,\s*255,\s*255/)
+                  ? primaryColor
+                  : '#7c3aed',
+              color: '#ffffff'
+            }}
           >
             {saving ? 'Saving…' : 'Add User'}
           </button>
