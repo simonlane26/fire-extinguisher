@@ -16,6 +16,9 @@ import {
   Upload,
   Package,
   HelpCircle,
+  Search,
+  Filter,
+  X,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
@@ -346,6 +349,14 @@ const FireExtinguisherApp: React.FC = () => {
     setShowRoleSwitcher(false);
   };
 
+  // Filtering states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [buildingFilter, setBuildingFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [conditionFilter, setConditionFilter] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
+
   // CSV Export handler
   const handleExport = async () => {
     try {
@@ -391,6 +402,49 @@ const FireExtinguisherApp: React.FC = () => {
       }
     }
   };
+
+  // Get unique values for filters
+  const buildings = Array.from(new Set(extinguishers.map(e => e.building).filter(Boolean)));
+  const types = Array.from(new Set(extinguishers.map(e => e.type).filter(Boolean)));
+  const statuses = Array.from(new Set(extinguishers.map(e => e.status).filter(Boolean)));
+  const conditions = Array.from(new Set(extinguishers.map(e => e.condition).filter(Boolean)));
+
+  // Filter extinguishers
+  const filteredExtinguishers = extinguishers.filter(item => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch =
+        item.location?.toLowerCase().includes(query) ||
+        item.building?.toLowerCase().includes(query) ||
+        item.type?.toLowerCase().includes(query) ||
+        item.serialNumber?.toLowerCase().includes(query) ||
+        item.manufacturer?.toLowerCase().includes(query);
+      if (!matchesSearch) return false;
+    }
+
+    // Building filter
+    if (buildingFilter !== 'all' && item.building !== buildingFilter) return false;
+
+    // Type filter
+    if (typeFilter !== 'all' && item.type !== typeFilter) return false;
+
+    // Status filter
+    if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+
+    // Condition filter
+    if (conditionFilter !== 'all' && item.condition !== conditionFilter) return false;
+
+    return true;
+  });
+
+  // Count active filters
+  const activeFilterCount = [
+    buildingFilter !== 'all',
+    typeFilter !== 'all',
+    statusFilter !== 'all',
+    conditionFilter !== 'all',
+  ].filter(Boolean).length;
 
   const { total, active, needs, planLimit } = computeKpis(extinguishers);
 
@@ -681,6 +735,111 @@ const FireExtinguisherApp: React.FC = () => {
         {/* Overview tab: actions + table */}
         {activeTab === 'overview' && (
           <>
+            {/* Search and Filter Bar */}
+            <div className="flex flex-col gap-4 p-4 bg-white rounded-lg shadow">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search Input */}
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search by location, building, type, serial number..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Filter Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                    showFilters
+                      ? 'bg-blue-50 border-blue-500 text-blue-700'
+                      : 'bg-white border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <Filter size={16} />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <span className="ml-1 px-2 py-0.5 text-xs font-semibold bg-blue-600 text-white rounded-full">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Filter Dropdowns */}
+              {showFilters && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-3 border-t">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Building</label>
+                    <select
+                      value={buildingFilter}
+                      onChange={(e) => setBuildingFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Buildings</option>
+                      {buildings.map(b => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <select
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Types</option>
+                      {types.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Statuses</option>
+                      {statuses.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                    <select
+                      value={conditionFilter}
+                      onChange={(e) => setConditionFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Conditions</option>
+                      {conditions.map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => setShowQrScanner(true)}
@@ -771,7 +930,7 @@ const FireExtinguisherApp: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {extinguishers.map((ext) => (
+                  {filteredExtinguishers.map((ext) => (
                     <tr key={ext.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">{ext.id}</td>
                       <td className="px-6 py-4">
@@ -799,7 +958,7 @@ const FireExtinguisherApp: React.FC = () => {
                       </td>
                     </tr>
                   ))}
-                  {extinguishers.length === 0 && (
+                  {filteredExtinguishers.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
                         No extinguishers yet. Click{' '}
