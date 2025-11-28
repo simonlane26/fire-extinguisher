@@ -36,7 +36,7 @@ import RoleSwitcherModal from './components/RoleSwitcher';
 import GenerateReportButton from './components/GenerateReportButton';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
-import { addExtinguisher, updateExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv } from './lib/api';
+import { addExtinguisher, updateExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings } from './lib/api';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
   Extinguisher,
@@ -157,8 +157,25 @@ const TenantProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     console.log('Switch tenant not implemented:', sub);
   };
 
-  const updateTenant = (u: Partial<Tenant>) =>
-    setTenant((prev) => ({ ...prev, ...u }));
+  const updateTenant = async (u: Partial<Tenant>) => {
+    try {
+      // Update tenant in database
+      const response = await updateTenantSettings(u);
+
+      // Update local state with response from server
+      setTenant(response.tenant);
+
+      // Also update the current user's tenant reference
+      actx.setCurrentUser({
+        ...actx.currentUser,
+        tenant: response.tenant,
+      });
+    } catch (error) {
+      console.error('Failed to update tenant:', error);
+      alert('Failed to save settings. Please try again.');
+      throw error; // Re-throw so SettingsPage can handle it
+    }
+  };
 
   return (
     <TenantContext.Provider
@@ -340,13 +357,21 @@ const FireExtinguisherApp: React.FC = () => {
 
   // Role switcher
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
-  const handleSelectRole = (role: RoleKey) => {
-    setCurrentUser({
-      ...currentUser,
-      role,
-      name: USER_ROLES[role].name,
-    });
-    setShowRoleSwitcher(false);
+  const handleSelectRole = async (role: RoleKey) => {
+    try {
+      // Update role in database
+      const response = await updateUserRole(role);
+
+      // Update local state with response from server
+      setCurrentUser({
+        ...response.user,
+        name: USER_ROLES[role].name,
+      });
+      setShowRoleSwitcher(false);
+    } catch (error) {
+      console.error('Failed to update role:', error);
+      alert('Failed to update role. Please try again.');
+    }
   };
 
   // Filtering states

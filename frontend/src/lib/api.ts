@@ -203,6 +203,56 @@ export async function getCurrentUser(): Promise<{ user: AuthedUser & { tenant: T
   return res.json();
 }
 
+export async function updateUserRole(role: string): Promise<{ success: boolean; user: AuthedUser & { tenant: Tenant } }> {
+  const res = await fetch(`${API_BASE}/auth/update-role`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ role }),
+  });
+
+  if (!res.ok) {
+    try {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Failed to update role');
+    } catch (parseError) {
+      throw new Error('Failed to update role');
+    }
+  }
+
+  return res.json();
+}
+
+export async function updateTenantSettings(data: {
+  companyName?: string;
+  subdomain?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  logoUrl?: string;
+}): Promise<{ success: boolean; tenant: Tenant; user: AuthedUser & { tenant: Tenant } }> {
+  const res = await fetch(`${API_BASE}/auth/update-tenant`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    try {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Failed to update tenant settings');
+    } catch (parseError) {
+      throw new Error('Failed to update tenant settings');
+    }
+  }
+
+  return res.json();
+}
+
 /* ------------------------------ Extinguishers ----------------------------- */
 
 /** GET /extinguishers (scoped by authenticated user's tenant) */
