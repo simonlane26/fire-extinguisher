@@ -61,7 +61,7 @@ const TenantContext = createContext<TenantCtx | null>(null);
 /* -------------------------------- Mock data --------------------------------- */
 const MOCK_CURRENT_USER: AuthedUser = {
   id: 'current_user',
-  name: 'Demo Admin',
+  name: 'Admin',
   email: 'admin@demo.com',
   role: 'admin',
   status: 'active',
@@ -894,7 +894,7 @@ const FireExtinguisherApp: React.FC = () => {
                 className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm"
                 style={{ backgroundColor: '#374151', color: '#ffffff' }}
               >
-                <Shield size={18} /> Switch Role (Demo)
+                <Shield size={18} /> Switch Role
               </button>
             </div>
 

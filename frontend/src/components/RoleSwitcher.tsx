@@ -22,7 +22,7 @@ const RoleSwitcher: React.FC<Props> = ({ open, onClose, currentRole, roles, onSe
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="w-full max-w-md overflow-hidden bg-white shadow-xl rounded-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="text-lg font-semibold">Switch User Role (Demo)</h3>
+          <h3 className="text-lg font-semibold">Switch User Role</h3>
           <button
             onClick={onClose}
             className="text-xl font-bold text-gray-500 hover:text-gray-800"
