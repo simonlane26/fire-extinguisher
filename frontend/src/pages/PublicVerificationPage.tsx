@@ -8,7 +8,17 @@ const getApiBase = () => {
   if ((import.meta as any).env?.VITE_API_URL) {
     return (import.meta as any).env.VITE_API_URL;
   }
-  return 'http://localhost:3000/api/v1';
+
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+  if (isLocalhost) {
+    const protocol = window.location.protocol;
+    return `${protocol}//${hostname}:3000/api/v1`;
+  } else {
+    // In production (Railway), use relative path (same domain, different path)
+    return '/api/v1';
+  }
 };
 
 interface VerificationData {
