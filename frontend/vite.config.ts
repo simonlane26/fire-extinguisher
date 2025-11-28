@@ -6,11 +6,8 @@ export default defineConfig({
   root: path.resolve(__dirname),
   plugins: [react()],
   build: {
-    // Disable module preload polyfill and optimize chunks
-    modulePreload: false,
-    // Force rebuild by using timestamp in manifest
-    manifest: true,
-    // Ensure no caching
+    // Ensure proper source maps and no aggressive tree-shaking
+    sourcemap: false,
     minify: 'esbuild',
   },
   server: {
