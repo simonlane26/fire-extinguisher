@@ -344,7 +344,7 @@ const FireExtinguisherApp: React.FC = () => {
     setCurrentUser({
       ...currentUser,
       role,
-      name: `Demo ${USER_ROLES[role].name}`,
+      name: USER_ROLES[role].name,
     });
     setShowRoleSwitcher(false);
   };

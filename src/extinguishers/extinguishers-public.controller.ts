@@ -21,8 +21,13 @@ export class ExtinguishersPublicController {
     }
 
     const now = new Date();
-    const nextInspection = extinguisher.nextInspection ? new Date(extinguisher.nextInspection) : null;
     const lastInspection = extinguisher.lastInspection ? new Date(extinguisher.lastInspection) : null;
+
+    // Calculate next inspection as 1 year from last inspection (annual check)
+    const nextInspection = lastInspection ? new Date(lastInspection) : null;
+    if (nextInspection) {
+      nextInspection.setFullYear(nextInspection.getFullYear() + 1);
+    }
 
     // Calculate compliance status
     const isOverdue = nextInspection && nextInspection < now;
