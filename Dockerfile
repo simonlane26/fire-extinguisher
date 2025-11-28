@@ -73,6 +73,14 @@ COPY . .
 # Build the backend
 RUN npm run build:backend
 
+# Build the frontend
+WORKDIR /app/frontend
+RUN npm ci
+RUN npm run build
+
+# Return to app directory
+WORKDIR /app
+
 # Clean up dummy .env
 RUN rm -f .env
 

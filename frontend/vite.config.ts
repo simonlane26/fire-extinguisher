@@ -9,6 +9,9 @@ export default defineConfig({
     // Ensure proper source maps and no aggressive tree-shaking
     sourcemap: false,
     minify: 'esbuild',
+    // Force clean build
+    emptyOutDir: true,
+    outDir: 'dist',
   },
   server: {
     port: 5173,
