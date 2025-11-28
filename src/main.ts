@@ -39,9 +39,9 @@ async function bootstrap() {
   // Exclude static asset paths from the prefix
   app.setGlobalPrefix('api/v1', {
     exclude: [
-      '/',              // root
-      '/assets/(.*)',   // frontend static assets
-      '/uploads/(.*)',  // uploaded files
+      '/',                    // root
+      '/assets/:path*',       // frontend static assets (wildcard)
+      '/uploads/:path*',      // uploaded files (wildcard)
     ],
   });
 
@@ -106,9 +106,11 @@ async function bootstrap() {
 
     // SPA fallback: serve index.html for all non-API routes
     // This must come AFTER useStaticAssets so /assets/* are served first
-    const expressApp = app.getHttpAdapter().getInstance();
-    expressApp.get('*', (req: any, res: any, next: any) => {
-      if (req.path.startsWith('/api/')) {
+    app.use((req: any, res: any, next: any) => {
+      // Only handle non-API, non-upload, non-asset routes
+      if (req.path.startsWith('/api/') ||
+          req.path.startsWith('/uploads/') ||
+          req.path.startsWith('/assets/')) {
         return next();
       }
       // Prevent caching of index.html to ensure users always get the latest version
