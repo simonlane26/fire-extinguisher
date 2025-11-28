@@ -35,13 +35,20 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '10mb' }));
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
+  // API Versioning - all routes prefixed with /api/v1
+  // Exclude static asset paths from the prefix
+  app.setGlobalPrefix('api/v1', {
+    exclude: [
+      '/',              // root
+      '/assets/(.*)',   // frontend static assets
+      '/uploads/(.*)',  // uploaded files
+    ],
+  });
+
   // Serve static files from uploads directory
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
-
-  // API Versioning - all routes prefixed with /api/v1
-  app.setGlobalPrefix('api/v1');
 
   // CORS Configuration
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
@@ -92,19 +99,23 @@ async function bootstrap() {
     const frontendPath = join(process.cwd(), 'frontend', 'dist');
     logger.log(`📦 Serving frontend from: ${frontendPath}`);
 
-    app.useStaticAssets(frontendPath);
+    // Serve static assets (JS/CSS/images) with proper caching
+    app.useStaticAssets(frontendPath, {
+      index: false, // Don't auto-serve index.html for root
+    });
 
-    // SPA fallback: serve index.html for all non-API, non-upload routes
-    app.use((req: any, res: any, next: any) => {
-      if (!req.url.startsWith('/api/') && !req.url.startsWith('/uploads/')) {
-        // Prevent caching of index.html to ensure users always get the latest version
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        res.sendFile(join(frontendPath, 'index.html'));
-      } else {
-        next();
+    // SPA fallback: serve index.html for all non-API routes
+    // This must come AFTER useStaticAssets so /assets/* are served first
+    const expressApp = app.getHttpAdapter().getInstance();
+    expressApp.get('*', (req: any, res: any, next: any) => {
+      if (req.path.startsWith('/api/')) {
+        return next();
       }
+      // Prevent caching of index.html to ensure users always get the latest version
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      return res.sendFile(join(frontendPath, 'index.html'));
     });
   }
 
