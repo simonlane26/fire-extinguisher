@@ -93,12 +93,47 @@ export class ReportsService {
         return 'N/A';
       };
 
+      // Calculate service dates from last inspection
+      const calculateServiceDates = (lastInspectionDate: any, extinguisherType: string) => {
+        if (!lastInspectionDate) {
+          return { annual: 'N/A', extended: 'N/A' };
+        }
+
+        let lastDate: Date;
+        if (lastInspectionDate instanceof Date) {
+          lastDate = new Date(lastInspectionDate);
+        } else if (typeof lastInspectionDate === 'string') {
+          lastDate = new Date(lastInspectionDate);
+        } else {
+          return { annual: 'N/A', extended: 'N/A' };
+        }
+
+        // Annual service: 1 year from last inspection
+        const annualDate = new Date(lastDate);
+        annualDate.setFullYear(annualDate.getFullYear() + 1);
+
+        // Extended service: 5 years (or 10 for CO2)
+        const isCO2 = extinguisherType?.toLowerCase().includes('co2') ||
+                      extinguisherType?.toLowerCase().includes('carbon dioxide');
+        const extendedYears = isCO2 ? 10 : 5;
+        const extendedDate = new Date(lastDate);
+        extendedDate.setFullYear(extendedDate.getFullYear() + extendedYears);
+
+        return {
+          annual: formatDate(annualDate),
+          extended: formatDate(extendedDate)
+        };
+      };
+
       const location = j.location || 'Unknown';
       const building = j.building || '';
       const serviceType = j.type || structured.type || j.serviceType || 'Inspection';
       const findings = defects.join(', ') || structured.findings || j.notes || 'Good condition';
       const recommendations = actions.join(', ') || structured.recommendations || 'N/A';
-      const nextService = formatDate(structured.nextDue || j.scheduledDate);
+
+      // Get last inspection date from job data
+      const lastInspection = j.lastInspection || structured.lastInspection || j.completedDate;
+      const serviceDates = calculateServiceDates(lastInspection, serviceType);
 
       return `
       <tr>
@@ -106,7 +141,8 @@ export class ReportsService {
         <td>${serviceType}</td>
         <td>${findings}</td>
         <td>${recommendations}</td>
-        <td>${nextService}</td>
+        <td>${serviceDates.annual}</td>
+        <td>${serviceDates.extended}</td>
       </tr>`;
     }).join('');
 
@@ -131,7 +167,7 @@ export class ReportsService {
 
         <h2>Summary</h2>
         <table border="1" cellspacing="0" cellpadding="6" width="100%" style="border-collapse:collapse">
-          <thead><tr><th>Location</th><th>Service Type</th><th>Findings</th><th>Actions/Recommendations</th><th>Next Service</th></tr></thead>
+          <thead><tr><th>Location</th><th>Service Type</th><th>Findings</th><th>Actions/Recommendations</th><th>Next Annual Service</th><th>Next Extended Service</th></tr></thead>
           <tbody>${jobRows}</tbody>
         </table>
 

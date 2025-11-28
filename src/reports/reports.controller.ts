@@ -56,12 +56,14 @@ export class ReportsController {
         type: ext.type,
         serviceType: ext.serviceType || 'Inspection',
         notes: ext.notes,
+        lastInspection: ext.lastInspection,
         scheduledDate: ext.nextInspection || ext.nextMaintenance,
         structured: {
           type: ext.type,
           findings: ext.condition,
           recommendations: ext.status === 'Active' ? 'Continue regular maintenance' : 'Requires attention',
           nextDue: ext.nextInspection || ext.nextMaintenance,
+          lastInspection: ext.lastInspection,
         }
       } as any));
     }
