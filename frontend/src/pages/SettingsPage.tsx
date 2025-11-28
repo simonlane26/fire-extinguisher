@@ -112,9 +112,10 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
     fileRef.current?.click();
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    setError(null);
 
     const patch: Partial<Tenant> = {
       companyName,
@@ -124,11 +125,19 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
       logoUrl,
     };
 
-    // mimic async
-    setTimeout(() => {
-      updateTenant(patch);
+    try {
+      await updateTenant(patch);
       setBusy(false);
-    }, 300);
+      // Show success message briefly
+      const successDiv = document.createElement('div');
+      successDiv.className = 'fixed top-4 right-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg shadow-lg z-50';
+      successDiv.textContent = 'Settings saved successfully!';
+      document.body.appendChild(successDiv);
+      setTimeout(() => successDiv.remove(), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
+      setBusy(false);
+    }
   }
 
   return (

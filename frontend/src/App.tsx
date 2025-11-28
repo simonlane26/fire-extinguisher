@@ -53,7 +53,7 @@ export type TenantCtx = {
   loading: boolean;
   error: string | null;
   switchTenant: (sub: string) => void;
-  updateTenant: (u: Partial<Tenant>) => void;
+  updateTenant: (u: Partial<Tenant>) => Promise<void>;
 };
 
 const TenantContext = createContext<TenantCtx | null>(null);
