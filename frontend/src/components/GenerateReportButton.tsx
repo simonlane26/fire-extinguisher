@@ -33,9 +33,18 @@ const GenerateReportButton: React.FC<Props> = ({
       });
 
       // Construct full URL - pdfUrl is like "/uploads/reports/123-report.pdf"
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
-      const baseUrl = API_URL.replace('/api/v1', ''); // Get http://localhost:3000
-      const fullPdfUrl = `${baseUrl}${pdfUrl}`;
+      // In production, use relative path; in development, construct full URL
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+      let fullPdfUrl: string;
+      if (isLocalhost) {
+        const protocol = window.location.protocol;
+        fullPdfUrl = `${protocol}//${hostname}:3000${pdfUrl}`;
+      } else {
+        // In production, pdfUrl is already a relative path
+        fullPdfUrl = pdfUrl;
+      }
 
       // open the generated PDF in a new tab
       window.open(fullPdfUrl, '_blank', 'noopener,noreferrer');
