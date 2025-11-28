@@ -14,9 +14,11 @@ interface QrCodeItem {
 
 interface QrCodesPageProps {
   primaryColor: string;
+  buildingFilter?: string;
+  allExtinguishers?: Extinguisher[];
 }
 
-const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor }) => {
+const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter = 'all', allExtinguishers = [] }) => {
   // QR Generation Settings
   const [size, setSize] = useState(300);
   const [scale, setScale] = useState(2);
@@ -44,9 +46,14 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor }) => {
   const [progress, setProgress] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Use passed extinguishers if available, otherwise fetch them
   useEffect(() => {
-    loadExtinguishers();
-  }, []);
+    if (allExtinguishers && allExtinguishers.length > 0) {
+      setExtinguishers(allExtinguishers);
+    } else {
+      loadExtinguishers();
+    }
+  }, [allExtinguishers]);
 
   const loadExtinguishers = async () => {
     try {
@@ -56,6 +63,11 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor }) => {
       console.error('Failed to load extinguishers:', error);
     }
   };
+
+  // Filter extinguishers based on building filter
+  const filteredExtinguishers = buildingFilter === 'all'
+    ? extinguishers
+    : extinguishers.filter(ext => ext.building === buildingFilter);
 
   const generateQrCodeDataUrl = async (text: string, label: string): Promise<QrCodeItem> => {
     const dataUrl = await QRCode.toDataURL(text, {
@@ -140,7 +152,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor }) => {
     const codes: QrCodeItem[] = [];
 
     try {
-      const selected = extinguishers.filter((e) => selectedExtinguishers.includes(e.id));
+      const selected = filteredExtinguishers.filter((e) => selectedExtinguishers.includes(e.id));
       for (let i = 0; i < selected.length; i++) {
         const ext = selected[i];
         const data = formatExtinguisherData(ext);
@@ -246,7 +258,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor }) => {
   };
 
   const selectAllExtinguishers = () => {
-    setSelectedExtinguishers(extinguishers.map((e) => e.id));
+    setSelectedExtinguishers(filteredExtinguishers.map((e) => e.id));
   };
 
   const deselectAllExtinguishers = () => {
@@ -439,25 +451,33 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor }) => {
           </div>
 
           <div className="mb-3 overflow-y-auto max-h-64">
-            {extinguishers.map((ext) => (
-              <label
-                key={ext.id}
-                className="flex items-center p-2 rounded cursor-pointer hover:bg-gray-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedExtinguishers.includes(ext.id)}
-                  onChange={() => toggleExtinguisherSelection(ext.id)}
-                  className="mr-3"
-                />
-                <div className="flex-1">
-                  <div className="font-medium">{ext.id}</div>
-                  <div className="text-sm text-gray-500">
-                    {ext.location} - {ext.building}
+            {filteredExtinguishers.length === 0 ? (
+              <p className="p-4 text-center text-gray-500">
+                {buildingFilter === 'all'
+                  ? 'No extinguishers available'
+                  : `No extinguishers found in ${buildingFilter}`}
+              </p>
+            ) : (
+              filteredExtinguishers.map((ext) => (
+                <label
+                  key={ext.id}
+                  className="flex items-center p-2 rounded cursor-pointer hover:bg-gray-50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedExtinguishers.includes(ext.id)}
+                    onChange={() => toggleExtinguisherSelection(ext.id)}
+                    className="mr-3"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">{ext.id}</div>
+                    <div className="text-sm text-gray-500">
+                      {ext.location} - {ext.building}
+                    </div>
                   </div>
-                </div>
-              </label>
-            ))}
+                </label>
+              ))
+            )}
           </div>
 
           <button

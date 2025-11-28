@@ -1003,7 +1003,11 @@ const FireExtinguisherApp: React.FC = () => {
 
         {/* QR Codes tab */}
         {activeTab === 'qr-codes' && (
-          <QrCodesPage primaryColor={tenant.primaryColor} />
+          <QrCodesPage
+            primaryColor={tenant.primaryColor}
+            buildingFilter={buildingFilter}
+            allExtinguishers={extinguishers}
+          />
         )}
 
         {/* Billing tab */}
