@@ -113,6 +113,16 @@ async function bootstrap() {
           req.path.startsWith('/assets/')) {
         return next();
       }
+
+      // Handle policy pages - serve the HTML files directly
+      if (req.path === '/privacy-policy' || req.path === '/terms-of-service' || req.path === '/cookie-policy') {
+        const policyFile = `${req.path}.html`;
+        const policyPath = join(frontendPath, policyFile);
+        if (require('fs').existsSync(policyPath)) {
+          return res.sendFile(policyPath);
+        }
+      }
+
       // Prevent caching of index.html to ensure users always get the latest version
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
@@ -120,7 +130,6 @@ async function bootstrap() {
       return res.sendFile(join(frontendPath, 'index.html'));
     });
   }
-
   const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
   const HOST = process.env.HOST || '0.0.0.0';
 

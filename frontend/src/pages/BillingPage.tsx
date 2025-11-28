@@ -28,7 +28,25 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+  // Get API base URL - same logic as api.ts
+  const getApiBase = () => {
+    if ((import.meta as any).env?.VITE_API_URL) {
+      return (import.meta as any).env.VITE_API_URL;
+    }
+
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+    if (isLocalhost) {
+      const protocol = window.location.protocol;
+      return `${protocol}//${hostname}:3000/api/v1`;
+    } else {
+      // In production (Railway), use relative path (same domain, different path)
+      return '/api/v1';
+    }
+  };
+
+  const API_URL = getApiBase();
 
   const loadPlans = async () => {
     try {
