@@ -65,8 +65,15 @@ export async function login(email: string, password: string): Promise<LoginRespo
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => 'Login failed');
-    throw new Error(text || 'Invalid credentials');
+    try {
+      const errorData = await res.json();
+      // Extract user-friendly message from error response
+      const message = errorData.message || 'Invalid credentials';
+      throw new Error(message);
+    } catch (parseError) {
+      // If JSON parsing fails, show generic message
+      throw new Error('Invalid email or password. Please try again.');
+    }
   }
 
   return res.json();
@@ -86,8 +93,15 @@ export async function register(
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => 'Registration failed');
-    throw new Error(text || 'Registration failed');
+    try {
+      const errorData = await res.json();
+      // Extract user-friendly message from error response
+      const message = errorData.message || 'Registration failed';
+      throw new Error(message);
+    } catch (parseError) {
+      // If JSON parsing fails, show generic message
+      throw new Error('Registration failed. Please try again.');
+    }
   }
 
   return res.json();
