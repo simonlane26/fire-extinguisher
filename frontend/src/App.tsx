@@ -446,6 +446,30 @@ const FireExtinguisherApp: React.FC = () => {
     conditionFilter !== 'all',
   ].filter(Boolean).length;
 
+  // Helper functions for status and condition colors
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return 'text-green-600 font-medium';
+      case 'inactive':
+        return 'text-red-600 font-medium';
+      default:
+        return 'text-gray-900';
+    }
+  };
+
+  const getConditionColor = (condition: string) => {
+    const cond = condition?.toLowerCase();
+    if (cond === 'good' || cond === 'excellent') {
+      return 'text-green-600 font-medium';
+    } else if (cond === 'fair' || cond === 'needs attention') {
+      return 'text-orange-600 font-medium';
+    } else if (cond === 'out of service') {
+      return 'text-red-600 font-medium';
+    }
+    return 'text-gray-900';
+  };
+
   const { total, active, needs, planLimit } = computeKpis(extinguishers);
 
   // Helper: next ID
@@ -944,8 +968,12 @@ const FireExtinguisherApp: React.FC = () => {
                         <div className="text-gray-900">{ext.type}</div>
                         <div className="text-sm text-gray-500">{ext.capacity}</div>
                       </td>
-                      <td className="px-6 py-4">{ext.status}</td>
-                      <td className="px-6 py-4">{ext.condition}</td>
+                      <td className="px-6 py-4">
+                        <span className={getStatusColor(ext.status)}>{ext.status}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={getConditionColor(ext.condition)}>{ext.condition}</span>
+                      </td>
                       <td className="px-6 py-4">
                         <button
                           onClick={() => openDetails(ext)}
