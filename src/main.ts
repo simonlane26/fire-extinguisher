@@ -40,8 +40,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1', {
     exclude: [
       '/',                    // root
-      '/assets/:path*',       // frontend static assets (wildcard)
-      '/uploads/:path*',      // uploaded files (wildcard)
+      '/assets/*path',        // frontend static assets (wildcard: *before param name)
+      '/uploads/*path',       // uploaded files (wildcard: *before param name)
     ],
   });
 
