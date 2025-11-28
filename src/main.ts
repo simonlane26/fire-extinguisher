@@ -116,7 +116,7 @@ async function bootstrap() {
 
       // Handle policy pages - serve the HTML files directly
       if (req.path === '/privacy-policy' || req.path === '/terms-of-service' || req.path === '/cookie-policy') {
-        const policyFile = `${req.path}.html`;
+        const policyFile = `${req.path.substring(1)}.html`; // Remove leading '/' from path
         const policyPath = join(frontendPath, policyFile);
         if (require('fs').existsSync(policyPath)) {
           return res.sendFile(policyPath);
