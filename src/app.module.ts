@@ -19,6 +19,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
 import { SitesModule } from './sites/sites.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     SitesModule,
     InventoryModule,
     NotificationsModule,
+    PublicModule,
   ],
   controllers: [AppController],
   providers: [

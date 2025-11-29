@@ -81,24 +81,11 @@ async function bootstrap() {
   // Global Exception Filter for error handling
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Serve frontend static files in production BEFORE guards
-  // This ensures static assets and HTML files are served without authentication
+  // Serve frontend static files in production (AFTER guards for proper routing)
+  // Policy HTML files are served by PublicController with @Public() decorator
   if (process.env.NODE_ENV === 'production') {
     const frontendPath = join(process.cwd(), 'frontend', 'dist');
     logger.log(`📦 Serving frontend from: ${frontendPath}`);
-
-    // Middleware to intercept HTML file requests BEFORE guards
-    const fs = require('fs');
-    app.use((req: any, res: any, next: any) => {
-      // Serve policy HTML files directly
-      if (req.path.endsWith('.html') && !req.path.includes('index.html')) {
-        const filePath = join(frontendPath, req.path);
-        if (fs.existsSync(filePath)) {
-          return res.sendFile(filePath);
-        }
-      }
-      next();
-    });
 
     // Serve static assets (JS/CSS/images) with proper caching
     app.useStaticAssets(frontendPath, {
@@ -114,7 +101,7 @@ async function bootstrap() {
         return next();
       }
 
-      // Skip HTML files (already handled above)
+      // Skip HTML files (handled by PublicController or static middleware)
       if (req.path.endsWith('.html')) {
         return next();
       }
