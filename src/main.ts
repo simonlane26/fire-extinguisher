@@ -104,25 +104,22 @@ async function bootstrap() {
       index: false, // Don't auto-serve index.html for root
     });
 
-    // SPA fallback: serve index.html for all non-API routes
-    // This must come AFTER useStaticAssets so /assets/* are served first
+    // SPA fallback: serve index.html for all non-API, non-static routes
+    // This must come AFTER useStaticAssets so /assets/* and *.html files are served first
     app.use((req: any, res: any, next: any) => {
-      // Only handle non-API, non-upload, non-asset routes
+      // Skip API routes, uploads, and assets
       if (req.path.startsWith('/api/') ||
           req.path.startsWith('/uploads/') ||
           req.path.startsWith('/assets/')) {
         return next();
       }
 
-      // Handle policy pages - serve the HTML files directly
-      if (req.path === '/privacy-policy' || req.path === '/terms-of-service' || req.path === '/cookie-policy') {
-        const policyFile = `${req.path.substring(1)}.html`; // Remove leading '/' from path
-        const policyPath = join(frontendPath, policyFile);
-        if (require('fs').existsSync(policyPath)) {
-          return res.sendFile(policyPath);
-        }
+      // Skip static HTML files (policy pages, etc.) - let express.static handle them
+      if (req.path.endsWith('.html')) {
+        return next();
       }
 
+      // For all other routes, serve the React SPA
       // Prevent caching of index.html to ensure users always get the latest version
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');

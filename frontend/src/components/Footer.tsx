@@ -25,15 +25,10 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="/privacy-policy"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/privacy-policy';
-                  }}
+                  href="/privacy-policy.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"
-                  style={{
-                    color: undefined,
-                  }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = primaryColor;
                   }}
@@ -46,11 +41,9 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
               </li>
               <li>
                 <a
-                  href="/terms-of-service"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/terms-of-service';
-                  }}
+                  href="/terms-of-service.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = primaryColor;
@@ -64,11 +57,9 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
               </li>
               <li>
                 <a
-                  href="/cookie-policy"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = '/cookie-policy';
-                  }}
+                  href="/cookie-policy.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = primaryColor;
