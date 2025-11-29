@@ -2,7 +2,7 @@
 import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Param, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PrismaService } from '../prisma/prisma.service';
-import { S3Service } from '../storage/storage.service';
+import { S3Service } from '../storage/s3.service';
 import { VisionService } from '../vision/vision.service';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
 import { TenantGuard } from '../auth/tenant.guard';
