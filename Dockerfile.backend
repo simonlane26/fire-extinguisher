@@ -3,7 +3,7 @@
 FROM node:20-slim
 
 # Cache-busting argument to force rebuild of frontend layers
-ARG CACHEBUST=4
+ARG CACHEBUST=5
 
 # Install Chrome and dependencies
 RUN apt-get update && apt-get install -y \
@@ -110,7 +110,9 @@ RUN echo "=== Cleaning all frontend build artifacts ===" && \
     npm cache clean --force && \
     npm install && \
     echo "=== Building frontend (should generate NEW hash) ===" && \
-    npm run build
+    npm run build && \
+    echo "=== Manually copying policy files to dist ===" && \
+    cp -v public/*.html dist/ || echo "Warning: Could not copy policy files"
 
 # Verify frontend build output
 RUN ls -la dist/ && \
