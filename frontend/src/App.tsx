@@ -36,7 +36,7 @@ import RoleSwitcherModal from './components/RoleSwitcher';
 import GenerateReportButton from './components/GenerateReportButton';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
-import { addExtinguisher, updateExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings } from './lib/api';
+import { addExtinguisher, updateExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole } from './lib/api';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
   Extinguisher,
@@ -331,8 +331,24 @@ const FireExtinguisherApp: React.FC = () => {
   ]);
 
   const handleAddUser = (u: User) => setUsers((prev) => [...prev, u]);
-  const handleUpdateUser = (id: string, patch: Partial<User>) =>
-    setUsers((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  const handleUpdateUser = async (id: string, patch: Partial<User>) => {
+    // If updating role, make API call
+    if (patch.role) {
+      try {
+        const result = await updateOtherUserRole(id, patch.role);
+        if (result.success) {
+          // Update local state with the returned user data
+          setUsers((prev) => prev.map((x) => (x.id === id ? { ...x, ...result.user } : x)));
+        }
+      } catch (err) {
+        console.error('Failed to update user role:', err);
+        alert(err instanceof Error ? err.message : 'Failed to update user role');
+      }
+    } else {
+      // For other updates, just update local state for now
+      setUsers((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+    }
+  };
 
   // Detail modal
   const [selectedExtinguisher, setSelectedExtinguisher] =

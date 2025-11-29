@@ -225,6 +225,28 @@ export async function updateUserRole(role: string): Promise<{ success: boolean; 
   return res.json();
 }
 
+export async function updateOtherUserRole(userId: string, role: string): Promise<{ success: boolean; user: any }> {
+  const res = await fetch(`${API_BASE}/auth/users/${userId}/role`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ role }),
+  });
+
+  if (!res.ok) {
+    try {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Failed to update user role');
+    } catch (parseError) {
+      throw new Error('Failed to update user role');
+    }
+  }
+
+  return res.json();
+}
+
 export async function updateTenantSettings(data: {
   companyName?: string;
   subdomain?: string;

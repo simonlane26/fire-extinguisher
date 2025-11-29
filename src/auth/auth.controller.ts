@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Patch, UseInterceptors, UploadedFile, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Patch, Param, UseInterceptors, UploadedFile, BadRequestException, PayloadTooLargeException, ForbiddenException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -253,5 +253,48 @@ export class AuthController {
         url,
       };
     }
+  }
+
+  @Patch('users/:userId/role')
+  @UseGuards(JwtAuthGuard)
+  async updateUserRole(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Param('userId') userId: string,
+    @Body('role') role: string,
+  ) {
+    // Only admins and super_admins can update roles
+    if (!['admin', 'super_admin'].includes(currentUser.role)) {
+      throw new ForbiddenException('Only admins can update user roles');
+    }
+
+    // Validate the role
+    const validRoles = ['super_admin', 'admin', 'manager', 'inspector', 'viewer'];
+    if (!validRoles.includes(role)) {
+      throw new BadRequestException('Invalid role');
+    }
+
+    // Update the user's role
+    const updatedUser = await this.prisma.user.update({
+      where: {
+        id: userId,
+        tenantId: currentUser.tenantId, // Ensure user is in same tenant
+      },
+      data: {
+        role: role as any,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    return {
+      success: true,
+      user: updatedUser,
+    };
   }
 }
