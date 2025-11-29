@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - Firexcheck</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f9fafb;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #7c3aed;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #5b21b6;
+            margin-top: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        h3 {
+            color: #6d28d9;
+            margin-top: 20px;
+        }
+        .meta {
+            color: #6b7280;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+        }
+        a {
+            color: #7c3aed;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #7c3aed;
+        }
+        strong {
+            color: #1f2937;
+        }
+        ul, ol {
+            margin-left: 20px;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 15px;
+            border-left: 4px solid #f59e0b;
+            margin: 20px 0;
+        }
+        .info-box {
+            background: #dbeafe;
+            padding: 15px;
+            border-left: 4px solid #3b82f6;
+            margin: 20px 0;
+        }
+        .success-box {
+            background: #d1fae5;
+            padding: 15px;
+            border-left: 4px solid #10b981;
+            margin: 20px 0;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #e5e7eb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #e5e7eb;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to App</a>
+
+        <h1>Documentation</h1>
+        <div class="meta">
+            <strong>Last Updated:</strong> November 29, 2025<br>
+            <strong>Version:</strong> 1.0
+        </div>
+
+        <p>Welcome to the Firexcheck documentation. This guide will help you get the most out of your fire extinguisher management system.</p>
+
+        <p><strong>Quick Links:</strong></p>
+        <ul>
+            <li><a href="#csv-import">CSV Import Guide</a></li>
+            <li><a href="#qr-codes">QR Code Management</a></li>
+            <li><a href="#inspections">Inspection Tracking</a></li>
+            <li><a href="#reports">Generating Reports</a></li>
+        </ul>
+
+        <h2 id="csv-import">CSV Import Guide</h2>
+        <p>Import multiple fire extinguishers at once using a CSV (Comma-Separated Values) file.</p>
+
+        <h3>Required CSV Format</h3>
+        <p>Your CSV file must include the following columns in this exact order:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Column</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Location</strong></td>
+                    <td>✓ Yes</td>
+                    <td>Specific location of the extinguisher</td>
+                    <td>Kitchen, Hallway Floor 2</td>
+                </tr>
+                <tr>
+                    <td><strong>Building</strong></td>
+                    <td>✓ Yes</td>
+                    <td>Building name or identifier</td>
+                    <td>Main Building, Warehouse A</td>
+                </tr>
+                <tr>
+                    <td><strong>Type</strong></td>
+                    <td>✓ Yes</td>
+                    <td>Type of fire extinguisher</td>
+                    <td>Water, CO2, Foam, Powder</td>
+                </tr>
+                <tr>
+                    <td><strong>Serial Number</strong></td>
+                    <td>No</td>
+                    <td>Manufacturer serial number</td>
+                    <td>SN12345</td>
+                </tr>
+                <tr>
+                    <td><strong>Last Inspection Date</strong></td>
+                    <td>No</td>
+                    <td>Date format: YYYY-MM-DD</td>
+                    <td>2025-01-15</td>
+                </tr>
+                <tr>
+                    <td><strong>Next Inspection Date</strong></td>
+                    <td>No</td>
+                    <td>Date format: YYYY-MM-DD</td>
+                    <td>2025-07-15</td>
+                </tr>
+                <tr>
+                    <td><strong>Status</strong></td>
+                    <td>No</td>
+                    <td>Defaults to "active" if not provided</td>
+                    <td>active, maintenance</td>
+                </tr>
+                <tr>
+                    <td><strong>Notes</strong></td>
+                    <td>No</td>
+                    <td>Additional information</td>
+                    <td>Near stove, Needs bracket</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Example CSV File</h3>
+        <pre><code>Location,Building,Type,Serial Number,Last Inspection Date,Next Inspection Date,Status,Notes
+Kitchen,Main Building,CO2,SN12345,2025-01-10,2025-07-10,active,Near the stove
+Hallway Floor 2,Main Building,Water,SN67890,2025-01-15,2025-07-15,active,
+Warehouse,Storage Building,Powder,SN11111,,,active,Needs replacement bracket
+Reception,Main Building,Foam,SN22222,2025-01-05,2025-07-05,active,Behind front desk</code></pre>
+
+        <h3>Creating Your CSV File</h3>
+
+        <div class="info-box">
+            <p><strong>Using Excel or Google Sheets:</strong></p>
+            <ol>
+                <li>Create a new spreadsheet</li>
+                <li>Add the column headers in the first row (exactly as shown above)</li>
+                <li>Fill in your extinguisher data in the rows below</li>
+                <li>Save as CSV: File → Save As → CSV (Comma delimited)</li>
+            </ol>
+        </div>
+
+        <h3>Important Notes</h3>
+        <ul>
+            <li><strong>First row must be headers</strong> - The system will skip the first row automatically</li>
+            <li><strong>Minimum required columns:</strong> Location, Building, and Type (first 3 columns)</li>
+            <li><strong>Date format:</strong> Must be YYYY-MM-DD (e.g., 2025-01-15)</li>
+            <li><strong>Empty optional fields:</strong> You can leave optional fields blank</li>
+            <li><strong>Special characters:</strong> If a field contains commas or quotes, wrap it in double quotes</li>
+            <li><strong>Maximum file size:</strong> 5MB per CSV file</li>
+        </ul>
+
+        <div class="highlight">
+            <p><strong>⚠️ Common Mistakes to Avoid:</strong></p>
+            <ul>
+                <li>Missing the header row</li>
+                <li>Wrong date format (use YYYY-MM-DD, not DD/MM/YYYY)</li>
+                <li>Columns in wrong order</li>
+                <li>Missing required fields (Location, Building, Type)</li>
+            </ul>
+        </div>
+
+        <h3>How to Import</h3>
+        <ol>
+            <li>Navigate to the <strong>Stock</strong> page</li>
+            <li>Click the <strong>Import CSV</strong> button</li>
+            <li>Select your prepared CSV file</li>
+            <li>Click <strong>Upload</strong></li>
+            <li>Review the import results showing successes and any errors</li>
+        </ol>
+
+        <div class="success-box">
+            <p><strong>✓ Pro Tip:</strong> Export your existing data first to see the exact format. You can then use this as a template for importing new data!</p>
+        </div>
+
+        <h2 id="qr-codes">QR Code Management</h2>
+        <p>Generate and manage QR codes for your fire extinguishers.</p>
+
+        <h3>Generating QR Codes</h3>
+        <ul>
+            <li><strong>Individual QR Code:</strong> View any extinguisher and click "Generate QR Code"</li>
+            <li><strong>Bulk Generation:</strong> Navigate to QR Codes page and select "Generate from Extinguishers"</li>
+            <li><strong>Building Filter:</strong> Filter by building to generate QR codes for specific locations</li>
+        </ul>
+
+        <h3>Public QR Code Scanning</h3>
+        <p>QR codes can be scanned by anyone to view extinguisher information without logging in:</p>
+        <ul>
+            <li>Location and building information</li>
+            <li>Type and serial number</li>
+            <li>Last inspection date</li>
+            <li>Next inspection due date</li>
+            <li>Current status</li>
+        </ul>
+
+        <h3>Printing QR Codes</h3>
+        <ol>
+            <li>Generate QR codes (individual or bulk)</li>
+            <li>Use your browser's print function (Ctrl+P or Cmd+P)</li>
+            <li>Recommended: Print on waterproof labels or laminate</li>
+            <li>Attach near each fire extinguisher</li>
+        </ol>
+
+        <h2 id="inspections">Inspection Tracking</h2>
+        <p>Track and manage fire extinguisher inspections to maintain compliance.</p>
+
+        <h3>Recording an Inspection</h3>
+        <ol>
+            <li>Navigate to the extinguisher you want to inspect</li>
+            <li>Click <strong>Record Inspection</strong></li>
+            <li>Fill in inspection details:
+                <ul>
+                    <li>Inspection date</li>
+                    <li>Condition assessment</li>
+                    <li>Pressure reading (if applicable)</li>
+                    <li>Any issues found</li>
+                    <li>Notes</li>
+                </ul>
+            </li>
+            <li>Optional: Add photos of the extinguisher</li>
+            <li>Click <strong>Save Inspection</strong></li>
+        </ol>
+
+        <h3>Inspection Schedule</h3>
+        <p>Fire extinguishers typically require:</p>
+        <ul>
+            <li><strong>Monthly visual inspections:</strong> Quick check for damage, accessibility</li>
+            <li><strong>Annual maintenance:</strong> Thorough inspection by qualified person</li>
+            <li><strong>5-year internal examination:</strong> Detailed inspection (type-dependent)</li>
+            <li><strong>Hydrostatic testing:</strong> Pressure testing (varies by type, typically 5-12 years)</li>
+        </ul>
+
+        <div class="info-box">
+            <p><strong>💡 Automated Reminders:</strong> The system automatically calculates next inspection dates and sends email notifications when inspections are due.</p>
+        </div>
+
+        <h3>Viewing Inspection History</h3>
+        <ul>
+            <li>Click on any extinguisher to view full inspection history</li>
+            <li>Filter by date range</li>
+            <li>Export inspection records to PDF or CSV</li>
+        </ul>
+
+        <h2 id="reports">Generating Reports</h2>
+        <p>Create comprehensive reports for compliance and record-keeping.</p>
+
+        <h3>Available Reports</h3>
+        <ul>
+            <li><strong>Inventory Report:</strong> Complete list of all extinguishers</li>
+            <li><strong>Inspection Report:</strong> Detailed inspection history</li>
+            <li><strong>Compliance Report:</strong> Overview of inspection status and upcoming due dates</li>
+            <li><strong>Site Report:</strong> Building-specific reports</li>
+        </ul>
+
+        <h3>Report Formats</h3>
+        <ul>
+            <li><strong>PDF:</strong> Professional formatted reports for printing or sharing</li>
+            <li><strong>CSV:</strong> Spreadsheet format for further analysis</li>
+        </ul>
+
+        <h3>Generating a Report</h3>
+        <ol>
+            <li>Navigate to the <strong>Reports</strong> page</li>
+            <li>Select report type</li>
+            <li>Choose date range (if applicable)</li>
+            <li>Apply filters (building, type, status)</li>
+            <li>Click <strong>Generate Report</strong></li>
+            <li>Download or print the report</li>
+        </ol>
+
+        <h2>Getting Help</h2>
+        <p>Need assistance? We're here to help:</p>
+        <ul>
+            <li><strong>Email Support:</strong> <a href="mailto:support@firexcheck.com">support@firexcheck.com</a></li>
+            <li><strong>Documentation:</strong> This page (bookmark for future reference!)</li>
+            <li><strong>Video Tutorials:</strong> Coming soon</li>
+        </ul>
+
+        <h2>Additional Resources</h2>
+        <ul>
+            <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="/terms-of-service.html">Terms of Service</a></li>
+            <li><a href="/cookie-policy.html">Cookie Policy</a></li>
+        </ul>
+
+        <div class="footer">
+            <p><strong>Firexcheck - Fire Extinguisher Management System</strong></p>
+            <p>Keeping your premises safe and compliant.</p>
+            <p>
+                <a href="/privacy-policy.html">Privacy Policy</a> •
+                <a href="/terms-of-service.html">Terms of Service</a> •
+                <a href="/cookie-policy.html">Cookie Policy</a> •
+                <a href="/">Return to App</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

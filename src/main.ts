@@ -45,6 +45,7 @@ async function bootstrap() {
       '/privacy-policy.html',        // policy pages
       '/terms-of-service.html',
       '/cookie-policy.html',
+      '/documentation.html',         // documentation
     ],
   });
 

@@ -38,4 +38,10 @@ export class PublicController {
   getCookiePolicy(@Res() res: Response) {
     return this.servePolicyFile('cookie-policy.html', res);
   }
+
+  @Public()
+  @Get('documentation.html')
+  getDocumentation(@Res() res: Response) {
+    return this.servePolicyFile('documentation.html', res);
+  }
 }

@@ -94,7 +94,7 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
               </li>
               <li>
                 <a
-                  href="https://firexcheck.com/docs"
+                  href="/documentation.html"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"
