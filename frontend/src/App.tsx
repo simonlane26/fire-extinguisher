@@ -36,7 +36,7 @@ import RoleSwitcherModal from './components/RoleSwitcher';
 import GenerateReportButton from './components/GenerateReportButton';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
-import { addExtinguisher, updateExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole } from './lib/api';
+import { addExtinguisher, updateExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers } from './lib/api';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
   Extinguisher,
@@ -300,35 +300,20 @@ const FireExtinguisherApp: React.FC = () => {
   }, [tenant.id]);
 
   // Users (for UsersPage)
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: 'user_1',
-      name: 'John Smith',
-      email: 'john.smith@demo.com',
-      role: 'admin',
-      status: 'active',
-      lastLogin: '2024-12-15',
-      createdAt: '2024-01-15',
-    },
-    {
-      id: 'user_2',
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@demo.com',
-      role: 'inspector',
-      status: 'active',
-      lastLogin: '2024-12-14',
-      createdAt: '2024-02-01',
-    },
-    {
-      id: 'user_3',
-      name: 'Mike Wilson',
-      email: 'mike.wilson@demo.com',
-      role: 'manager',
-      status: 'inactive',
-      lastLogin: '2024-12-10',
-      createdAt: '2024-03-15',
-    },
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+
+  // Fetch users from API
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const fetchedUsers = await getUsers();
+        setUsers(fetchedUsers);
+      } catch (err) {
+        console.error('Failed to fetch users:', err);
+      }
+    };
+    loadUsers();
+  }, []);
 
   const handleAddUser = (u: User) => setUsers((prev) => [...prev, u]);
   const handleUpdateUser = async (id: string, patch: Partial<User>) => {

@@ -225,6 +225,22 @@ export async function updateUserRole(role: string): Promise<{ success: boolean; 
   return res.json();
 }
 
+export async function getUsers(): Promise<any[]> {
+  const res = await fetch(`${API_BASE}/auth/users`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch users');
+  }
+
+  return res.json();
+}
+
 export async function updateOtherUserRole(userId: string, role: string): Promise<{ success: boolean; user: any }> {
   const res = await fetch(`${API_BASE}/auth/users/${userId}/role`, {
     method: 'PATCH',

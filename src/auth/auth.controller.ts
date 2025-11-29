@@ -255,6 +255,29 @@ export class AuthController {
     }
   }
 
+  @Get('users')
+  @UseGuards(JwtAuthGuard)
+  async getUsers(@CurrentUser() currentUser: CurrentUserData) {
+    const users = await this.prisma.user.findMany({
+      where: {
+        tenantId: currentUser.tenantId,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return users;
+  }
+
   @Patch('users/:userId/role')
   @UseGuards(JwtAuthGuard)
   async updateUserRole(
