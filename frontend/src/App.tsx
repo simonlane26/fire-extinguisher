@@ -616,7 +616,7 @@ const FireExtinguisherApp: React.FC = () => {
     <div className="flex items-center gap-2 text-sm opacity-75">
       <span>Fire Safety Management System</span>
       <span className="opacity-50">•</span>
-      <span className="font-medium">Fireexcheck.com</span>
+      <span className="font-medium">Firexcheck.com</span>
     </div>
   </div>
 </div>
