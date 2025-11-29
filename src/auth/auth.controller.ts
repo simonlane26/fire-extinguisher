@@ -273,14 +273,27 @@ export class AuthController {
       throw new BadRequestException('Invalid role');
     }
 
+    // First verify the user exists and is in the same tenant
+    const userToUpdate = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, tenantId: true },
+    });
+
+    if (!userToUpdate) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (userToUpdate.tenantId !== currentUser.tenantId) {
+      throw new ForbiddenException('Cannot update user from different tenant');
+    }
+
     // Update the user's role
     const updatedUser = await this.prisma.user.update({
       where: {
         id: userId,
-        tenantId: currentUser.tenantId, // Ensure user is in same tenant
       },
       data: {
-        role: role as any,
+        role: role,
       },
       select: {
         id: true,
