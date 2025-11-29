@@ -274,6 +274,11 @@ export class AuthController {
       throw new BadRequestException('Invalid role');
     }
 
+    // Admins cannot create super_admin users
+    if (currentUser.role === 'admin' && role === 'super_admin') {
+      throw new ForbiddenException('Admins cannot create super admin users');
+    }
+
     // Check if email already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
@@ -317,10 +322,19 @@ export class AuthController {
   @Get('users')
   @UseGuards(JwtAuthGuard)
   async getUsers(@CurrentUser() currentUser: CurrentUserData) {
+    const whereClause: any = {
+      tenantId: currentUser.tenantId,
+    };
+
+    // Admins cannot see super_admin users
+    if (currentUser.role === 'admin') {
+      whereClause.role = {
+        not: 'super_admin',
+      };
+    }
+
     const users = await this.prisma.user.findMany({
-      where: {
-        tenantId: currentUser.tenantId,
-      },
+      where: whereClause,
       select: {
         id: true,
         email: true,
@@ -358,7 +372,7 @@ export class AuthController {
     // First verify the user exists and is in the same tenant
     const userToUpdate = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, tenantId: true },
+      select: { id: true, tenantId: true, role: true },
     });
 
     if (!userToUpdate) {
@@ -367,6 +381,16 @@ export class AuthController {
 
     if (userToUpdate.tenantId !== currentUser.tenantId) {
       throw new ForbiddenException('Cannot update user from different tenant');
+    }
+
+    // Admins cannot edit super_admin users or assign super_admin role
+    if (currentUser.role === 'admin') {
+      if (userToUpdate.role === 'super_admin') {
+        throw new ForbiddenException('Admins cannot modify super admin users');
+      }
+      if (role === 'super_admin') {
+        throw new ForbiddenException('Admins cannot assign super admin role');
+      }
     }
 
     // Update the user's role

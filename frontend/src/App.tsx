@@ -118,19 +118,19 @@ const USER_ROLES: Record<RoleKey, { name: string; description: string }> = {
 };
 
 const PERMISSIONS: Record<PermissionKey, RoleKey[]> = {
-  VIEW_USERS: ['super_admin', 'admin', 'manager'],
+  VIEW_USERS: ['super_admin', 'admin'],
   ADD_USERS: ['super_admin', 'admin'],
   EDIT_USERS: ['super_admin', 'admin'],
   DELETE_USERS: ['super_admin'],
   VIEW_EXTINGUISHERS: ['super_admin', 'admin', 'manager', 'inspector', 'viewer'],
-  ADD_EXTINGUISHERS: ['super_admin', 'admin', 'manager'],
-  EDIT_EXTINGUISHERS: ['super_admin', 'admin', 'manager'],
-  DELETE_EXTINGUISHERS: ['super_admin'],
+  ADD_EXTINGUISHERS: ['super_admin', 'admin', 'manager', 'inspector'],
+  EDIT_EXTINGUISHERS: ['super_admin', 'admin', 'manager', 'inspector'],
+  DELETE_EXTINGUISHERS: ['super_admin', 'admin'],
   PERFORM_INSPECTIONS: ['super_admin', 'admin', 'manager', 'inspector'],
   VIEW_INSPECTIONS: ['super_admin', 'admin', 'manager', 'inspector', 'viewer'],
   VIEW_REPORTS: ['super_admin', 'admin', 'manager'],
   VIEW_BILLING: ['super_admin'],
-  MANAGE_SETTINGS: ['super_admin', 'admin'],
+  MANAGE_SETTINGS: ['super_admin'],
 };
 
 const hasPermissionFor = (role: RoleKey, perm: PermissionKey) =>

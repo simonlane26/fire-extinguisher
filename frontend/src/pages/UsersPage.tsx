@@ -14,7 +14,7 @@ type Props = {
   onUpdateUser: (id: string, patch: Partial<User>) => void;
 };
 
-const ROLES: RoleKey[] = ['super_admin','admin','manager','inspector','viewer'];
+const ALL_ROLES: RoleKey[] = ['super_admin','admin','manager','inspector','viewer'];
 
 function StatusPill({ status }: { status: User['status'] }) {
   const isActive = status === 'active';
@@ -29,6 +29,15 @@ function StatusPill({ status }: { status: User['status'] }) {
 export default function UsersPage({
   users, primaryColor, currentRole, canAdd, canEdit, onAddUser, onUpdateUser,
 }: Props) {
+  // Filter roles based on current user - admins cannot see/assign super_admin
+  const availableRoles = useMemo(() => {
+    if (currentRole === 'super_admin') {
+      return ALL_ROLES;
+    }
+    // Admins cannot create or manage super_admin users
+    return ALL_ROLES.filter(role => role !== 'super_admin');
+  }, [currentRole]);
+
   // search + filters
   const [q, setQ] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | RoleKey>('all');
@@ -86,7 +95,7 @@ export default function UsersPage({
             title="Filter by role"
           >
             <option value="all">All roles</option>
-            {ROLES.map(r => <option key={r} value={r}>{r.replace('_',' ')}</option>)}
+            {availableRoles.map((r: RoleKey) => <option key={r} value={r}>{r.replace('_',' ')}</option>)}
           </select>
 
           {canAdd ? (
@@ -172,7 +181,7 @@ export default function UsersPage({
         onClose={() => setOpenAdd(false)}
         onCreate={(u) => { onAddUser(u); setOpenAdd(false); }}
         primaryColor={primaryColor}
-        availableRoles={ROLES}
+        availableRoles={availableRoles}
       />
       <UserDetailsDrawer
         open={!!selected}
@@ -180,6 +189,7 @@ export default function UsersPage({
         canEdit={canEdit}
         onClose={() => setSelectedId(null)}
         onChangeRole={(role: any) => selected && onUpdateUser(selected.id, { role })}
+        availableRoles={availableRoles}
       />
     </div>
   );

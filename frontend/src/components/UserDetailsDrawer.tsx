@@ -7,12 +7,13 @@ type Props = {
   canEdit: boolean;
   onClose: () => void;
   onChangeRole: (role: RoleKey) => void;
+  availableRoles?: RoleKey[];
 };
 
-const ROLES: RoleKey[] = ['super_admin','admin','manager','inspector','viewer'];
+const ALL_ROLES: RoleKey[] = ['super_admin','admin','manager','inspector','viewer'];
 
 export default function UserDetailsDrawer({
-  open, user, canEdit, onClose, onChangeRole,
+  open, user, canEdit, onClose, onChangeRole, availableRoles = ALL_ROLES,
 }: Props) {
   if (!open || !user) return null;
 
@@ -38,7 +39,7 @@ export default function UserDetailsDrawer({
                   value={user.role}
                   onChange={(e)=>onChangeRole(e.target.value as RoleKey)}
                 >
-                  {ROLES.map(r => <option key={r} value={r}>{r.replace('_',' ')}</option>)}
+                  {availableRoles.map((r: RoleKey) => <option key={r} value={r}>{r.replace('_',' ')}</option>)}
                 </select>
               ) : (
                 <div className="font-medium">{user.role.replace('_',' ')}</div>
