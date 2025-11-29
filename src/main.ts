@@ -87,13 +87,25 @@ async function bootstrap() {
     const frontendPath = join(process.cwd(), 'frontend', 'dist');
     logger.log(`📦 Serving frontend from: ${frontendPath}`);
 
-    // Serve static assets (JS/CSS/images/HTML) with proper caching
+    // Middleware to intercept HTML file requests BEFORE guards
+    const fs = require('fs');
+    app.use((req: any, res: any, next: any) => {
+      // Serve policy HTML files directly
+      if (req.path.endsWith('.html') && !req.path.includes('index.html')) {
+        const filePath = join(frontendPath, req.path);
+        if (fs.existsSync(filePath)) {
+          return res.sendFile(filePath);
+        }
+      }
+      next();
+    });
+
+    // Serve static assets (JS/CSS/images) with proper caching
     app.useStaticAssets(frontendPath, {
       index: false, // Don't auto-serve index.html for root
     });
 
     // SPA fallback: serve index.html for all non-API, non-static routes
-    // This must come AFTER useStaticAssets so /assets/* and *.html files are served first
     app.use((req: any, res: any, next: any) => {
       // Skip API routes, uploads, and assets
       if (req.path.startsWith('/api/') ||
@@ -102,7 +114,7 @@ async function bootstrap() {
         return next();
       }
 
-      // Skip static HTML files (policy pages, etc.) - let express.static handle them
+      // Skip HTML files (already handled above)
       if (req.path.endsWith('.html')) {
         return next();
       }
