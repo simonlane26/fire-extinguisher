@@ -10,16 +10,16 @@ export class S3Service {
   private isConfigured = false;
 
   constructor() {
-    const hasS3Config = process.env.S3_REGION && process.env.S3_BUCKET &&
-                        process.env.S3_ACCESS_KEY && process.env.S3_SECRET_KEY;
+    const hasS3Config = process.env.AWS_REGION && process.env.S3_BUCKET &&
+                        process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY;
 
     if (hasS3Config) {
       try {
         this.s3 = new S3Client({
-          region: process.env.S3_REGION!,
+          region: process.env.AWS_REGION!,
           credentials: {
-            accessKeyId: process.env.S3_ACCESS_KEY!,
-            secretAccessKey: process.env.S3_SECRET_KEY!
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
           }
         });
         this.bucket = process.env.S3_BUCKET!;
@@ -45,6 +45,11 @@ export class S3Service {
       ContentType: contentType,
       ACL: 'public-read'
     }));
-    return `https://${this.bucket}.s3.${process.env.S3_REGION}.amazonaws.com/${key}`;
+    return `https://${this.bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+  }
+
+  // Alias for compatibility with existing code
+  async upload(key: string, body: Buffer, contentType: string) {
+    return this.uploadBuffer(key, body, contentType);
   }
 }

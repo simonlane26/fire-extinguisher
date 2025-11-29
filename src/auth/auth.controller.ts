@@ -7,6 +7,7 @@ import { Public } from './decorators/public.decorator';
 import { CurrentUser, CurrentUserData } from './decorators/current-user.decorator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../storage/s3.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -19,6 +20,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly prisma: PrismaService,
+    private readonly s3: S3Service,
   ) {}
 
   @Public()
@@ -211,30 +213,45 @@ export class AuthController {
 
     const tenantId = user.tenantId;
 
-    // Save to local uploads directory
-    const uploadsDir = path.join(process.cwd(), 'uploads', 'logos', tenantId);
+    // Try S3 upload first, fallback to local storage if S3 not configured
+    try {
+      // Upload to S3
+      const key = `logos/${tenantId}/${Date.now()}-${file.originalname}`;
+      const url = await this.s3.upload(key, file.buffer, file.mimetype);
 
-    // Create directory if it doesn't exist
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+      return {
+        success: true,
+        url,
+      };
+    } catch (s3Error) {
+      // S3 not configured, fallback to local storage
+      this.prisma['$log']?.warn?.(`S3 upload failed, using local storage: ${s3Error.message}`);
+
+      // Save to local uploads directory
+      const uploadsDir = path.join(process.cwd(), 'uploads', 'logos', tenantId);
+
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const ext = path.extname(file.originalname);
+      const filename = `${timestamp}${ext}`;
+      const filepath = path.join(uploadsDir, filename);
+
+      // Write file to disk
+      fs.writeFileSync(filepath, file.buffer);
+
+      // Construct URL for accessing the file
+      // The URL will be served by the static assets middleware in main.ts
+      const url = `/uploads/logos/${tenantId}/${filename}`;
+
+      return {
+        success: true,
+        url,
+      };
     }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
-    const filename = `${timestamp}${ext}`;
-    const filepath = path.join(uploadsDir, filename);
-
-    // Write file to disk
-    fs.writeFileSync(filepath, file.buffer);
-
-    // Construct URL for accessing the file
-    // The URL will be served by the static assets middleware in main.ts
-    const url = `/uploads/logos/${tenantId}/${filename}`;
-
-    return {
-      success: true,
-      url,
-    };
   }
 }
