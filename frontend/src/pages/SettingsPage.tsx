@@ -184,7 +184,9 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
             </div>
           </div>
           <div className="hidden gap-2 md:flex">
-            <span className="rounded bg-white/20 px-2 py-0.5 text-xs">Trial</span>
+            <span className="rounded bg-white/20 px-2 py-0.5 text-xs capitalize">
+              {tenant.subscriptionPlan}
+            </span>
             <span className="rounded bg-white/20 px-2 py-0.5 text-xs">Admin</span>
           </div>
         </div>
