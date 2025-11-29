@@ -9,11 +9,13 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { TenantGuard } from './tenant.guard';
 import { PrismaModule } from '../prisma/prisma.module';
 import { EmailModule } from '../email/email.module';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [
     PrismaModule,
     EmailModule,
+    StorageModule,
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
