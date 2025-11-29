@@ -39,9 +39,13 @@ async function bootstrap() {
   // Exclude static asset paths from the prefix
   app.setGlobalPrefix('api/v1', {
     exclude: [
-      '/',                    // root
-      '/assets/*path',        // frontend static assets (wildcard: *before param name)
-      '/uploads/*path',       // uploaded files (wildcard: *before param name)
+      '/',                           // root
+      '/assets/*path',               // frontend static assets (wildcard: *before param name)
+      '/uploads/*path',              // uploaded files (wildcard: *before param name)
+      '/privacy-policy.html',        // policy pages
+      '/terms-of-service.html',
+      '/cookie-policy.html',
+      '/*.html',                     // all HTML files
     ],
   });
 
@@ -78,28 +82,13 @@ async function bootstrap() {
   // Global Exception Filter for error handling
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Global Validation Pipe with detailed error messages
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-    }),
-  );
-
-  // Global JWT Authentication (routes must use @Public() to opt-out)
-  const reflector = app.get(Reflector);
-  app.useGlobalGuards(new JwtAuthGuard(reflector));
-
-  // Serve frontend static files in production (after all middleware/guards)
+  // Serve frontend static files in production BEFORE guards
+  // This ensures static assets and HTML files are served without authentication
   if (process.env.NODE_ENV === 'production') {
     const frontendPath = join(process.cwd(), 'frontend', 'dist');
     logger.log(`📦 Serving frontend from: ${frontendPath}`);
 
-    // Serve static assets (JS/CSS/images) with proper caching
+    // Serve static assets (JS/CSS/images/HTML) with proper caching
     app.useStaticAssets(frontendPath, {
       index: false, // Don't auto-serve index.html for root
     });
@@ -127,6 +116,23 @@ async function bootstrap() {
       return res.sendFile(join(frontendPath, 'index.html'));
     });
   }
+
+  // Global Validation Pipe with detailed error messages
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
+
+  // Global JWT Authentication (routes must use @Public() to opt-out)
+  // Static files are already served above, so this only affects API routes
+  const reflector = app.get(Reflector);
+  app.useGlobalGuards(new JwtAuthGuard(reflector));
   const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
   const HOST = process.env.HOST || '0.0.0.0';
 
