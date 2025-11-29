@@ -5,6 +5,7 @@ import path from 'path';
 export default defineConfig({
   root: path.resolve(__dirname),
   plugins: [react()],
+  publicDir: 'public', // Copy public folder contents to dist during build
   build: {
     // Ensure proper source maps and no aggressive tree-shaking
     sourcemap: false,
