@@ -225,6 +225,24 @@ export async function updateUserRole(role: string): Promise<{ success: boolean; 
   return res.json();
 }
 
+export async function createUser(data: { name: string; email: string; role: string; status?: string }): Promise<any> {
+  const res = await fetch(`${API_BASE}/auth/users`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to create user');
+  }
+
+  return res.json();
+}
+
 export async function getUsers(): Promise<any[]> {
   const res = await fetch(`${API_BASE}/auth/users`, {
     method: 'GET',

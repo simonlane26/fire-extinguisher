@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { User, RoleKey } from '../types';
+import { createUser } from '../lib/api';
 
 type Props = {
   open: boolean;
@@ -30,22 +31,28 @@ export default function AddUserModal({
     }
     setSaving(true);
 
-    const newUser: User = {
-      id: `user_${Date.now()}`,
-      name: name.trim(),
-      email: email.trim(),
-      role,
-      status,
-      lastLogin: 'Never',
-      createdAt: new Date().toISOString().split('T')[0],
-      phone: '',
-    };
+    try {
+      // Call API to create user in database
+      const newUser = await createUser({
+        name: name.trim(),
+        email: email.trim(),
+        role,
+        status,
+      });
 
-    // (Optional) send invite email here
-    // await fetch('/api/invite', { method:'POST', body: JSON.stringify({email}) });
+      onCreate(newUser);
 
-    onCreate(newUser);
-    setSaving(false);
+      // Reset form
+      setName('');
+      setEmail('');
+      setRole('viewer');
+      setStatus('active');
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create user');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

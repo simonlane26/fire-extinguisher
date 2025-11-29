@@ -255,6 +255,65 @@ export class AuthController {
     }
   }
 
+  @Post('users')
+  @UseGuards(JwtAuthGuard)
+  async createUser(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Body() body: { name: string; email: string; role: string; status?: string },
+  ) {
+    // Only admins and super_admins can create users
+    if (!['admin', 'super_admin'].includes(currentUser.role)) {
+      throw new ForbiddenException('Only admins can create users');
+    }
+
+    const { name, email, role, status = 'active' } = body;
+
+    // Validate the role
+    const validRoles = ['super_admin', 'admin', 'manager', 'inspector', 'viewer'];
+    if (!validRoles.includes(role)) {
+      throw new BadRequestException('Invalid role');
+    }
+
+    // Check if email already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('Email already in use');
+    }
+
+    // Create a temporary password (user should reset it via email)
+    const tempPassword = Math.random().toString(36).slice(-12);
+    const bcrypt = require('bcrypt');
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    // Create the user
+    const newUser = await this.prisma.user.create({
+      data: {
+        tenantId: currentUser.tenantId,
+        name,
+        email,
+        passwordHash,
+        role,
+        status,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    // TODO: Send invitation email with password reset link
+    // For now, we just create the user
+
+    return newUser;
+  }
+
   @Get('users')
   @UseGuards(JwtAuthGuard)
   async getUsers(@CurrentUser() currentUser: CurrentUserData) {
