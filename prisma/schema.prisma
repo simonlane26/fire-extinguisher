@@ -15,6 +15,8 @@ model Tenant {
   companyName          String
   subdomain            String            @unique
   logoUrl              String?
+  primaryColor         String            @default("#7c3aed")
+  secondaryColor       String            @default("#5b21b6")
   contactEmail         String?
   stripeCustomerId     String?           @unique
   stripeSubscriptionId String?           @unique
