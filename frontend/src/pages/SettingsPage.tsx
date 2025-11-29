@@ -3,6 +3,7 @@ import type { Tenant } from '../types';
 import { extractAverageColor } from '../utils/extractAccent';
 import { Upload, X, Image as ImageIcon, Palette } from 'lucide-react';
 import NotificationSettings from '../components/NotificationSettings';
+import { uploadLogo } from '../lib/api';
 
 type Props = {
   tenant: Tenant;
@@ -85,6 +86,7 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
       return;
     }
 
+    // Create preview URL for immediate display
     const objectUrl = URL.createObjectURL(file);
     setLogoUrl(objectUrl);
 
@@ -100,6 +102,19 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
       if (accent) setPrimary(accent);
     } catch {
       // ignore extraction failures silently
+    }
+
+    // Upload to server and get permanent URL
+    try {
+      setBusy(true);
+      const result = await uploadLogo(file);
+      setLogoUrl(result.url); // Replace blob URL with permanent URL
+      URL.revokeObjectURL(objectUrl); // Clean up blob URL
+      setBusy(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload logo');
+      setBusy(false);
+      // Keep the preview URL on error so user can see what they selected
     }
   }
 

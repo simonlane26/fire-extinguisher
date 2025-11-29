@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Body, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Patch, UseInterceptors, UploadedFile, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -6,12 +7,18 @@ import { Public } from './decorators/public.decorator';
 import { CurrentUser, CurrentUserData } from './decorators/current-user.decorator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
+
+const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly prisma: PrismaService,
+    private readonly s3: S3Service,
   ) {}
 
   @Public()
@@ -152,6 +159,65 @@ export class AuthController {
         tenantId: updatedUser.tenantId,
         tenant: updatedUser.tenant,
       },
+    };
+  }
+
+  @Post('upload-logo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file', {
+    limits: {
+      fileSize: MAX_LOGO_SIZE,
+    },
+    fileFilter: (req, file, callback) => {
+      // Validate MIME type
+      if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+        return callback(
+          new BadRequestException(
+            `Invalid file type. Only ${ALLOWED_EXTENSIONS.join(', ')} files are allowed.`
+          ),
+          false
+        );
+      }
+
+      // Validate file extension
+      const ext = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        return callback(
+          new BadRequestException(
+            `Invalid file extension. Only ${ALLOWED_EXTENSIONS.join(', ')} files are allowed.`
+          ),
+          false
+        );
+      }
+
+      callback(null, true);
+    },
+  }))
+  async uploadLogo(
+    @CurrentUser() user: CurrentUserData,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    // Validate file was uploaded
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // Double-check file size
+    if (file.size > MAX_LOGO_SIZE) {
+      throw new PayloadTooLargeException(
+        `File size exceeds maximum allowed size of ${MAX_LOGO_SIZE / 1024 / 1024}MB`
+      );
+    }
+
+    const tenantId = user.tenantId;
+
+    // Upload to S3
+    const key = `logos/${tenantId}/${Date.now()}-${file.originalname}`;
+    const uploadResult = await this.s3.upload(key, file.buffer, file.mimetype);
+
+    return {
+      success: true,
+      url: uploadResult.url,
     };
   }
 }

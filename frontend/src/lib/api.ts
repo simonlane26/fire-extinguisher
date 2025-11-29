@@ -253,6 +253,31 @@ export async function updateTenantSettings(data: {
   return res.json();
 }
 
+export async function uploadLogo(file: File): Promise<{ success: boolean; url: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_BASE}/auth/upload-logo`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      // Don't set Content-Type - let browser set it with boundary for multipart/form-data
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    try {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Failed to upload logo');
+    } catch (parseError) {
+      throw new Error('Failed to upload logo');
+    }
+  }
+
+  return res.json();
+}
+
 /* ------------------------------ Extinguishers ----------------------------- */
 
 /** GET /extinguishers (scoped by authenticated user's tenant) */
