@@ -8,12 +8,12 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-gray-200 bg-white">
+    <footer className="mt-auto bg-white border-t border-gray-200">
       <div className="px-6 py-8 mx-auto max-w-7xl">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-1">
-            <h3 className="mb-3 text-lg font-semibold text-gray-900">Fireexcheck</h3>
+            <h3 className="mb-3 text-lg font-semibold text-gray-900">Firexcheck</h3>
             <p className="text-sm text-gray-600">
               Professional fire extinguisher management system. Keep your premises safe and compliant.
             </p>
@@ -174,7 +174,7 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
         <div className="pt-6 mt-8 border-t border-gray-200">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <p className="text-sm text-gray-600">
-              © {currentYear} Fireexcheck. All rights reserved.
+              © {currentYear} Firexcheck. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <span>GDPR Compliant</span>
