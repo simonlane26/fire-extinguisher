@@ -74,7 +74,7 @@ class NotificationService {
    */
   private async fetchPublicKey(): Promise<void> {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_BASE_URL}/notifications/public-key`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -249,7 +249,7 @@ class NotificationService {
    */
   async sendTestNotification(): Promise<boolean> {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_BASE_URL}/notifications/test`, {
         method: 'POST',
         headers: {
@@ -279,7 +279,7 @@ class NotificationService {
     deviceName?: string
   ): Promise<void> {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const subscriptionData = subscription.toJSON();
 
       const response = await fetch(`${API_BASE_URL}/notifications/subscribe`, {
@@ -310,7 +310,7 @@ class NotificationService {
    */
   private async removeSubscriptionFromBackend(endpoint: string): Promise<void> {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_BASE_URL}/notifications/subscribe`, {
         method: 'DELETE',
         headers: {
