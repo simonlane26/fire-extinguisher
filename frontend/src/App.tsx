@@ -19,6 +19,7 @@ import {
   Search,
   Filter,
   X,
+  LogOut,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
@@ -234,7 +235,7 @@ const FireExtinguisherApp: React.FC = () => {
   if (!tctx || !actx) return null;
 
   const { tenant, updateTenant } = tctx;
-  const { currentUser, setCurrentUser, hasPermission } = actx;
+  const { currentUser, setCurrentUser, hasPermission, logout } = actx;
 
   const [activeTab, setActiveTab] =
     useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing'>('overview');
@@ -637,6 +638,15 @@ const FireExtinguisherApp: React.FC = () => {
           {currentUser.name} ({USER_ROLES[currentUser.role]?.name})
         </span>
       </div>
+      <button
+        type="button"
+        onClick={logout}
+        className="flex items-center px-3 py-1 space-x-2 text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30"
+        title="Log out"
+      >
+        <LogOut size={16} />
+        <span className="text-sm font-medium">Log Out</span>
+      </button>
     </div>
   </div>
 </header>
