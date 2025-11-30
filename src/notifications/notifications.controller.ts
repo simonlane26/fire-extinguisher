@@ -13,8 +13,11 @@ export class NotificationsController {
   @Public()
   @Get('public-key')
   getPublicKey() {
+    const key = this.notificationsService.getPublicKey();
+    console.log('🔑 Controller: getPublicKey endpoint called, service returned:', key ? key.substring(0, 20) + '...' : 'EMPTY');
+    console.log('🔑 ENV check:', process.env.VAPID_PUBLIC_KEY ? process.env.VAPID_PUBLIC_KEY.substring(0, 20) + '...' : 'NOT SET');
     return {
-      publicKey: this.notificationsService.getPublicKey()
+      publicKey: key || process.env.VAPID_PUBLIC_KEY || ''
     };
   }
 
