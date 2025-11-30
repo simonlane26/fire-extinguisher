@@ -318,6 +318,7 @@ export class NotificationsService {
 
   // Get public VAPID key for frontend
   getPublicKey(): string {
+    this.logger.log(`getPublicKey() called, returning: ${this.publicKey ? this.publicKey.substring(0, 20) + '...' : 'EMPTY'}`);
     return this.publicKey;
   }
 }
