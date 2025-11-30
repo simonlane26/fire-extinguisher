@@ -38,14 +38,22 @@ export class S3Service {
       throw new Error('S3 service is not configured');
     }
 
-    await this.s3.send(new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-      ACL: 'public-read'
-    }));
-    return `https://${this.bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    try {
+      await this.s3.send(new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        // ACL removed - bucket policy handles public access
+      }));
+
+      // Return the public S3 URL
+      const region = process.env.AWS_REGION;
+      return `https://${this.bucket}.s3.${region}.amazonaws.com/${key}`;
+    } catch (error) {
+      this.logger.error(`Failed to upload to S3: ${error.message}`);
+      throw new Error(`S3 upload failed: ${error.message}`);
+    }
   }
 
   // Alias for compatibility with existing code
