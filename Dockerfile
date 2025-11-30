@@ -70,7 +70,8 @@ RUN npx prisma generate
 # Copy application code
 COPY . .
 
-# Build the backend
+# Build the backend (clean build to ensure latest code)
+RUN rm -rf dist
 RUN npm run build:backend
 
 # Build the frontend
