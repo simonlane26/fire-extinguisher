@@ -78,6 +78,14 @@ WORKDIR /app/frontend
 RUN npm ci
 RUN npm run build
 
+# Verify frontend build output
+RUN echo "=== Frontend build verification ===" && \
+    ls -la dist/ && \
+    echo "=== Assets directory ===" && \
+    ls -la dist/assets/ || echo "No assets directory found" && \
+    echo "=== HTML files ===" && \
+    ls -la dist/*.html || echo "No HTML files found"
+
 # Return to app directory
 WORKDIR /app
 
