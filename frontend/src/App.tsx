@@ -1037,12 +1037,12 @@ const FireExtinguisherApp: React.FC = () => {
         )}
 
         {/* Billing tab */}
-        {activeTab === 'billing' && (
+        {activeTab === 'billing' && hasPermission('VIEW_BILLING') && (
           <BillingPage tenant={tenant} primaryColor={tenant.primaryColor} />
         )}
 
         {/* Settings tab */}
-        {activeTab === 'settings' && (
+        {activeTab === 'settings' && hasPermission('MANAGE_SETTINGS') && (
           <SettingsPage tenant={tenant} updateTenant={updateTenant} />
         )}
 
