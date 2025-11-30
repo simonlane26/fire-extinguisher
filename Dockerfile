@@ -95,6 +95,7 @@ RUN rm -f .env
 # Set environment variables
 ENV NODE_ENV=production
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+# Push notifications configured via Railway environment variables
 
 # Expose port
 EXPOSE 3000
