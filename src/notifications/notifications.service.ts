@@ -5,6 +5,7 @@ import * as webpush from 'web-push';
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
+  private publicKey: string = '';
 
   constructor(private prisma: PrismaService) {
     // Configure web-push with VAPID keys
@@ -21,6 +22,9 @@ export class NotificationsService {
       this.logger.warn('⚠️  VAPID keys not configured. Push notifications will not work.');
       return;
     }
+
+    // Store public key for frontend
+    this.publicKey = vapidPublicKey;
 
     try {
       webpush.setVapidDetails(
@@ -314,6 +318,6 @@ export class NotificationsService {
 
   // Get public VAPID key for frontend
   getPublicKey(): string {
-    return process.env.VAPID_PUBLIC_KEY || '';
+    return this.publicKey;
   }
 }
