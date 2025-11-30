@@ -216,14 +216,19 @@ export class AuthController {
     // Try S3 upload first, fallback to local storage if S3 not configured
     try {
       // Upload to S3
+      console.log('🚀 Attempting S3 upload...');
       const key = `logos/${tenantId}/${Date.now()}-${file.originalname}`;
       const url = await this.s3.upload(key, file.buffer, file.mimetype);
+      console.log('✅ S3 upload successful:', url);
 
       return {
         success: true,
         url,
       };
     } catch (s3Error) {
+      console.error('❌ S3 upload failed, using local storage:');
+      console.error('Error:', s3Error);
+      console.error('Message:', s3Error.message);
       // S3 not configured, fallback to local storage
       this.prisma['$log']?.warn?.(`S3 upload failed, using local storage: ${s3Error.message}`);
 
