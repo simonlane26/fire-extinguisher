@@ -13,7 +13,7 @@ export class NotificationsService {
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
     const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:noreply@example.com';
 
-    // Debug logging
+    // Log VAPID configuration
     this.logger.log(`VAPID_PUBLIC_KEY: ${vapidPublicKey ? vapidPublicKey.substring(0, 20) + '...' : 'NOT SET'}`);
     this.logger.log(`VAPID_PRIVATE_KEY: ${vapidPrivateKey ? vapidPrivateKey.substring(0, 10) + '...' : 'NOT SET'}`);
     this.logger.log(`VAPID_SUBJECT: ${vapidSubject}`);
