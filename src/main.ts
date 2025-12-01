@@ -27,7 +27,10 @@ async function bootstrap() {
 
     await prisma.$executeRawUnsafe(`
       ALTER TABLE "InspectionPhoto"
-      ADD COLUMN IF NOT EXISTS "inspectionId" TEXT;
+      ADD COLUMN IF NOT EXISTS "inspectionId" TEXT,
+      ADD COLUMN IF NOT EXISTS "caption" TEXT,
+      ADD COLUMN IF NOT EXISTS "uploadedBy" TEXT,
+      ADD COLUMN IF NOT EXISTS "findings" JSONB;
     `);
 
     logger.log('✅ Database schema check complete');
