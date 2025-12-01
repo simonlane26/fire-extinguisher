@@ -1,4 +1,5 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, Res, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportsService } from './reports.service';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
@@ -93,6 +94,147 @@ export class ReportsController {
     });
 
     return { report, pdfUrl };
+  }
+
+  @Get('extinguisher/:id/history')
+  async getExtinguisherHistory(
+    @CurrentUser() user: CurrentUserData,
+    @Param('id') extinguisherId: string,
+  ) {
+    const tenantId = user.tenantId;
+
+    // Get extinguisher with all related data
+    const extinguisher = await this.prisma.extinguisher.findFirst({
+      where: { id: extinguisherId, tenantId },
+      include: {
+        inspections: {
+          orderBy: { serviceDate: 'desc' },
+        },
+        site: true,
+      },
+    });
+
+    if (!extinguisher) {
+      throw new Error('Extinguisher not found');
+    }
+
+    // Get photos related to this extinguisher
+    const photos = await this.prisma.inspectionPhoto.findMany({
+      where: { extinguisherId, tenantId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Get parts usage history
+    const partsUsage = await this.prisma.partUsage.findMany({
+      where: { extinguisherId, tenantId },
+      include: {
+        inventoryItem: true,
+      },
+      orderBy: { usedAt: 'desc' },
+    });
+
+    return {
+      extinguisher,
+      inspections: extinguisher.inspections,
+      photos,
+      partsUsage,
+      totalInspections: extinguisher.inspections.length,
+      totalPhotos: photos.length,
+      totalPartsReplaced: partsUsage.length,
+    };
+  }
+
+  @Post('extinguisher/:id/history-pdf')
+  async generateExtinguisherHistoryPDF(
+    @CurrentUser() user: CurrentUserData,
+    @Param('id') extinguisherId: string,
+  ) {
+    const tenantId = user.tenantId;
+
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+    });
+
+    // Get full history
+    const history = await this.getExtinguisherHistory(user, extinguisherId);
+
+    // Generate comprehensive PDF
+    const pdfUrl = await this.reports.buildExtinguisherHistoryReport({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      extinguisher: history.extinguisher,
+      inspections: history.inspections,
+      photos: history.photos,
+      partsUsage: history.partsUsage,
+    });
+
+    return { pdfUrl };
+  }
+
+  @Post('extinguisher/:id/certificate')
+  async generateInspectionCertificate(
+    @CurrentUser() user: CurrentUserData,
+    @Param('id') extinguisherId: string,
+    @Body() body: { inspectionId?: string },
+  ) {
+    const tenantId = user.tenantId;
+
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+    });
+
+    const extinguisher = await this.prisma.extinguisher.findFirst({
+      where: { id: extinguisherId, tenantId },
+      include: {
+        site: true,
+      },
+    });
+
+    if (!extinguisher) {
+      throw new Error('Extinguisher not found');
+    }
+
+    // Get specific inspection or latest one
+    const inspection = body.inspectionId
+      ? await this.prisma.inspection.findFirst({
+          where: { id: body.inspectionId, extinguisherId, tenantId },
+        })
+      : await this.prisma.inspection.findFirst({
+          where: { extinguisherId, tenantId },
+          orderBy: { serviceDate: 'desc' },
+        });
+
+    if (!inspection) {
+      throw new Error('No inspection found');
+    }
+
+    const pdfUrl = await this.reports.buildComplianceCertificate({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      extinguisher,
+      inspection,
+    });
+
+    return { pdfUrl };
+  }
+
+  @Get('extinguisher/:id/export-excel')
+  async exportExtinguisherHistoryExcel(
+    @CurrentUser() user: CurrentUserData,
+    @Param('id') extinguisherId: string,
+    @Res() res: Response,
+  ) {
+    // Get full history
+    const history = await this.getExtinguisherHistory(user, extinguisherId);
+
+    // Generate Excel file
+    const excelBuffer = await this.reports.buildExtinguisherHistoryExcel({
+      extinguisher: history.extinguisher,
+      inspections: history.inspections,
+      partsUsage: history.partsUsage,
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=extinguisher-${extinguisherId}-history.xlsx`);
+    res.send(excelBuffer);
   }
 }
 

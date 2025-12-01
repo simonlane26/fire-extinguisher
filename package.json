@@ -37,6 +37,7 @@
     "class-validator": "^0.14.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
+    "exceljs": "^4.4.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.544.0",
     "multer": "^2.0.2",
