@@ -17,12 +17,12 @@ fi
 export PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 echo "PUPPETEER_EXECUTABLE_PATH set to: $PUPPETEER_EXECUTABLE_PATH"
 
-# Sync database schema with Prisma schema
-echo "=== Syncing database schema ==="
-npx prisma db push --accept-data-loss --skip-generate || {
-    echo "⚠️  Database sync failed, but continuing anyway..."
+# Run database migrations
+echo "=== Running database migrations ==="
+npx prisma migrate deploy || {
+    echo "⚠️  Migration failed, but continuing anyway..."
 }
-echo "=== Database sync complete ==="
+echo "=== Migrations complete ==="
 
 # Start the application
 echo "=== Starting application ==="
