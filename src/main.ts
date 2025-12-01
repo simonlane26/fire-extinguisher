@@ -11,6 +11,26 @@ import * as bodyParser from 'body-parser';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
+  // Ensure database schema is up to date
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+
+    logger.log('🔧 Checking database schema...');
+
+    // Add missing columns to PushSubscription table if they don't exist
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "PushSubscription"
+      ADD COLUMN IF NOT EXISTS "deviceName" TEXT,
+      ADD COLUMN IF NOT EXISTS "lastUsed" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    `);
+
+    logger.log('✅ Database schema check complete');
+    await prisma.$disconnect();
+  } catch (error) {
+    logger.warn('⚠️  Database schema check failed:', error.message);
+  }
+
   // Debug: Log environment variables (excluding sensitive ones)
   console.log('🔍 Environment check:');
   console.log('NODE_ENV:', process.env.NODE_ENV);
