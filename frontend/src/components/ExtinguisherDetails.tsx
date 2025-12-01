@@ -97,14 +97,14 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
     }
   };
 
-  const handleDownloadExcel = () => {
+  const handleDownloadExcel = async () => {
     try {
       setLoadingReport('excel');
-      downloadExtinguisherExcel(data.id);
+      await downloadExtinguisherExcel(data.id);
     } catch (error: any) {
       alert(error.message || 'Failed to download Excel file');
     } finally {
-      setTimeout(() => setLoadingReport(null), 1000);
+      setLoadingReport(null);
     }
   };
 

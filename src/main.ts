@@ -18,11 +18,16 @@ async function bootstrap() {
 
     logger.log('🔧 Checking database schema...');
 
-    // Add missing columns to PushSubscription table if they don't exist
+    // Add missing columns to tables if they don't exist
     await prisma.$executeRawUnsafe(`
       ALTER TABLE "PushSubscription"
       ADD COLUMN IF NOT EXISTS "deviceName" TEXT,
       ADD COLUMN IF NOT EXISTS "lastUsed" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "InspectionPhoto"
+      ADD COLUMN IF NOT EXISTS "inspectionId" TEXT;
     `);
 
     logger.log('✅ Database schema check complete');

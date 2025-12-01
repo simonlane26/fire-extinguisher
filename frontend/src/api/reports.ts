@@ -81,18 +81,28 @@ export async function generateComplianceCertificate(extinguisherId: string, insp
 }
 
 // Download Excel export
-export function downloadExtinguisherExcel(extinguisherId: string) {
+export async function downloadExtinguisherExcel(extinguisherId: string) {
   const url = `${API_URL}/reports/extinguisher/${extinguisherId}/export-excel`;
-  const token = localStorage.getItem('auth_token');
 
-  // Create a temporary link and click it to trigger download
-  const link = document.createElement('a');
-  link.href = url;
-  if (token) {
-    // For download, we need to pass the token in the URL or use a different method
-    // Since we can't set headers on a link, we'll open in a new tab with auth
-    window.open(url, '_blank');
-  } else {
-    link.click();
+  // Use fetch to download with proper authentication headers
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders()
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Excel export failed: ${res.status} ${text}`);
   }
+
+  // Convert response to blob and trigger download
+  const blob = await res.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = blobUrl;
+  link.download = `extinguisher-${extinguisherId}-history.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(blobUrl);
 }
