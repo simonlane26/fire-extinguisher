@@ -116,8 +116,14 @@ const EditExtinguisherModal: React.FC<Props> = ({
   const handleSave = async () => {
     setError(null);
 
+    // Validate required fields
     if (!form.location || !form.building || !form.type) {
       setError('Please fill Location, Building and Type.');
+      return;
+    }
+
+    if (!form.weight || !form.status || !form.condition || !form.serviceType || !form.inspector) {
+      setError('Please fill Weight, Status, Condition, Service Type and Inspector.');
       return;
     }
 
@@ -248,12 +254,13 @@ const EditExtinguisherModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Weight</label>
+              <label className="block mb-1 text-sm text-gray-600">Weight *</label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 placeholder="e.g., 2kg, 6kg, 9kg"
                 value={form.weight || ''}
                 onChange={(e) => handleChange('weight', e.target.value)}
+                required
               />
             </div>
           </div>
@@ -289,11 +296,12 @@ const EditExtinguisherModal: React.FC<Props> = ({
           {/* Status / Condition / Service Type / Inspector */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Status</label>
+              <label className="block mb-1 text-sm text-gray-600">Status *</label>
               <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 value={form.status || 'Active'}
                 onChange={(e) => handleChange('status', e.target.value)}
+                required
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -304,11 +312,12 @@ const EditExtinguisherModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Condition</label>
+              <label className="block mb-1 text-sm text-gray-600">Condition *</label>
               <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 value={form.condition || 'Good'}
                 onChange={(e) => handleChange('condition', e.target.value)}
+                required
               >
                 {CONDITIONS.map((c) => (
                   <option key={c} value={c}>
@@ -319,11 +328,12 @@ const EditExtinguisherModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Service Type</label>
+              <label className="block mb-1 text-sm text-gray-600">Service Type *</label>
               <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 value={form.serviceType || 'Annual Inspection'}
                 onChange={(e) => handleChange('serviceType', e.target.value)}
+                required
               >
                 {SERVICE_TYPES.map((st) => (
                   <option key={st} value={st}>
@@ -334,12 +344,13 @@ const EditExtinguisherModal: React.FC<Props> = ({
             </div>
 
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Inspector</label>
+              <label className="block mb-1 text-sm text-gray-600">Inspector *</label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 placeholder="Inspector name"
                 value={form.inspector || ''}
                 onChange={(e) => handleChange('inspector', e.target.value)}
+                required
               />
             </div>
           </div>
