@@ -21,21 +21,22 @@ export class ExtinguishersPublicController {
     }
 
     const now = new Date();
-    const lastInspection = extinguisher.lastInspection ? new Date(extinguisher.lastInspection) : null;
+    // Use lastMaintenance for annual inspection/service (not lastInspection which is 5-year extended)
+    const lastService = extinguisher.lastMaintenance ? new Date(extinguisher.lastMaintenance) : null;
 
-    // Calculate next inspection as 1 year from last inspection (annual check)
-    const nextInspection = lastInspection ? new Date(lastInspection) : null;
-    if (nextInspection) {
-      nextInspection.setFullYear(nextInspection.getFullYear() + 1);
+    // Calculate next service as 1 year from last service (annual check)
+    const nextService = lastService ? new Date(lastService) : null;
+    if (nextService) {
+      nextService.setFullYear(nextService.getFullYear() + 1);
     }
 
     // Calculate compliance status
-    const isOverdue = nextInspection && nextInspection < now;
-    const daysUntilDue = nextInspection
-      ? Math.ceil((nextInspection.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    const isOverdue = nextService && nextService < now;
+    const daysUntilDue = nextService
+      ? Math.ceil((nextService.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       : null;
-    const daysSinceInspection = lastInspection
-      ? Math.floor((now.getTime() - lastInspection.getTime()) / (1000 * 60 * 60 * 24))
+    const daysSinceService = lastService
+      ? Math.floor((now.getTime() - lastService.getTime()) / (1000 * 60 * 60 * 24))
       : null;
 
     // Determine status and message
@@ -63,15 +64,15 @@ export class ExtinguishersPublicController {
       capacity: extinguisher.capacity,
       status: extinguisher.status,
       condition: extinguisher.condition,
-      lastInspection: lastInspection ? {
-        date: lastInspection.toISOString().split('T')[0],
-        daysAgo: daysSinceInspection,
-        formattedDate: this.formatDate(lastInspection),
+      lastInspection: lastService ? {
+        date: lastService.toISOString().split('T')[0],
+        daysAgo: daysSinceService,
+        formattedDate: this.formatDate(lastService),
       } : null,
-      nextInspection: nextInspection ? {
-        date: nextInspection.toISOString().split('T')[0],
+      nextInspection: nextService ? {
+        date: nextService.toISOString().split('T')[0],
         daysUntil: daysUntilDue,
-        formattedDate: this.formatDate(nextInspection),
+        formattedDate: this.formatDate(nextService),
       } : null,
       complianceStatus: {
         status,
