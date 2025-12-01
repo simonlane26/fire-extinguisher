@@ -46,3 +46,53 @@ export async function generateReport(payload: GenerateReportPayload) {
   }
   return (await res.json()) as { report: any; pdfUrl: string };
 }
+
+// Generate comprehensive extinguisher history PDF
+export async function generateExtinguisherHistoryPDF(extinguisherId: string) {
+  const res = await fetch(`${API_URL}/reports/extinguisher/${extinguisherId}/history-pdf`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`History report generation failed: ${res.status} ${text}`);
+  }
+  return (await res.json()) as { pdfUrl: string };
+}
+
+// Generate compliance certificate PDF
+export async function generateComplianceCertificate(extinguisherId: string, inspectionId?: string) {
+  const res = await fetch(`${API_URL}/reports/extinguisher/${extinguisherId}/certificate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ inspectionId }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Certificate generation failed: ${res.status} ${text}`);
+  }
+  return (await res.json()) as { pdfUrl: string };
+}
+
+// Download Excel export
+export function downloadExtinguisherExcel(extinguisherId: string) {
+  const url = `${API_URL}/reports/extinguisher/${extinguisherId}/export-excel`;
+  const token = localStorage.getItem('auth_token');
+
+  // Create a temporary link and click it to trigger download
+  const link = document.createElement('a');
+  link.href = url;
+  if (token) {
+    // For download, we need to pass the token in the URL or use a different method
+    // Since we can't set headers on a link, we'll open in a new tab with auth
+    window.open(url, '_blank');
+  } else {
+    link.click();
+  }
+}

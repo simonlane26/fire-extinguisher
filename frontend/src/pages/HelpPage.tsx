@@ -60,6 +60,7 @@ export default function HelpPage() {
       features: [
         'Generate unique QR codes for each extinguisher',
         'Bulk generate QR codes for multiple extinguishers',
+        'Filter extinguishers by building and create QR codes',
         'Download QR codes as images or print them',
         'Scan QR codes to quickly access extinguisher details',
         'Public verification page for anyone to check extinguisher status',
@@ -212,14 +213,14 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-6xl p-6 mx-auto">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
           <HelpCircle className="w-8 h-8 text-blue-600" />
           <h1 className="text-3xl font-bold text-gray-900">Help & Documentation</h1>
         </div>
-        <p className="text-gray-600 text-lg">
+        <p className="text-lg text-gray-600">
           Learn how to use FireXCheck to manage your fire extinguisher inspections and maintenance.
         </p>
       </div>
@@ -271,20 +272,20 @@ export default function HelpPage() {
       {/* Getting Started Section */}
       {activeSection === 'getting-started' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Getting Started</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+            <h2 className="mb-4 text-2xl font-bold text-gray-900">Getting Started</h2>
+            <p className="mb-6 text-gray-600">
               Welcome to FireXCheck! Follow these steps to get started with managing your fire extinguishers.
             </p>
 
             <div className="space-y-6">
               {/* Step 1 */}
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-bold">1</span>
+                <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full">
+                  <span className="font-bold text-blue-600">1</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Add Your First Extinguisher</h3>
+                  <h3 className="mb-1 font-semibold text-gray-900">Add Your First Extinguisher</h3>
                   <p className="text-gray-600">
                     Click the "Add Extinguisher" button on the Overview page. Enter the building name,
                     specific location, extinguisher type, and size. Add optional details like serial number
@@ -295,11 +296,11 @@ export default function HelpPage() {
 
               {/* Step 2 */}
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-bold">2</span>
+                <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full">
+                  <span className="font-bold text-blue-600">2</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Generate QR Codes</h3>
+                  <h3 className="mb-1 font-semibold text-gray-900">Generate QR Codes</h3>
                   <p className="text-gray-600">
                     Go to the QR Codes tab and generate codes for your extinguishers. Print these codes
                     and attach them to the physical extinguishers. Anyone can scan the code to verify
@@ -310,11 +311,11 @@ export default function HelpPage() {
 
               {/* Step 3 */}
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-bold">3</span>
+                <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full">
+                  <span className="font-bold text-blue-600">3</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Record Inspections</h3>
+                  <h3 className="mb-1 font-semibold text-gray-900">Record Inspections</h3>
                   <p className="text-gray-600">
                     Click on an extinguisher to open its details. Update the condition, add inspection notes,
                     and upload photos. Set the next inspection date to receive reminders.
@@ -324,11 +325,11 @@ export default function HelpPage() {
 
               {/* Step 4 */}
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-bold">4</span>
+                <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full">
+                  <span className="font-bold text-blue-600">4</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Generate Reports</h3>
+                  <h3 className="mb-1 font-semibold text-gray-900">Generate Reports</h3>
                   <p className="text-gray-600">
                     Create professional PDF service reports with the "Generate Report" button. Reports
                     include all extinguisher details, inspection history, and photos - perfect for client
@@ -339,11 +340,11 @@ export default function HelpPage() {
 
               {/* Step 5 */}
               <div className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-bold">5</span>
+                <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full">
+                  <span className="font-bold text-blue-600">5</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Enable Notifications</h3>
+                  <h3 className="mb-1 font-semibold text-gray-900">Enable Notifications</h3>
                   <p className="text-gray-600">
                     Go to Settings and enable push notifications. You'll receive alerts for upcoming
                     inspections, status changes, and maintenance reminders so you never miss a service date.
@@ -354,8 +355,8 @@ export default function HelpPage() {
           </div>
 
           {/* Quick Tips */}
-          <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
-            <h3 className="font-semibold text-blue-900 mb-3">Quick Tips</h3>
+          <div className="p-6 border border-blue-200 bg-blue-50 rounded-xl">
+            <h3 className="mb-3 font-semibold text-blue-900">Quick Tips</h3>
             <ul className="space-y-2 text-blue-800">
               <li className="flex items-start gap-2">
                 <Search className="w-5 h-5 mt-0.5 flex-shrink-0" />
@@ -380,21 +381,21 @@ export default function HelpPage() {
 
       {/* Features Section */}
       {activeSection === 'features' && (
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid gap-6 md:grid-cols-2">
           {featureSections.map((section, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+              className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl"
             >
               <div className="flex items-center gap-3 mb-3">
                 {section.icon}
                 <h3 className="text-lg font-semibold text-gray-900">{section.title}</h3>
               </div>
-              <p className="text-gray-600 mb-4">{section.description}</p>
+              <p className="mb-4 text-gray-600">{section.description}</p>
               <ul className="space-y-2">
                 {section.features.map((feature, featureIndex) => (
                   <li key={featureIndex} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-green-500 mt-1">•</span>
+                    <span className="mt-1 text-green-500">•</span>
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -407,8 +408,8 @@ export default function HelpPage() {
       {/* FAQ Section */}
       {activeSection === 'faq' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h2>
+          <div className="p-6 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">Frequently Asked Questions</h2>
             <p className="text-gray-600">
               Find answers to common questions about using FireXCheck.
             </p>
@@ -417,21 +418,21 @@ export default function HelpPage() {
           {faqItems.map((item, index) => (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+              className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
             >
               <button
                 onClick={() => toggleFAQ(index)}
-                className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between w-full p-4 text-left transition-colors hover:bg-gray-50"
               >
-                <span className="font-medium text-gray-900 pr-4">{item.question}</span>
+                <span className="pr-4 font-medium text-gray-900">{item.question}</span>
                 {expandedFAQ === index ? (
-                  <ChevronUp className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <ChevronUp className="flex-shrink-0 w-5 h-5 text-gray-500" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <ChevronDown className="flex-shrink-0 w-5 h-5 text-gray-500" />
                 )}
               </button>
               {expandedFAQ === index && (
-                <div className="px-4 pb-4 text-gray-600 border-t border-gray-100 pt-3">
+                <div className="px-4 pt-3 pb-4 text-gray-600 border-t border-gray-100">
                   {item.answer}
                 </div>
               )}
@@ -443,25 +444,25 @@ export default function HelpPage() {
       {/* Support Section */}
       {activeSection === 'support' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact Support</h2>
-            <p className="text-gray-600 mb-6">
+          <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+            <h2 className="mb-4 text-2xl font-bold text-gray-900">Contact Support</h2>
+            <p className="mb-6 text-gray-600">
               Need help? Our support team is here to assist you.
             </p>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid gap-6 md:grid-cols-2">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-blue-100 rounded-lg">
                   <Mail className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Email Support</h3>
-                  <p className="text-gray-600 text-sm mb-2">
+                  <h3 className="mb-1 font-semibold text-gray-900">Email Support</h3>
+                  <p className="mb-2 text-sm text-gray-600">
                     For general inquiries and technical support
                   </p>
                   <a
                     href="mailto:support@firexcheck.com"
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+                    className="font-medium text-blue-600 hover:text-blue-700"
                   >
                     support@firexcheck.com
                   </a>
@@ -473,13 +474,13 @@ export default function HelpPage() {
                   <Shield className="w-6 h-6 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Security Issues</h3>
-                  <p className="text-gray-600 text-sm mb-2">
+                  <h3 className="mb-1 font-semibold text-gray-900">Security Issues</h3>
+                  <p className="mb-2 text-sm text-gray-600">
                     Report security vulnerabilities privately
                   </p>
                   <a
                     href="mailto:security@firexcheck.com"
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+                    className="font-medium text-blue-600 hover:text-blue-700"
                   >
                     security@firexcheck.com
                   </a>
@@ -491,15 +492,15 @@ export default function HelpPage() {
                   <Book className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Documentation</h3>
-                  <p className="text-gray-600 text-sm mb-2">
+                  <h3 className="mb-1 font-semibold text-gray-900">Documentation</h3>
+                  <p className="mb-2 text-sm text-gray-600">
                     Browse our full documentation online
                   </p>
                   <a
                     href="https://firexcheck.com/docs"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+                    className="font-medium text-blue-600 hover:text-blue-700"
                   >
                     firexcheck.com/docs
                   </a>
@@ -511,13 +512,13 @@ export default function HelpPage() {
                   <Settings className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Account Issues</h3>
-                  <p className="text-gray-600 text-sm mb-2">
+                  <h3 className="mb-1 font-semibold text-gray-900">Account Issues</h3>
+                  <p className="mb-2 text-sm text-gray-600">
                     For billing and account-related questions
                   </p>
                   <a
                     href="mailto:accounts@firexcheck.com"
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+                    className="font-medium text-blue-600 hover:text-blue-700"
                   >
                     accounts@firexcheck.com
                   </a>
@@ -527,8 +528,8 @@ export default function HelpPage() {
           </div>
 
           {/* Response Times */}
-          <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
-            <h3 className="font-semibold text-gray-900 mb-3">Expected Response Times</h3>
+          <div className="p-6 border border-gray-200 bg-gray-50 rounded-xl">
+            <h3 className="mb-3 font-semibold text-gray-900">Expected Response Times</h3>
             <ul className="space-y-2 text-gray-700">
               <li className="flex items-center justify-between">
                 <span>General Support</span>

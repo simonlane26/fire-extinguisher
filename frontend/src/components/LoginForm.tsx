@@ -39,23 +39,23 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-violet-100 rounded-full mb-4">
+    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-violet-600 to-purple-700">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-2xl">
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-violet-100">
             <Flame className="w-8 h-8 text-violet-600" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Fire Extinguisher Manager</h1>
-          <p className="text-gray-600 mt-2">
+          <p className="mt-2 text-gray-600">
             {isRegister ? 'Create your account' : 'Sign in to your account'}
           </p>
-          <p className="text-sm text-violet-600 font-medium mt-1">Fireexcheck.com</p>
+          <p className="mt-1 text-sm font-medium text-violet-600">Firexcheck.com</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isRegister && (
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-700">
                 Full Name
               </label>
               <input
@@ -71,7 +71,7 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
               Email Address
             </label>
             <input
@@ -93,7 +93,7 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
               {!isRegister && (
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-violet-600 hover:text-violet-700 font-medium"
+                  className="text-xs font-medium text-violet-600 hover:text-violet-700"
                 >
                   Forgot password?
                 </Link>
@@ -110,21 +110,21 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
               required
             />
             {isRegister && (
-              <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
+              <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
             )}
           </div>
 
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4 flex items-start gap-3 shadow-sm animate-shake">
+            <div className="flex items-start gap-3 p-4 border-l-4 border-red-500 rounded-lg shadow-sm bg-red-50 animate-shake">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm font-medium text-red-800">Authentication Failed</p>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setError('')}
-                className="text-red-400 hover:text-red-600 transition-colors flex-shrink-0"
+                className="flex-shrink-0 text-red-400 transition-colors hover:text-red-600"
                 aria-label="Dismiss error"
               >
                 <X className="w-4 h-4" />
@@ -164,7 +164,7 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                     setIsRegister(false);
                     setError('');
                   }}
-                  className="text-violet-600 hover:text-violet-700 font-medium"
+                  className="font-medium text-violet-600 hover:text-violet-700"
                 >
                   Sign in
                 </button>
@@ -174,7 +174,7 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                 New to Fire Extinguisher Manager?{' '}
                 <Link
                   to="/signup"
-                  className="text-violet-600 hover:text-violet-700 font-medium"
+                  className="font-medium text-violet-600 hover:text-violet-700"
                 >
                   Create an account
                 </Link>
@@ -184,8 +184,8 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
         </div>
 
         {!isRegister && (
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium mb-2">Demo Credentials:</p>
+          <div className="p-4 mt-6 border border-blue-200 rounded-lg bg-blue-50">
+            <p className="mb-2 text-sm font-medium text-blue-800">Demo Credentials:</p>
             <p className="text-xs text-blue-700">
               Use the register form to create a new account, or contact your administrator for login credentials.
             </p>

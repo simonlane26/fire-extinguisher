@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Extinguisher } from '../types';
-import { Pencil } from 'lucide-react';
+import { Pencil, FileText, Award, Download } from 'lucide-react';
+import { generateExtinguisherHistoryPDF, generateComplianceCertificate, downloadExtinguisherExcel } from '../api/reports';
 
 type Props = {
   open: boolean;
@@ -56,6 +57,8 @@ const Section: React.FC<{ title: string; className?: string; children?: React.Re
 );
 
 const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColor = '#7c3aed', onEdit }) => {
+  const [loadingReport, setLoadingReport] = useState<string | null>(null);
+
   if (!open || !data) return null;
 
   // Determine if primary color is effectively white
@@ -69,6 +72,41 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
     primaryColor.match(/^rgba?\(255,\s*255,\s*255/);
 
   const effectiveColor = isWhitePrimary ? '#7c3aed' : primaryColor;
+
+  const handleGenerateHistory = async () => {
+    try {
+      setLoadingReport('history');
+      const { pdfUrl } = await generateExtinguisherHistoryPDF(data.id);
+      window.open(pdfUrl, '_blank');
+    } catch (error: any) {
+      alert(error.message || 'Failed to generate history report');
+    } finally {
+      setLoadingReport(null);
+    }
+  };
+
+  const handleGenerateCertificate = async () => {
+    try {
+      setLoadingReport('certificate');
+      const { pdfUrl } = await generateComplianceCertificate(data.id);
+      window.open(pdfUrl, '_blank');
+    } catch (error: any) {
+      alert(error.message || 'Failed to generate certificate');
+    } finally {
+      setLoadingReport(null);
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    try {
+      setLoadingReport('excel');
+      downloadExtinguisherExcel(data.id);
+    } catch (error: any) {
+      alert(error.message || 'Failed to download Excel file');
+    } finally {
+      setTimeout(() => setLoadingReport(null), 1000);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
@@ -141,6 +179,42 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
             <div className="p-3 text-sm text-gray-800 bg-white border border-gray-200 rounded-lg">
               {safe(data.notes)}
             </div>
+          </Section>
+
+          {/* Reports */}
+          <Section title="Generate Reports" className="bg-purple-50">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <button
+                onClick={handleGenerateHistory}
+                disabled={loadingReport !== null}
+                className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+                style={{ backgroundColor: effectiveColor }}
+              >
+                <FileText size={18} />
+                {loadingReport === 'history' ? 'Generating...' : 'Full History PDF'}
+              </button>
+
+              <button
+                onClick={handleGenerateCertificate}
+                disabled={loadingReport !== null}
+                className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-white bg-green-600 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                <Award size={18} />
+                {loadingReport === 'certificate' ? 'Generating...' : 'Certificate'}
+              </button>
+
+              <button
+                onClick={handleDownloadExcel}
+                disabled={loadingReport !== null}
+                className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+              >
+                <Download size={18} />
+                {loadingReport === 'excel' ? 'Downloading...' : 'Excel Export'}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-gray-600">
+              Generate comprehensive lifecycle reports, compliance certificates, or export complete history to Excel.
+            </p>
           </Section>
         </div>
 
