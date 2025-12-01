@@ -120,9 +120,152 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.TenantScalarFieldEnum = {
+  id: 'id',
+  companyName: 'companyName',
+  subdomain: 'subdomain',
+  logoUrl: 'logoUrl',
+  subscriptionPlan: 'subscriptionPlan',
+  subscriptionStatus: 'subscriptionStatus',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  name: 'name',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  role: 'role',
+  status: 'status',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ExtinguisherScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  externalId: 'externalId',
+  location: 'location',
+  building: 'building',
+  floor: 'floor',
+  type: 'type',
+  capacity: 'capacity',
+  manufacturer: 'manufacturer',
+  model: 'model',
+  serialNumber: 'serialNumber',
+  installDate: 'installDate',
+  expiryDate: 'expiryDate',
+  lastInspection: 'lastInspection',
+  nextInspection: 'nextInspection',
+  lastMaintenance: 'lastMaintenance',
+  nextMaintenance: 'nextMaintenance',
+  status: 'status',
+  condition: 'condition',
+  serviceType: 'serviceType',
+  inspector: 'inspector',
+  notes: 'notes',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InspectionScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  extinguisherId: 'extinguisherId',
+  serviceDate: 'serviceDate',
+  serviceType: 'serviceType',
+  technician: 'technician',
+  condition: 'condition',
+  notes: 'notes',
+  partsReplaced: 'partsReplaced',
+  nextServiceDate: 'nextServiceDate',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.SubscriptionScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  stripeCustomerId: 'stripeCustomerId',
+  stripeSubscriptionId: 'stripeSubscriptionId',
+  plan: 'plan',
+  status: 'status',
+  currentPeriodStart: 'currentPeriodStart',
+  currentPeriodEnd: 'currentPeriodEnd',
+  trialEnd: 'trialEnd',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InvoiceScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  stripeInvoiceId: 'stripeInvoiceId',
+  amount: 'amount',
+  status: 'status',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ServiceJobScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  extinguisherId: 'extinguisherId',
+  location: 'location',
+  building: 'building',
+  type: 'type',
+  serviceType: 'serviceType',
+  status: 'status',
+  notes: 'notes',
+  scheduledDate: 'scheduledDate',
+  completedDate: 'completedDate',
+  technician: 'technician',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InspectionPhotoScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  extinguisherId: 'extinguisherId',
+  inspectionId: 'inspectionId',
+  photoUrl: 'photoUrl',
+  caption: 'caption',
+  uploadedBy: 'uploadedBy',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ServiceReportScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  visitDate: 'visitDate',
+  technician: 'technician',
+  jobIds: 'jobIds',
+  pdfUrl: 'pdfUrl',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
 
 exports.Prisma.ModelName = {
-
+  Tenant: 'Tenant',
+  User: 'User',
+  Extinguisher: 'Extinguisher',
+  Inspection: 'Inspection',
+  Subscription: 'Subscription',
+  Invoice: 'Invoice',
+  ServiceJob: 'ServiceJob',
+  InspectionPhoto: 'InspectionPhoto',
+  ServiceReport: 'ServiceReport'
 };
 
 /**

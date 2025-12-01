@@ -91,7 +91,13 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
       const { pdfUrl } = await generateComplianceCertificate(data.id);
       window.open(pdfUrl, '_blank');
     } catch (error: any) {
-      alert(error.message || 'Failed to generate certificate');
+      const errorMessage = error.message || 'Failed to generate certificate';
+      // Show user-friendly message
+      if (errorMessage.includes('No inspection')) {
+        alert('⚠️ No inspection records found.\n\nPlease complete at least one inspection for this extinguisher before generating a compliance certificate.');
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setLoadingReport(null);
     }

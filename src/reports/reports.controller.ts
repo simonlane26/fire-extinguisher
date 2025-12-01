@@ -204,7 +204,7 @@ export class ReportsController {
         });
 
     if (!inspection) {
-      throw new Error('No inspection found');
+      throw new Error('No inspection records found for this extinguisher. Please complete at least one inspection before generating a certificate.');
     }
 
     const pdfUrl = await this.reports.buildComplianceCertificate({

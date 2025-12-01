@@ -92,9 +92,152 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.TenantScalarFieldEnum = {
+  id: 'id',
+  companyName: 'companyName',
+  subdomain: 'subdomain',
+  logoUrl: 'logoUrl',
+  subscriptionPlan: 'subscriptionPlan',
+  subscriptionStatus: 'subscriptionStatus',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  name: 'name',
+  email: 'email',
+  passwordHash: 'passwordHash',
+  role: 'role',
+  status: 'status',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ExtinguisherScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  externalId: 'externalId',
+  location: 'location',
+  building: 'building',
+  floor: 'floor',
+  type: 'type',
+  capacity: 'capacity',
+  manufacturer: 'manufacturer',
+  model: 'model',
+  serialNumber: 'serialNumber',
+  installDate: 'installDate',
+  expiryDate: 'expiryDate',
+  lastInspection: 'lastInspection',
+  nextInspection: 'nextInspection',
+  lastMaintenance: 'lastMaintenance',
+  nextMaintenance: 'nextMaintenance',
+  status: 'status',
+  condition: 'condition',
+  serviceType: 'serviceType',
+  inspector: 'inspector',
+  notes: 'notes',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InspectionScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  extinguisherId: 'extinguisherId',
+  serviceDate: 'serviceDate',
+  serviceType: 'serviceType',
+  technician: 'technician',
+  condition: 'condition',
+  notes: 'notes',
+  partsReplaced: 'partsReplaced',
+  nextServiceDate: 'nextServiceDate',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.SubscriptionScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  stripeCustomerId: 'stripeCustomerId',
+  stripeSubscriptionId: 'stripeSubscriptionId',
+  plan: 'plan',
+  status: 'status',
+  currentPeriodStart: 'currentPeriodStart',
+  currentPeriodEnd: 'currentPeriodEnd',
+  trialEnd: 'trialEnd',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InvoiceScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  stripeInvoiceId: 'stripeInvoiceId',
+  amount: 'amount',
+  status: 'status',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ServiceJobScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  extinguisherId: 'extinguisherId',
+  location: 'location',
+  building: 'building',
+  type: 'type',
+  serviceType: 'serviceType',
+  status: 'status',
+  notes: 'notes',
+  scheduledDate: 'scheduledDate',
+  completedDate: 'completedDate',
+  technician: 'technician',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.InspectionPhotoScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  extinguisherId: 'extinguisherId',
+  inspectionId: 'inspectionId',
+  photoUrl: 'photoUrl',
+  caption: 'caption',
+  uploadedBy: 'uploadedBy',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ServiceReportScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  visitDate: 'visitDate',
+  technician: 'technician',
+  jobIds: 'jobIds',
+  pdfUrl: 'pdfUrl',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
 
 exports.Prisma.ModelName = {
-
+  Tenant: 'Tenant',
+  User: 'User',
+  Extinguisher: 'Extinguisher',
+  Inspection: 'Inspection',
+  Subscription: 'Subscription',
+  Invoice: 'Invoice',
+  ServiceJob: 'ServiceJob',
+  InspectionPhoto: 'InspectionPhoto',
+  ServiceReport: 'ServiceReport'
 };
 /**
  * Create the Client
@@ -107,7 +250,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\simon\\fire-extinguisher\\generated\\generated\\prisma",
+      "value": "d:\\Simon\\fire-extinguisher\\generated\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -121,7 +264,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\simon\\fire-extinguisher\\generated\\prisma\\schema.prisma",
+    "sourceFilePath": "d:\\Simon\\fire-extinguisher\\generated\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -143,13 +286,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n",
-  "inlineSchemaHash": "99605b976d14dee99c394828b1c2a62deafc51a4fda3251761a240d4cc88e515",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Tenant {\n  id                 String            @id @default(cuid())\n  companyName        String\n  subdomain          String            @unique\n  logoUrl            String?\n  subscriptionPlan   String            @default(\"trial\")\n  subscriptionStatus String            @default(\"trial\")\n  createdAt          DateTime          @default(now())\n  users              User[]\n  extinguishers      Extinguisher[]\n  inspections        Inspection[]\n  subscriptions      Subscription[]\n  invoices           Invoice[]\n  serviceJobs        ServiceJob[]\n  inspectionPhotos   InspectionPhoto[]\n  serviceReports     ServiceReport[]\n\n  @@map(\"Tenant\")\n}\n\nmodel User {\n  id           String   @id @default(cuid())\n  tenantId     String\n  name         String\n  email        String   @unique\n  passwordHash String\n  role         String\n  status       String   @default(\"active\")\n  createdAt    DateTime @default(now())\n  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([tenantId])\n  @@map(\"User\")\n}\n\nmodel Extinguisher {\n  id              String       @id @default(cuid())\n  tenantId        String\n  externalId      String?\n  location        String\n  building        String\n  floor           String?\n  type            String\n  capacity        String?\n  manufacturer    String?\n  model           String?\n  serialNumber    String?\n  installDate     DateTime?\n  expiryDate      DateTime?\n  lastInspection  DateTime?\n  nextInspection  DateTime?\n  lastMaintenance DateTime?\n  nextMaintenance DateTime?\n  status          String       @default(\"Active\")\n  condition       String       @default(\"Good\")\n  serviceType     String?\n  inspector       String?\n  notes           String?\n  createdAt       DateTime     @default(now())\n  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n  inspections     Inspection[]\n\n  @@index([tenantId])\n  @@map(\"Extinguisher\")\n}\n\nmodel Inspection {\n  id              String       @id @default(cuid())\n  tenantId        String\n  extinguisherId  String\n  serviceDate     DateTime\n  serviceType     String\n  technician      String?\n  condition       String\n  notes           String?\n  partsReplaced   String?\n  nextServiceDate DateTime?\n  createdAt       DateTime     @default(now())\n  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n  extinguisher    Extinguisher @relation(fields: [extinguisherId], references: [id], onDelete: Cascade)\n\n  @@index([tenantId, extinguisherId])\n  @@map(\"Inspection\")\n}\n\nmodel Subscription {\n  id                   String    @id @default(cuid())\n  tenantId             String\n  stripeCustomerId     String?\n  stripeSubscriptionId String?\n  plan                 String\n  status               String\n  currentPeriodStart   DateTime?\n  currentPeriodEnd     DateTime?\n  trialEnd             DateTime?\n  createdAt            DateTime  @default(now())\n  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([tenantId])\n  @@map(\"Subscription\")\n}\n\nmodel Invoice {\n  id              String   @id @default(cuid())\n  tenantId        String\n  stripeInvoiceId String?\n  amount          Int\n  status          String\n  createdAt       DateTime @default(now())\n  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([tenantId])\n  @@map(\"Invoice\")\n}\n\nmodel ServiceJob {\n  id             String    @id @default(cuid())\n  tenantId       String\n  extinguisherId String?\n  location       String\n  building       String\n  type           String\n  serviceType    String\n  status         String    @default(\"pending\")\n  notes          String?\n  scheduledDate  DateTime?\n  completedDate  DateTime?\n  technician     String?\n  createdAt      DateTime  @default(now())\n  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([tenantId])\n  @@map(\"ServiceJob\")\n}\n\nmodel InspectionPhoto {\n  id             String   @id @default(cuid())\n  tenantId       String\n  extinguisherId String?\n  inspectionId   String?\n  photoUrl       String\n  caption        String?\n  uploadedBy     String?\n  createdAt      DateTime @default(now())\n  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([tenantId])\n  @@map(\"InspectionPhoto\")\n}\n\nmodel ServiceReport {\n  id         String   @id @default(cuid())\n  tenantId   String\n  visitDate  DateTime\n  technician String?\n  jobIds     String[]\n  pdfUrl     String\n  createdAt  DateTime @default(now())\n  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([tenantId])\n  @@map(\"ServiceReport\")\n}\n",
+  "inlineSchemaHash": "8d0c6efce8e33355399dbdd73ac4c879114442b4356da2da11dd2fa1778912d5",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Tenant\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"companyName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"subdomain\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"logoUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"subscriptionPlan\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"subscriptionStatus\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"users\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TenantToUser\"},{\"name\":\"extinguishers\",\"kind\":\"object\",\"type\":\"Extinguisher\",\"relationName\":\"ExtinguisherToTenant\"},{\"name\":\"inspections\",\"kind\":\"object\",\"type\":\"Inspection\",\"relationName\":\"InspectionToTenant\"},{\"name\":\"subscriptions\",\"kind\":\"object\",\"type\":\"Subscription\",\"relationName\":\"SubscriptionToTenant\"},{\"name\":\"invoices\",\"kind\":\"object\",\"type\":\"Invoice\",\"relationName\":\"InvoiceToTenant\"},{\"name\":\"serviceJobs\",\"kind\":\"object\",\"type\":\"ServiceJob\",\"relationName\":\"ServiceJobToTenant\"},{\"name\":\"inspectionPhotos\",\"kind\":\"object\",\"type\":\"InspectionPhoto\",\"relationName\":\"InspectionPhotoToTenant\"},{\"name\":\"serviceReports\",\"kind\":\"object\",\"type\":\"ServiceReport\",\"relationName\":\"ServiceReportToTenant\"}],\"dbName\":\"Tenant\"},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"passwordHash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"TenantToUser\"}],\"dbName\":\"User\"},\"Extinguisher\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"externalId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"building\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"floor\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"capacity\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"manufacturer\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"model\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"serialNumber\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"installDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"expiryDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"lastInspection\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"nextInspection\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"lastMaintenance\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"nextMaintenance\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"condition\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"serviceType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"inspector\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"ExtinguisherToTenant\"},{\"name\":\"inspections\",\"kind\":\"object\",\"type\":\"Inspection\",\"relationName\":\"ExtinguisherToInspection\"}],\"dbName\":\"Extinguisher\"},\"Inspection\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"extinguisherId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"serviceDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"serviceType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"technician\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"condition\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"partsReplaced\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"nextServiceDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"InspectionToTenant\"},{\"name\":\"extinguisher\",\"kind\":\"object\",\"type\":\"Extinguisher\",\"relationName\":\"ExtinguisherToInspection\"}],\"dbName\":\"Inspection\"},\"Subscription\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"stripeCustomerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"stripeSubscriptionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"plan\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"currentPeriodStart\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"currentPeriodEnd\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"trialEnd\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"SubscriptionToTenant\"}],\"dbName\":\"Subscription\"},\"Invoice\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"stripeInvoiceId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"amount\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"InvoiceToTenant\"}],\"dbName\":\"Invoice\"},\"ServiceJob\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"extinguisherId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"location\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"building\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"serviceType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scheduledDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"completedDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"technician\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"ServiceJobToTenant\"}],\"dbName\":\"ServiceJob\"},\"InspectionPhoto\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"extinguisherId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"inspectionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"photoUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"caption\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"uploadedBy\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"InspectionPhotoToTenant\"}],\"dbName\":\"InspectionPhoto\"},\"ServiceReport\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"visitDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"technician\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"jobIds\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"pdfUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"ServiceReportToTenant\"}],\"dbName\":\"ServiceReport\"}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),
