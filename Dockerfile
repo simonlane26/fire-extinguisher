@@ -1,5 +1,6 @@
 # Use Node.js 20 base image
 FROM node:20-slim
+# Rebuild 2025-12-01: Force Prisma Client regeneration for deviceName column
 
 # Install Chrome and dependencies
 RUN apt-get update && apt-get install -y \
