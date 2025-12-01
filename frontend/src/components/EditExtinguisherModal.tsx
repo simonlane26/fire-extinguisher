@@ -61,6 +61,17 @@ const EditExtinguisherModal: React.FC<Props> = ({
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [partsUsed, setPartsUsed] = useState<Array<{ itemId: string; quantity: number; notes?: string }>>([]);
 
+  // Helper to format date for HTML date input (YYYY-MM-DD)
+  const formatDateForInput = (dateString?: string | null): string => {
+    if (!dateString) return '';
+    try {
+      // Extract just the date part (YYYY-MM-DD) from ISO string
+      return dateString.split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
   // Load sites and populate form when modal opens
   useEffect(() => {
     if (open && extinguisher) {
@@ -75,12 +86,12 @@ const EditExtinguisherModal: React.FC<Props> = ({
         manufacturer: extinguisher.manufacturer || '',
         model: extinguisher.model || '',
         serialNumber: extinguisher.serialNumber || '',
-        installDate: extinguisher.installDate || '',
-        expiryDate: extinguisher.expiryDate || '',
-        lastInspection: extinguisher.lastInspection || '',
-        nextInspection: extinguisher.nextInspection || '',
-        lastMaintenance: extinguisher.lastMaintenance || '',
-        nextMaintenance: extinguisher.nextMaintenance || '',
+        installDate: formatDateForInput(extinguisher.installDate),
+        expiryDate: formatDateForInput(extinguisher.expiryDate),
+        lastInspection: formatDateForInput(extinguisher.lastInspection),
+        nextInspection: formatDateForInput(extinguisher.nextInspection),
+        lastMaintenance: formatDateForInput(extinguisher.lastMaintenance),
+        nextMaintenance: formatDateForInput(extinguisher.nextMaintenance),
         status: extinguisher.status || 'Active',
         condition: extinguisher.condition || 'Good',
         serviceType: extinguisher.serviceType || 'Annual Inspection',
