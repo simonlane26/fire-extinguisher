@@ -194,7 +194,7 @@ export class ReportsController {
     }
 
     // Get specific inspection or latest one
-    const inspection = body.inspectionId
+    let inspection = body.inspectionId
       ? await this.prisma.inspection.findFirst({
           where: { id: body.inspectionId, extinguisherId, tenantId },
         })
@@ -203,8 +203,27 @@ export class ReportsController {
           orderBy: { serviceDate: 'desc' },
         });
 
+    // If no formal inspection record exists, create a synthetic one from extinguisher data
     if (!inspection) {
-      throw new Error('No inspection records found for this extinguisher. Please complete at least one inspection before generating a certificate.');
+      // Check if the extinguisher has been serviced (has lastInspection or lastMaintenance)
+      if (!extinguisher.lastInspection && !extinguisher.lastMaintenance) {
+        throw new Error('No service history found for this extinguisher. Please complete at least one service or inspection before generating a certificate.');
+      }
+
+      // Create synthetic inspection record from extinguisher's current state
+      inspection = {
+        id: 'synthetic',
+        tenantId,
+        extinguisherId,
+        serviceDate: extinguisher.lastInspection || extinguisher.lastMaintenance || new Date(),
+        serviceType: extinguisher.serviceType || 'Service',
+        technician: extinguisher.inspector || 'Technician',
+        condition: extinguisher.condition,
+        notes: extinguisher.notes || null,
+        partsReplaced: null,
+        nextServiceDate: extinguisher.nextInspection || extinguisher.nextMaintenance || null,
+        createdAt: new Date(),
+      } as any;
     }
 
     const pdfUrl = await this.reports.buildComplianceCertificate({
