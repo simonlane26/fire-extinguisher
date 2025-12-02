@@ -1088,6 +1088,9 @@ const FireExtinguisherApp: React.FC = () => {
         <QRScanner
           onClose={() => setShowQrScanner(false)}
           onDetected={async (text) => {
+            // Close scanner immediately to prevent multiple scans
+            setShowQrScanner(false);
+
             // Extract extinguisher ID from scanned text
             // Handles both raw IDs and URLs like "https://domain.com/verify/{id}"
             let extinguisherId = text.trim();
@@ -1131,8 +1134,6 @@ const FireExtinguisherApp: React.FC = () => {
                 fetchError = err instanceof Error ? err.message : String(err);
               }
             }
-
-            setShowQrScanner(false);
 
             if (match) {
               setSelectedExtinguisher(match);
