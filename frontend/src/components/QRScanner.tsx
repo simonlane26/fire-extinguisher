@@ -13,6 +13,7 @@ const QRScanner: React.FC<Props> = ({ onClose, onDetected }) => {
   const [controls, setControls] = useState<IScannerControls | null>(null);
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
+  const detectedRef = useRef(false); // Prevent multiple detections
 
   useEffect(() => {
     const reader = new BrowserMultiFormatReader();
@@ -26,7 +27,12 @@ const QRScanner: React.FC<Props> = ({ onClose, onDetected }) => {
           },
           videoRef.current!,
           (res: Result | undefined) => {
-            if (res) onDetected(res.getText());
+            // Only call onDetected once
+            if (res && !detectedRef.current) {
+              detectedRef.current = true;
+              ctrl.stop(); // Stop scanning immediately
+              onDetected(res.getText());
+            }
           }
         );
         setControls(ctrl);
