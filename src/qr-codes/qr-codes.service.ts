@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as QRCode from 'qrcode';
 import JSZip from 'jszip';
+import { createCanvas, loadImage } from 'canvas';
 import { GenerateQrDto, GenerateBulkQrDto } from './dto/generate-qr.dto';
 
 @Injectable()
@@ -68,7 +69,7 @@ export class QrCodesService {
 
       for (const ext of extinguishers) {
         const qrData = this.buildExtinguisherQrData(ext);
-        const buffer = await QRCode.toBuffer(qrData, {
+        let buffer = await QRCode.toBuffer(qrData, {
           errorCorrectionLevel: dto.errorCorrection || 'M',
           width: dto.size || 500,
           margin: dto.margin || 4,
@@ -77,6 +78,16 @@ export class QrCodesService {
             light: dto.backgroundColor || '#FFFFFF',
           },
         });
+
+        // Add label if provided (use location/building as default label for extinguishers)
+        if (dto.label) {
+          const label = dto.label
+            .replace('{location}', ext.location || '')
+            .replace('{building}', ext.building || '')
+            .replace('{type}', ext.type || '')
+            .replace('{id}', ext.id || '');
+          buffer = await this.addLabelToQr(buffer, label, dto.size || 500);
+        }
 
         zip.file(`${this.sanitizeFilename(ext.id)}.png`, buffer);
       }
@@ -87,7 +98,7 @@ export class QrCodesService {
         const num = String(i).padStart(padding, '0');
         const text = `${dto.prefix}${num}${dto.suffix || ''}`;
 
-        const buffer = await QRCode.toBuffer(text, {
+        let buffer = await QRCode.toBuffer(text, {
           errorCorrectionLevel: dto.errorCorrection || 'M',
           width: dto.size || 500,
           margin: dto.margin || 4,
@@ -96,6 +107,12 @@ export class QrCodesService {
             light: dto.backgroundColor || '#FFFFFF',
           },
         });
+
+        // Add label if provided
+        if (dto.label) {
+          const label = dto.label.replace('{code}', text);
+          buffer = await this.addLabelToQr(buffer, label, dto.size || 500);
+        }
 
         zip.file(`${this.sanitizeFilename(text)}.png`, buffer);
       }
@@ -126,6 +143,36 @@ export class QrCodesService {
   private buildExtinguisherQrData(ext: any): string {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     return `${frontendUrl}/verify/${ext.id}`;
+  }
+
+  /**
+   * Add a label to a QR code image
+   */
+  private async addLabelToQr(qrBuffer: Buffer, label: string, size: number = 500): Promise<Buffer> {
+    // Load the QR code image
+    const qrImage = await loadImage(qrBuffer);
+
+    // Calculate canvas size (QR + label space)
+    const labelHeight = 60;
+    const canvas = createCanvas(size, size + labelHeight);
+    const ctx = canvas.getContext('2d');
+
+    // Fill background
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, size, size + labelHeight);
+
+    // Draw QR code
+    ctx.drawImage(qrImage, 0, 0, size, size);
+
+    // Draw label text
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, size / 2, size + labelHeight / 2);
+
+    // Convert to buffer
+    return canvas.toBuffer('image/png');
   }
 
   /**

@@ -32,6 +32,7 @@ export interface QrCodeOptions {
   margin?: number;
   foregroundColor?: string;
   backgroundColor?: string;
+  label?: string;
 }
 
 export interface BulkQrCodeOptions {
@@ -47,6 +48,7 @@ export interface BulkQrCodeOptions {
   margin?: number;
   foregroundColor?: string;
   backgroundColor?: string;
+  label?: string;
 }
 
 /**

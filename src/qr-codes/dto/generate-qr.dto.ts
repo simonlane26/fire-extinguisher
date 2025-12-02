@@ -59,6 +59,10 @@ export class GenerateQrDto {
   @IsOptional()
   @IsString()
   backgroundColor?: string;
+
+  @IsOptional()
+  @IsString()
+  label?: string;
 }
 
 export class GenerateBulkQrDto {
@@ -118,4 +122,8 @@ export class GenerateBulkQrDto {
   @IsOptional()
   @IsString()
   backgroundColor?: string;
+
+  @IsOptional()
+  @IsString()
+  label?: string;
 }
