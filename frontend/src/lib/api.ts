@@ -353,6 +353,27 @@ export async function fetchExtinguishers(): Promise<Extinguisher[]> {
   return res.json() as Promise<Extinguisher[]>;
 }
 
+/** GET /extinguishers/:id (fetch single extinguisher by ID) */
+export async function fetchExtinguisherById(id: string): Promise<Extinguisher | null> {
+  const res = await fetch(`${API_BASE}/extinguishers/${id}`, {
+    headers: {
+      'Accept': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (res.status === 404) {
+    return null;
+  }
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch extinguisher (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Extinguisher>;
+}
+
 /** POST /extinguishers */
 export async function addExtinguisher(
   payload: Partial<Extinguisher>

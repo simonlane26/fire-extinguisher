@@ -37,7 +37,7 @@ import RoleSwitcherModal from './components/RoleSwitcher';
 import GenerateReportButton from './components/GenerateReportButton';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
-import { addExtinguisher, updateExtinguisher, fetchExtinguishers, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers } from './lib/api';
+import { addExtinguisher, updateExtinguisher, fetchExtinguishers, fetchExtinguisherById, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers } from './lib/api';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
   Extinguisher,
@@ -1087,7 +1087,7 @@ const FireExtinguisherApp: React.FC = () => {
       {showQrScanner && (
         <QRScanner
           onClose={() => setShowQrScanner(false)}
-          onDetected={(text) => {
+          onDetected={async (text) => {
             // Extract extinguisher ID from scanned text
             // Handles both raw IDs and URLs like "https://domain.com/verify/{id}"
             let extinguisherId = text.trim();
@@ -1105,19 +1105,39 @@ const FireExtinguisherApp: React.FC = () => {
             // Trim any whitespace
             extinguisherId = extinguisherId.trim();
 
-            const match =
+            // First, try to find in the loaded extinguishers list
+            let match =
               extinguishers.find(
                 (e) => e.id === extinguisherId || e.id === text || `QR_${e.id}` === text,
               ) || null;
+
+            // If not found locally, try fetching from API
+            if (!match) {
+              try {
+                const fetched = await fetchExtinguisherById(extinguisherId);
+                if (fetched) {
+                  match = fetched;
+                  // Add to local list if not already there
+                  setExtinguishers((prev) => {
+                    if (!prev.find(e => e.id === fetched.id)) {
+                      return [...prev, fetched];
+                    }
+                    return prev;
+                  });
+                }
+              } catch (err) {
+                console.error('Failed to fetch extinguisher:', err);
+              }
+            }
+
+            setShowQrScanner(false);
+
             if (match) {
               setSelectedExtinguisher(match);
               setShowDetails(true);
             } else {
-              // Show debug info to help troubleshoot
-              const availableIds = extinguishers.slice(0, 3).map(e => e.id).join(', ');
-              alert(`Scanned: ${text}\n\nExtracted ID: ${extinguisherId}\n\nNo match found.\n\nAvailable IDs (first 3): ${availableIds}...`);
+              alert(`Extinguisher not found.\n\nScanned ID: ${extinguisherId}\n\nThis extinguisher may not exist or may belong to a different organization.`);
             }
-            setShowQrScanner(false);
           }}
         />
       )}
