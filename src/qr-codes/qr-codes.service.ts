@@ -80,6 +80,7 @@ export class QrCodesService {
         });
 
         // Add label if provided (use location/building as default label for extinguishers)
+        let filename = ext.id;
         if (dto.label) {
           const label = dto.label
             .replace('{location}', ext.location || '')
@@ -87,9 +88,11 @@ export class QrCodesService {
             .replace('{type}', ext.type || '')
             .replace('{id}', ext.id || '');
           buffer = await this.addLabelToQr(buffer, label, dto.size || 500);
+          // Use label as filename when provided
+          filename = label;
         }
 
-        zip.file(`${this.sanitizeFilename(ext.id)}.png`, buffer);
+        zip.file(`${this.sanitizeFilename(filename)}.png`, buffer);
       }
     } else if (dto.prefix !== undefined && dto.startNumber !== undefined && dto.endNumber !== undefined) {
       // Generate sequential QR codes
