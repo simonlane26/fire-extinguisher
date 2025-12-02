@@ -1088,15 +1088,27 @@ const FireExtinguisherApp: React.FC = () => {
         <QRScanner
           onClose={() => setShowQrScanner(false)}
           onDetected={(text) => {
+            // Extract extinguisher ID from scanned text
+            // Handles both raw IDs and URLs like "https://domain.com/verify/{id}"
+            let extinguisherId = text;
+
+            // If it's a URL, extract the ID from the path
+            if (text.includes('/verify/')) {
+              const parts = text.split('/verify/');
+              extinguisherId = parts[1] || text;
+            } else if (text.startsWith('QR_')) {
+              extinguisherId = text.substring(3);
+            }
+
             const match =
               extinguishers.find(
-                (e) => e.id === text || `QR_${e.id}` === text,
+                (e) => e.id === extinguisherId || e.id === text || `QR_${e.id}` === text,
               ) || null;
             if (match) {
               setSelectedExtinguisher(match);
               setShowDetails(true);
             } else {
-              alert(`Scanned: ${text}\nNo extinguisher found`);
+              alert(`Scanned: ${text}\nNo extinguisher found with ID: ${extinguisherId}`);
             }
             setShowQrScanner(false);
           }}
