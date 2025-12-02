@@ -156,7 +156,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
       for (let i = 0; i < selected.length; i++) {
         const ext = selected[i];
         const data = formatExtinguisherData(ext);
-        const label = `${ext.id} - ${ext.location}`;
+        const label = ext.location || ext.id;
         const qr = await generateQrCodeDataUrl(data, label);
         codes.push(qr);
         setProgress(((i + 1) / selected.length) * 100);
