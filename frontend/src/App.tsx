@@ -1090,15 +1090,20 @@ const FireExtinguisherApp: React.FC = () => {
           onDetected={(text) => {
             // Extract extinguisher ID from scanned text
             // Handles both raw IDs and URLs like "https://domain.com/verify/{id}"
-            let extinguisherId = text;
+            let extinguisherId = text.trim();
 
             // If it's a URL, extract the ID from the path
-            if (text.includes('/verify/')) {
-              const parts = text.split('/verify/');
+            if (extinguisherId.includes('/verify/')) {
+              const parts = extinguisherId.split('/verify/');
               extinguisherId = parts[1] || text;
-            } else if (text.startsWith('QR_')) {
-              extinguisherId = text.substring(3);
+              // Remove any query params, hash fragments, or trailing slashes
+              extinguisherId = extinguisherId.split('?')[0].split('#')[0].replace(/\/$/, '');
+            } else if (extinguisherId.startsWith('QR_')) {
+              extinguisherId = extinguisherId.substring(3);
             }
+
+            // Trim any whitespace
+            extinguisherId = extinguisherId.trim();
 
             const match =
               extinguishers.find(
@@ -1108,7 +1113,9 @@ const FireExtinguisherApp: React.FC = () => {
               setSelectedExtinguisher(match);
               setShowDetails(true);
             } else {
-              alert(`Scanned: ${text}\nNo extinguisher found with ID: ${extinguisherId}`);
+              // Show debug info to help troubleshoot
+              const availableIds = extinguishers.slice(0, 3).map(e => e.id).join(', ');
+              alert(`Scanned: ${text}\n\nExtracted ID: ${extinguisherId}\n\nNo match found.\n\nAvailable IDs (first 3): ${availableIds}...`);
             }
             setShowQrScanner(false);
           }}
