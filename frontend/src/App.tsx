@@ -1112,6 +1112,7 @@ const FireExtinguisherApp: React.FC = () => {
               ) || null;
 
             // If not found locally, try fetching from API
+            let fetchError = null;
             if (!match) {
               try {
                 const fetched = await fetchExtinguisherById(extinguisherId);
@@ -1127,6 +1128,7 @@ const FireExtinguisherApp: React.FC = () => {
                 }
               } catch (err) {
                 console.error('Failed to fetch extinguisher:', err);
+                fetchError = err instanceof Error ? err.message : String(err);
               }
             }
 
@@ -1136,7 +1138,10 @@ const FireExtinguisherApp: React.FC = () => {
               setSelectedExtinguisher(match);
               setShowDetails(true);
             } else {
-              alert(`Extinguisher not found.\n\nScanned ID: ${extinguisherId}\n\nThis extinguisher may not exist or may belong to a different organization.`);
+              const errorMsg = fetchError
+                ? `Extinguisher not found.\n\nScanned ID: ${extinguisherId}\n\nError: ${fetchError}`
+                : `Extinguisher not found.\n\nScanned ID: ${extinguisherId}\n\nThis extinguisher may not exist or may belong to a different organization.`;
+              alert(errorMsg);
             }
           }}
         />
