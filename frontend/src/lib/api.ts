@@ -458,15 +458,18 @@ export async function importExtinguishersCsv(file: File): Promise<{ success: boo
   if (!res.ok) {
     const text = await res.text().catch(() => '');
 
-    // Try to parse JSON error response
+    // Try to parse JSON error response and extract user-friendly message
     try {
       const errorData = JSON.parse(text);
-      // Extract just the message if it exists
       if (errorData.message) {
         throw new Error(errorData.message);
       }
     } catch (parseError) {
-      // If JSON parsing fails, use the raw text
+      // If it's already an Error (from the throw above), re-throw it
+      if (parseError instanceof Error && parseError.message !== text) {
+        throw parseError;
+      }
+      // Otherwise JSON parsing failed, so use the raw text
     }
 
     throw new Error(`Failed to import extinguishers (${res.status}): ${text}`);
