@@ -93,6 +93,15 @@ export class ExtinguishersController {
     }
 
     const csvContent = file.buffer.toString('utf-8');
+
+    // Check plan limits before importing
+    if (this.stripeService.isConfigured()) {
+      const result = await this.service.validateCsvImport(user.tenantId, csvContent);
+      if (!result.canImport) {
+        throw new ForbiddenException(result.message);
+      }
+    }
+
     return this.service.importFromCsv(user.tenantId, csvContent);
   }
 }

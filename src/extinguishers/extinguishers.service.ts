@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { StripeService } from '../stripe/stripe.service';
 import { CreateExtinguisherDto } from './dto/create-extinguisher.dto';
 import { UpdateExtinguisherDto } from './dto/update-extinguisher.dto';
 
@@ -9,6 +10,7 @@ export class ExtinguishersService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private stripeService: StripeService,
   ) {}
 
   create(tenantId: string, dto: CreateExtinguisherDto) {
@@ -221,6 +223,46 @@ export class ExtinguishersService {
     ];
 
     return csvLines.join('\n');
+  }
+
+  async validateCsvImport(tenantId: string, csvContent: string): Promise<{ canImport: boolean; message?: string }> {
+    const lines = csvContent.trim().split('\n');
+
+    if (lines.length < 2) {
+      return { canImport: false, message: 'CSV file is empty or invalid' };
+    }
+
+    // Count valid data lines (skip header and empty lines)
+    const dataLines = lines.slice(1).filter(line => line.trim());
+    const rowsToImport = dataLines.length;
+
+    // Get current extinguisher count
+    const currentCount = await this.prisma.extinguisher.count({
+      where: { tenantId },
+    });
+
+    // Get tenant plan
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+    });
+
+    const limits = this.stripeService.getPlanLimits(tenant.subscriptionPlan as any);
+
+    // Check if unlimited
+    if (limits.maxExtinguishers === -1) {
+      return { canImport: true };
+    }
+
+    // Check if import would exceed limit
+    const totalAfterImport = currentCount + rowsToImport;
+    if (totalAfterImport > limits.maxExtinguishers) {
+      return {
+        canImport: false,
+        message: `Import would exceed your plan limit. You have ${currentCount}/${limits.maxExtinguishers} extinguishers. This CSV contains ${rowsToImport} rows. Please upgrade your plan or reduce the number of extinguishers in the CSV.`
+      };
+    }
+
+    return { canImport: true };
   }
 
   async importFromCsv(tenantId: string, csvContent: string) {
