@@ -346,7 +346,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
           Enterprise plan available with unlimited extinguishers, SSO, audit logs, and dedicated support.
         </p>
         <a
-          href="mailto:sales@firexcheck.com"
+          href="mailto:notification.firexcheck@gmail.com"
           className="inline-block px-6 py-2 text-white rounded-lg hover:opacity-90"
           style={{ backgroundColor: safeColor }}
         >

@@ -612,6 +612,94 @@ export async function fetchLowStockItems(): Promise<InventoryItem[]> {
   return res.json() as Promise<InventoryItem[]>;
 }
 
+/* ---------------------------------- Photos -------------------------------- */
+
+export interface InspectionPhoto {
+  id: string;
+  tenantId: string;
+  extinguisherId: string;
+  inspectionId?: string | null;
+  url: string;
+  caption?: string | null;
+  uploadedBy?: string | null;
+  createdAt: string;
+}
+
+/** POST /photos/upload - Upload a photo */
+export async function uploadPhoto(params: {
+  file: File;
+  extinguisherId: string;
+  inspectionId?: string;
+  caption?: string;
+}): Promise<InspectionPhoto> {
+  const formData = new FormData();
+  formData.append('file', params.file);
+  formData.append('extinguisherId', params.extinguisherId);
+  if (params.inspectionId) formData.append('inspectionId', params.inspectionId);
+  if (params.caption) formData.append('caption', params.caption);
+
+  const res = await fetch(`${API_BASE}/photos/upload`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+
+    try {
+      const errorData = JSON.parse(text);
+      if (errorData.message) {
+        throw new Error(errorData.message);
+      }
+    } catch (parseError) {
+      if (parseError instanceof Error && parseError.message !== text) {
+        throw parseError;
+      }
+    }
+
+    throw new Error(`Failed to upload photo (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
+/** GET /photos/extinguisher/:extinguisherId - Get photos for an extinguisher */
+export async function fetchExtinguisherPhotos(extinguisherId: string): Promise<InspectionPhoto[]> {
+  const res = await fetch(`${API_BASE}/photos/extinguisher/${extinguisherId}`, {
+    headers: {
+      'Accept': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch photos (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
+/** DELETE /photos/:photoId - Delete a photo */
+export async function deletePhoto(photoId: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE}/photos/${photoId}`, {
+    method: 'DELETE',
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to delete photo (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
 /** POST /inventory/items */
 export async function createInventoryItem(data: Partial<InventoryItem>): Promise<InventoryItem> {
   const res = await fetch(`${API_BASE}/inventory/items`, {

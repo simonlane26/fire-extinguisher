@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Extinguisher } from '../types';
-import { Pencil, FileText, Award, Download } from 'lucide-react';
+import { Pencil, FileText, Award, Download, Upload, Image as ImageIcon, Trash2, X } from 'lucide-react';
 import { generateExtinguisherHistoryPDF, generateComplianceCertificate, downloadExtinguisherExcel } from '../api/reports';
+import { uploadPhoto, fetchExtinguisherPhotos, deletePhoto, type InspectionPhoto } from '../lib/api';
 
 type Props = {
   open: boolean;
@@ -58,6 +59,71 @@ const Section: React.FC<{ title: string; className?: string; children?: React.Re
 
 const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColor = '#7c3aed', onEdit }) => {
   const [loadingReport, setLoadingReport] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<InspectionPhoto[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load photos when modal opens
+  useEffect(() => {
+    if (open && data) {
+      loadPhotos();
+    }
+  }, [open, data?.id]);
+
+  const loadPhotos = async () => {
+    if (!data) return;
+    try {
+      const fetchedPhotos = await fetchExtinguisherPhotos(data.id);
+      setPhotos(fetchedPhotos);
+    } catch (error) {
+      console.error('Failed to load photos:', error);
+    }
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !data) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+      alert('Please select a valid image file (JPEG, PNG, or WebP)');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const newPhoto = await uploadPhoto({
+        file,
+        extinguisherId: data.id,
+      });
+      setPhotos(prev => [newPhoto, ...prev]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error: any) {
+      alert(error.message || 'Failed to upload photo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+      await deletePhoto(photoId);
+      setPhotos(prev => prev.filter(p => p.id !== photoId));
+    } catch (error: any) {
+      alert(error.message || 'Failed to delete photo');
+    }
+  };
 
   if (!open || !data) return null;
 
@@ -187,6 +253,62 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
             </div>
           </Section>
 
+          {/* Photo Gallery */}
+          <Section title="Photos" className="bg-blue-50">
+            <div className="flex items-center gap-3 mb-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+                style={{ backgroundColor: effectiveColor }}
+              >
+                <Upload size={16} />
+                {uploading ? 'Uploading...' : 'Upload Photo'}
+              </button>
+              <span className="text-xs text-gray-600">
+                {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
+              </span>
+            </div>
+
+            {photos.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                {photos.map((photo) => (
+                  <div key={photo.id} className="relative group">
+                    <img
+                      src={photo.url}
+                      alt={photo.caption || 'Extinguisher photo'}
+                      className="object-cover w-full h-32 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => setSelectedImage(photo.url)}
+                    />
+                    <button
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      className="absolute top-1 right-1 p-1 text-white bg-red-500 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-600 transition-opacity"
+                      aria-label="Delete photo"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                    {photo.caption && (
+                      <p className="mt-1 text-xs text-gray-600 truncate">{photo.caption}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center text-gray-500 bg-gray-50 rounded-lg">
+                <ImageIcon size={48} className="mb-2 text-gray-300" />
+                <p className="text-sm">No photos yet</p>
+                <p className="text-xs">Click "Upload Photo" to add images</p>
+              </div>
+            )}
+          </Section>
+
           {/* Reports */}
           <Section title="Generate Reports" className="bg-purple-50">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -244,6 +366,28 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
           </button>
         </div>
       </div>
+
+      {/* Image Lightbox */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+            aria-label="Close lightbox"
+          >
+            <X size={24} />
+          </button>
+          <img
+            src={selectedImage}
+            alt="Full size view"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };

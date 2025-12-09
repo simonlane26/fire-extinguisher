@@ -73,7 +73,11 @@
       "Bash(node clear-logo.js:*)",
       "Bash(node:*)",
       "Bash(del:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(npx nest build:*)",
+      "Bash(node_modules.binnest build)",
+      "Bash(.node_modules.binnest.cmd build)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

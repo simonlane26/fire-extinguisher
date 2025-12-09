@@ -20,6 +20,7 @@ import { SitesModule } from './sites/sites.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PublicModule } from './public/public.module';
+import { PhotosModule } from './photos/photos.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PublicModule } from './public/public.module';
     InventoryModule,
     NotificationsModule,
     PublicModule,
+    PhotosModule,
   ],
   controllers: [AppController],
   providers: [
