@@ -59,6 +59,20 @@ export class ReportsService {
 
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      // Wait for all images to load
+      await page.evaluate(() => {
+        return Promise.all(
+          Array.from(document.images)
+            .filter(img => !img.complete)
+            .map(img => new Promise(resolve => {
+              img.addEventListener('load', resolve);
+              img.addEventListener('error', resolve);
+              setTimeout(resolve, 5000);
+            }))
+        );
+      });
+
       const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
 
       // Save locally instead of S3
@@ -343,6 +357,20 @@ export class ReportsService {
 
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      // Wait for all images to load
+      await page.evaluate(() => {
+        return Promise.all(
+          Array.from(document.images)
+            .filter(img => !img.complete)
+            .map(img => new Promise(resolve => {
+              img.addEventListener('load', resolve);
+              img.addEventListener('error', resolve);
+              setTimeout(resolve, 5000);
+            }))
+        );
+      });
+
       await page.pdf({ path: filepath, format: 'A4', printBackground: true });
 
       return `/uploads/reports/${filename}`;
@@ -468,6 +496,21 @@ export class ReportsService {
 
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      // Wait for all images (logo and photo) to load
+      await page.evaluate(() => {
+        return Promise.all(
+          Array.from(document.images)
+            .filter(img => !img.complete)
+            .map(img => new Promise(resolve => {
+              img.addEventListener('load', resolve);
+              img.addEventListener('error', resolve);
+              // Set timeout to avoid hanging forever
+              setTimeout(resolve, 5000);
+            }))
+        );
+      });
+
       await page.pdf({ path: filepath, format: 'A4', printBackground: true });
 
       return `/uploads/reports/${filename}`;
