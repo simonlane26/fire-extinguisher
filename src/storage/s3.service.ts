@@ -39,13 +39,25 @@ export class S3Service {
     }
 
     try {
-      await this.s3.send(new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: body,
-        ContentType: contentType,
-        ACL: 'public-read', // Make object publicly readable
-      }));
+      // Try with ACL first
+      try {
+        await this.s3.send(new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: body,
+          ContentType: contentType,
+          ACL: 'public-read', // Make object publicly readable
+        }));
+      } catch (aclError: any) {
+        // If ACL fails (disabled on bucket), upload without ACL
+        this.logger.warn(`ACL failed, uploading without ACL: ${aclError.message}`);
+        await this.s3.send(new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: body,
+          ContentType: contentType,
+        }));
+      }
 
       // Return the public S3 URL
       const region = process.env.AWS_REGION;
