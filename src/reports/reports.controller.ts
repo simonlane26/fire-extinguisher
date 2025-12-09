@@ -226,10 +226,18 @@ export class ReportsController {
       } as any;
     }
 
+    // Get the most recent photo for the extinguisher
+    const recentPhoto = await this.prisma.inspectionPhoto.findFirst({
+      where: { extinguisherId, tenantId },
+      orderBy: { createdAt: 'desc' },
+      select: { url: true },
+    });
+
     const pdfUrl = await this.reports.buildComplianceCertificate({
       tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
       extinguisher,
       inspection,
+      photoUrl: recentPhoto?.url,
     });
 
     return { pdfUrl };

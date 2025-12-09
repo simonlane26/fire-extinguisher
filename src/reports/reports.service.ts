@@ -356,8 +356,9 @@ export class ReportsService {
     tenant: { name: string; logoUrl?: string };
     extinguisher: any;
     inspection: any;
+    photoUrl?: string;
   }) {
-    const { tenant, extinguisher, inspection } = params;
+    const { tenant, extinguisher, inspection, photoUrl } = params;
 
     const html = `
       <html>
@@ -373,6 +374,7 @@ export class ReportsService {
           .info-label { font-weight: bold; width: 200px; color: #555; }
           .signature { margin-top: 64px; border-top: 2px solid #333; padding-top: 8px; width: 300px; display: inline-block; }
           .stamp { margin-top: 32px; padding: 16px; border: 2px solid #7c3aed; display: inline-block; border-radius: 50%; }
+          .extinguisher-photo { max-width: 400px; max-height: 300px; border-radius: 8px; margin: 16px 0; object-fit: cover; }
         </style>
       </head>
       <body>
@@ -382,6 +384,8 @@ export class ReportsService {
             <div class="title">INSPECTION CERTIFICATE</div>
             <div class="subtitle">${tenant.name}</div>
           </div>
+
+          ${photoUrl ? `<img src="${photoUrl}" class="extinguisher-photo" alt="Extinguisher Photo"/>` : ''}
 
           <p style="font-size: 16px; margin: 24px 0;">This certifies that the fire extinguisher described below has been inspected and tested in accordance with applicable regulations.</p>
 
