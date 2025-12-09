@@ -87,10 +87,65 @@ export class ExtinguishersService {
 
     const updated = await this.prisma.extinguisher.update({ where: { id }, data: updateData });
 
+    // Create inspection record if service-related fields were updated
+    await this.createInspectionRecordIfNeeded(tenantId, id, existing, dto);
+
     // Send notifications for important status changes
     await this.sendUpdateNotifications(existing, updated, tenantId);
 
     return updated;
+  }
+
+  /**
+   * Create an Inspection record when service details are updated
+   */
+  private async createInspectionRecordIfNeeded(
+    tenantId: string,
+    extinguisherId: string,
+    existing: any,
+    dto: UpdateExtinguisherDto
+  ) {
+    // Check if any service-related fields changed
+    const serviceFieldsChanged =
+      (dto.lastInspection && dto.lastInspection !== existing.lastInspection?.toISOString()) ||
+      (dto.lastMaintenance && dto.lastMaintenance !== existing.lastMaintenance?.toISOString()) ||
+      (dto.serviceType && dto.serviceType !== existing.serviceType) ||
+      (dto.inspector && dto.inspector !== existing.inspector);
+
+    if (!serviceFieldsChanged) {
+      return; // No service update, skip creating inspection record
+    }
+
+    // Determine service date (prefer lastMaintenance for annual, lastInspection for extended)
+    let serviceDate: Date | null = null;
+    let serviceType = dto.serviceType || existing.serviceType || 'Annual Inspection';
+
+    if (dto.lastMaintenance) {
+      serviceDate = new Date(dto.lastMaintenance);
+      serviceType = 'Annual Inspection';
+    } else if (dto.lastInspection) {
+      serviceDate = new Date(dto.lastInspection);
+      serviceType = 'Extended Inspection';
+    }
+
+    if (!serviceDate) {
+      return; // No service date to record
+    }
+
+    // Create inspection record
+    await this.prisma.inspection.create({
+      data: {
+        tenantId,
+        extinguisherId,
+        serviceDate,
+        serviceType,
+        technician: dto.inspector || existing.inspector || 'Unknown',
+        condition: dto.condition || existing.condition || 'Good',
+        notes: dto.notes || null,
+        nextServiceDate: dto.nextMaintenance ? new Date(dto.nextMaintenance) :
+                        dto.nextInspection ? new Date(dto.nextInspection) : null,
+      },
+    });
   }
 
   /**
