@@ -75,6 +75,7 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
     if (!data) return;
     try {
       const fetchedPhotos = await fetchExtinguisherPhotos(data.id);
+      console.log('Loaded photos:', fetchedPhotos);
       setPhotos(fetchedPhotos);
     } catch (error) {
       console.error('Failed to load photos:', error);
@@ -103,11 +104,13 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
         file,
         extinguisherId: data.id,
       });
+      console.log('Uploaded photo:', newPhoto);
       setPhotos(prev => [newPhoto, ...prev]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     } catch (error: any) {
+      console.error('Upload error:', error);
       alert(error.message || 'Failed to upload photo');
     } finally {
       setUploading(false);
@@ -286,6 +289,10 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
                       alt={photo.caption || 'Extinguisher photo'}
                       className="object-cover w-full h-32 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => setSelectedImage(photo.url)}
+                      onError={(e) => {
+                        console.error('Failed to load image:', photo.url);
+                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23ddd" width="200" height="200"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImage Error%3C/text%3E%3C/svg%3E';
+                      }}
                     />
                     <button
                       onClick={() => handleDeletePhoto(photo.id)}
