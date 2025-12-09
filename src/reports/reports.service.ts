@@ -388,6 +388,10 @@ export class ReportsService {
   }) {
     const { tenant, extinguisher, inspection, photoUrl } = params;
 
+    console.log('Building certificate with tenant:', tenant);
+    console.log('Logo URL:', tenant.logoUrl);
+    console.log('Photo URL:', photoUrl);
+
     const html = `
       <html>
       <head>
@@ -495,21 +499,43 @@ export class ReportsService {
       });
 
       const page = await browser.newPage();
+
+      // Enable console logging from the page
+      page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+      page.on('pageerror', error => console.log('PAGE ERROR:', error));
+
       await page.setContent(html, { waitUntil: 'networkidle0' });
 
-      // Wait for all images (logo and photo) to load
-      await page.evaluate(() => {
+      // Wait for all images (logo and photo) to load and log their status
+      const imageLoadResults = await page.evaluate(() => {
+        const images = Array.from(document.images);
+        console.log('Total images found:', images.length);
+        images.forEach((img, i) => {
+          console.log(`Image ${i}: src=${img.src}, complete=${img.complete}, naturalWidth=${img.naturalWidth}`);
+        });
+
         return Promise.all(
-          Array.from(document.images)
+          images
             .filter(img => !img.complete)
             .map(img => new Promise(resolve => {
-              img.addEventListener('load', resolve);
-              img.addEventListener('error', resolve);
+              img.addEventListener('load', () => {
+                console.log('Image loaded:', img.src);
+                resolve({ src: img.src, status: 'loaded' });
+              });
+              img.addEventListener('error', (e) => {
+                console.log('Image failed:', img.src, e);
+                resolve({ src: img.src, status: 'error' });
+              });
               // Set timeout to avoid hanging forever
-              setTimeout(resolve, 5000);
+              setTimeout(() => {
+                console.log('Image timeout:', img.src);
+                resolve({ src: img.src, status: 'timeout' });
+              }, 5000);
             }))
         );
       });
+
+      console.log('Image load results:', imageLoadResults);
 
       await page.pdf({ path: filepath, format: 'A4', printBackground: true });
 
