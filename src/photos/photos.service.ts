@@ -44,6 +44,7 @@ export class PhotosService {
 
     // Upload to S3
     const imageUrl = await this.s3Service.upload(key, compressedBuffer, `image/${ext}`);
+    this.logger.log(`Photo uploaded to S3: ${imageUrl}`);
 
     // Get user for uploadedBy
     const user = await this.prisma.user.findUnique({
@@ -63,6 +64,7 @@ export class PhotosService {
       },
     });
 
+    this.logger.log(`Photo record created: ${photo.id} with URL: ${photo.url}`);
     return photo;
   }
 

@@ -44,7 +44,7 @@ export class S3Service {
         Key: key,
         Body: body,
         ContentType: contentType,
-        // ACL removed - bucket policy handles public access
+        ACL: 'public-read', // Make object publicly readable
       }));
 
       // Return the public S3 URL
