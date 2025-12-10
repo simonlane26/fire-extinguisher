@@ -41,11 +41,14 @@ const ReportsPage: React.FC<Props> = ({
   const [generatingUsers, setGeneratingUsers] = useState(false);
   const [generatingByType, setGeneratingByType] = useState(false);
   const [selectedType, setSelectedType] = useState<string>(typeFilter);
+  const [selectedUser, setSelectedUser] = useState<string>('all');
   const [extinguisherTypes, setExtinguisherTypes] = useState<string[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
-    // Fetch available extinguisher types
+    // Fetch available extinguisher types and users
     fetchExtinguisherTypes();
+    fetchUsers();
   }, []);
 
   const fetchExtinguisherTypes = async () => {
@@ -60,10 +63,31 @@ const ReportsPage: React.FC<Props> = ({
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/users`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      const data = await res.json();
+      setUsers(data);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    }
+  };
+
   const generateUserReport = async () => {
     try {
       setGeneratingUsers(true);
-      const res = await fetch(`${API_BASE}/reports/users/report`, {
+
+      // Build query params with user filter
+      const params = new URLSearchParams();
+      if (selectedUser !== 'all') params.append('userId', selectedUser);
+
+      const queryString = params.toString();
+      const url = `${API_BASE}/reports/users/report${queryString ? `?${queryString}` : ''}`;
+
+      const res = await fetch(url, {
         headers: getAuthHeaders(),
       });
 
@@ -148,6 +172,23 @@ const ReportsPage: React.FC<Props> = ({
           <p className="text-gray-600 mb-4 text-sm">
             Generate a detailed report of all users in your organization, including their roles, status, and activity.
           </p>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filter by User
+            </label>
+            <select
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+              style={{ focusRing: primaryColor }}
+            >
+              <option value="all">All Users</option>
+              {users.map(user => (
+                <option key={user.id} value={user.id}>{user.name}</option>
+              ))}
+            </select>
+          </div>
 
           <button
             onClick={generateUserReport}

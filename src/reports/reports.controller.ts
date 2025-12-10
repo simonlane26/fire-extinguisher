@@ -272,15 +272,24 @@ export class ReportsController {
 
   // User Management Report
   @Get('users/report')
-  async generateUserReport(@CurrentUser() user: CurrentUserData) {
+  async generateUserReport(
+    @CurrentUser() user: CurrentUserData,
+    @Query('userId') userId?: string,
+  ) {
     const tenantId = user.tenantId;
 
     const tenant = await this.prisma.tenant.findUniqueOrThrow({
       where: { id: tenantId },
     });
 
+    // Build where clause for users
+    const userWhereClause: any = { tenantId };
+    if (userId && userId !== 'all') {
+      userWhereClause.id = userId;
+    }
+
     const users = await this.prisma.user.findMany({
-      where: { tenantId },
+      where: userWhereClause,
       orderBy: { createdAt: 'desc' },
     });
 
@@ -306,41 +315,57 @@ export class ReportsController {
       users.map(async (u) => {
         console.log(`\nChecking activity for user: "${u.name}" (${u.email})`);
 
-        // Extract last name for matching (technician might be abbreviated like "S lane")
-        const lastName = u.name.includes(' ') ? u.name.split(' ').pop() : u.name;
+        // Try multiple matching strategies to find user's work
+        // 1. Match by name (full or partial)
+        // 2. Match by email
+        // 3. Match by user ID if available
+        const nameWords = u.name.split(' ');
+        const lastName = nameWords.length > 0 ? nameWords[nameWords.length - 1] : u.name;
+        const firstInitial = u.name.charAt(0);
 
-        // Count inspections performed (use contains for partial matching)
+        // Count inspections performed (try multiple matching strategies)
         const inspectionsCount = await this.prisma.inspection.count({
           where: {
             tenantId,
             OR: [
+              // Full name match
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              // Email match
+              { technician: { equals: u.email, mode: 'insensitive' } },
+              // "FirstInitial LastName" pattern (e.g., "S lane" for "Simon Charles Lane")
+              { technician: { contains: `${firstInitial} ${lastName}`, mode: 'insensitive' } },
+              // Just last name
               { technician: { contains: lastName, mode: 'insensitive' } },
-              { technician: { contains: u.email, mode: 'insensitive' } },
             ],
           },
         });
 
-        console.log(`  - Last name: "${lastName}", Inspections found: ${inspectionsCount}`);
+        console.log(`  - Matching patterns tried: Full name="${u.name}", Email="${u.email}", Pattern="${firstInitial} ${lastName}", Last name="${lastName}"`);
+        console.log(`  - Inspections found: ${inspectionsCount}`);
 
-        // Count service jobs (use contains for partial matching)
+        // Count service jobs
         const serviceJobsCount = await this.prisma.serviceJob.count({
           where: {
             tenantId,
             OR: [
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              { technician: { equals: u.email, mode: 'insensitive' } },
+              { technician: { contains: `${firstInitial} ${lastName}`, mode: 'insensitive' } },
               { technician: { contains: lastName, mode: 'insensitive' } },
-              { technician: { contains: u.email, mode: 'insensitive' } },
               { createdByUserId: u.id },
             ],
           },
         });
 
-        // Count photos uploaded (use contains for partial matching)
+        // Count photos uploaded
         const photosCount = await this.prisma.inspectionPhoto.count({
           where: {
             tenantId,
             OR: [
+              { uploadedBy: { equals: u.name, mode: 'insensitive' } },
+              { uploadedBy: { equals: u.email, mode: 'insensitive' } },
+              { uploadedBy: { contains: `${firstInitial} ${lastName}`, mode: 'insensitive' } },
               { uploadedBy: { contains: lastName, mode: 'insensitive' } },
-              { uploadedBy: { contains: u.email, mode: 'insensitive' } },
             ],
           },
         });
@@ -353,8 +378,10 @@ export class ReportsController {
           where: {
             tenantId,
             OR: [
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              { technician: { equals: u.email, mode: 'insensitive' } },
+              { technician: { contains: `${firstInitial} ${lastName}`, mode: 'insensitive' } },
               { technician: { contains: lastName, mode: 'insensitive' } },
-              { technician: { contains: u.email, mode: 'insensitive' } },
             ],
             serviceDate: { gte: thirtyDaysAgo },
           },
@@ -365,8 +392,10 @@ export class ReportsController {
           where: {
             tenantId,
             OR: [
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              { technician: { equals: u.email, mode: 'insensitive' } },
+              { technician: { contains: `${firstInitial} ${lastName}`, mode: 'insensitive' } },
               { technician: { contains: lastName, mode: 'insensitive' } },
-              { technician: { contains: u.email, mode: 'insensitive' } },
             ],
             partsReplaced: { not: null },
           },
@@ -379,8 +408,10 @@ export class ReportsController {
           where: {
             tenantId,
             OR: [
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              { technician: { equals: u.email, mode: 'insensitive' } },
+              { technician: { contains: `${firstInitial} ${lastName}`, mode: 'insensitive' } },
               { technician: { contains: lastName, mode: 'insensitive' } },
-              { technician: { contains: u.email, mode: 'insensitive' } },
             ],
           },
           orderBy: { serviceDate: 'desc' },
