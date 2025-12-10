@@ -27,12 +27,20 @@ const API_BASE = getApiBase();
 
 type Props = {
   primaryColor?: string;
+  buildingFilter?: string;
+  typeFilter?: string;
+  statusFilter?: string;
 };
 
-const ReportsPage: React.FC<Props> = ({ primaryColor = '#7c3aed' }) => {
+const ReportsPage: React.FC<Props> = ({
+  primaryColor = '#7c3aed',
+  buildingFilter = 'all',
+  typeFilter = 'all',
+  statusFilter = 'all',
+}) => {
   const [generatingUsers, setGeneratingUsers] = useState(false);
   const [generatingByType, setGeneratingByType] = useState(false);
-  const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedType, setSelectedType] = useState<string>(typeFilter);
   const [extinguisherTypes, setExtinguisherTypes] = useState<string[]>([]);
 
   useEffect(() => {
@@ -81,7 +89,17 @@ const ReportsPage: React.FC<Props> = ({ primaryColor = '#7c3aed' }) => {
   const generateExtinguishersByTypeReport = async () => {
     try {
       setGeneratingByType(true);
-      const res = await fetch(`${API_BASE}/reports/extinguishers/by-type?type=${selectedType}`, {
+
+      // Build query params with filters
+      const params = new URLSearchParams();
+      if (selectedType !== 'all') params.append('type', selectedType);
+      if (buildingFilter !== 'all') params.append('building', buildingFilter);
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+
+      const queryString = params.toString();
+      const url = `${API_BASE}/reports/extinguishers/by-type${queryString ? `?${queryString}` : ''}`;
+
+      const res = await fetch(url, {
         headers: getAuthHeaders(),
       });
 
@@ -157,6 +175,30 @@ const ReportsPage: React.FC<Props> = ({ primaryColor = '#7c3aed' }) => {
           <p className="text-gray-600 mb-4 text-sm">
             Generate a report grouped by extinguisher type, with detailed inventory and service information.
           </p>
+
+          {(buildingFilter !== 'all' || typeFilter !== 'all' || statusFilter !== 'all') && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm font-medium text-blue-900 mb-1">Active Filters:</p>
+              <div className="flex flex-wrap gap-2">
+                {buildingFilter !== 'all' && (
+                  <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                    Building: {buildingFilter}
+                  </span>
+                )}
+                {typeFilter !== 'all' && (
+                  <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                    Type: {typeFilter}
+                  </span>
+                )}
+                {statusFilter !== 'all' && (
+                  <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                    Status: {statusFilter}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-blue-700 mt-2">Report will include only filtered extinguishers</p>
+            </div>
+          )}
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">

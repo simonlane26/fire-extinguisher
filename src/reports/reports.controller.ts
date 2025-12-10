@@ -372,6 +372,8 @@ export class ReportsController {
   async generateExtinguishersByTypeReport(
     @CurrentUser() user: CurrentUserData,
     @Query('type') type?: string,
+    @Query('building') building?: string,
+    @Query('status') status?: string,
   ) {
     const tenantId = user.tenantId;
 
@@ -379,10 +381,16 @@ export class ReportsController {
       where: { id: tenantId },
     });
 
-    // Build where clause based on filter
+    // Build where clause based on filters
     const whereClause: any = { tenantId };
     if (type && type !== 'all') {
       whereClause.type = type;
+    }
+    if (building && building !== 'all') {
+      whereClause.building = building;
+    }
+    if (status && status !== 'all') {
+      whereClause.status = status;
     }
 
     const extinguishers = await this.prisma.extinguisher.findMany({
@@ -407,6 +415,8 @@ export class ReportsController {
       extinguishers,
       groupedByType,
       filterType: type || 'all',
+      filterBuilding: building || 'all',
+      filterStatus: status || 'all',
     });
 
     return { pdfUrl };

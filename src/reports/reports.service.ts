@@ -807,8 +807,10 @@ export class ReportsService {
     extinguishers: any[];
     groupedByType: Record<string, any[]>;
     filterType: string;
+    filterBuilding?: string;
+    filterStatus?: string;
   }) {
-    const { tenant, extinguishers, groupedByType, filterType } = params;
+    const { tenant, extinguishers, groupedByType, filterType, filterBuilding = 'all', filterStatus = 'all' } = params;
 
     const html = `
       <html>
@@ -841,7 +843,13 @@ export class ReportsService {
           <div>
             <h1>Extinguishers by Type Report</h1>
             <p style="margin: 8px 0 0 0; color: #666;">${tenant.name}</p>
-            <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">Filter: ${filterType === 'all' ? 'All Types' : filterType} | Generated: ${new Date().toLocaleDateString()}</p>
+            <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">
+              ${[
+                filterType !== 'all' ? `Type: ${filterType}` : null,
+                filterBuilding !== 'all' ? `Building: ${filterBuilding}` : null,
+                filterStatus !== 'all' ? `Status: ${filterStatus}` : null,
+              ].filter(Boolean).join(' | ') || 'All Extinguishers'} | Generated: ${new Date().toLocaleDateString()}
+            </p>
           </div>
           ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height: 60px;"/>` : ''}
         </div>

@@ -1068,7 +1068,14 @@ const FireExtinguisherApp: React.FC = () => {
         )}
 
         {/* Reports tab */}
-        {activeTab === 'reports' && <ReportsPage primaryColor={tenant.primaryColor} />}
+        {activeTab === 'reports' && (
+          <ReportsPage
+            primaryColor={tenant.primaryColor}
+            buildingFilter={buildingFilter}
+            typeFilter={typeFilter}
+            statusFilter={statusFilter}
+          />
+        )}
 
         {/* Help tab */}
         {activeTab === 'help' && <HelpPage />}
