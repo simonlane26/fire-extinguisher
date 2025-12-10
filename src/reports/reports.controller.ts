@@ -295,40 +295,43 @@ export class ReportsController {
     // Get activity metrics for each user
     const usersWithActivity = await Promise.all(
       users.map(async (u) => {
-        console.log(`Checking activity for user: ${u.name} (${u.email})`);
+        console.log(`\nChecking activity for user: "${u.name}" (${u.email})`);
 
-        // Count inspections performed (matched by technician name or email, case-insensitive)
+        // Extract last name for matching (technician might be abbreviated like "S lane")
+        const lastName = u.name.includes(' ') ? u.name.split(' ').pop() : u.name;
+
+        // Count inspections performed (use contains for partial matching)
         const inspectionsCount = await this.prisma.inspection.count({
           where: {
             tenantId,
             OR: [
-              { technician: { equals: u.name, mode: 'insensitive' } },
-              { technician: { equals: u.email, mode: 'insensitive' } },
+              { technician: { contains: lastName, mode: 'insensitive' } },
+              { technician: { contains: u.email, mode: 'insensitive' } },
             ],
           },
         });
 
-        console.log(`  - Inspections: ${inspectionsCount}`);
+        console.log(`  - Last name: "${lastName}", Inspections found: ${inspectionsCount}`);
 
-        // Count service jobs (matched by technician name, email, or createdByUserId)
+        // Count service jobs (use contains for partial matching)
         const serviceJobsCount = await this.prisma.serviceJob.count({
           where: {
             tenantId,
             OR: [
-              { technician: { equals: u.name, mode: 'insensitive' } },
-              { technician: { equals: u.email, mode: 'insensitive' } },
+              { technician: { contains: lastName, mode: 'insensitive' } },
+              { technician: { contains: u.email, mode: 'insensitive' } },
               { createdByUserId: u.id },
             ],
           },
         });
 
-        // Count photos uploaded
+        // Count photos uploaded (use contains for partial matching)
         const photosCount = await this.prisma.inspectionPhoto.count({
           where: {
             tenantId,
             OR: [
-              { uploadedBy: { equals: u.name, mode: 'insensitive' } },
-              { uploadedBy: { equals: u.email, mode: 'insensitive' } },
+              { uploadedBy: { contains: lastName, mode: 'insensitive' } },
+              { uploadedBy: { contains: u.email, mode: 'insensitive' } },
             ],
           },
         });
@@ -341,8 +344,8 @@ export class ReportsController {
           where: {
             tenantId,
             OR: [
-              { technician: { equals: u.name, mode: 'insensitive' } },
-              { technician: { equals: u.email, mode: 'insensitive' } },
+              { technician: { contains: lastName, mode: 'insensitive' } },
+              { technician: { contains: u.email, mode: 'insensitive' } },
             ],
             serviceDate: { gte: thirtyDaysAgo },
           },
@@ -353,22 +356,22 @@ export class ReportsController {
           where: {
             tenantId,
             OR: [
-              { technician: { equals: u.name, mode: 'insensitive' } },
-              { technician: { equals: u.email, mode: 'insensitive' } },
+              { technician: { contains: lastName, mode: 'insensitive' } },
+              { technician: { contains: u.email, mode: 'insensitive' } },
             ],
             partsReplaced: { not: null },
           },
         });
 
-        console.log(`  - Repairs: ${repairsCount}`);
+        console.log(`  - Repairs found: ${repairsCount}`);
 
         // Get last activity date
         const lastInspection = await this.prisma.inspection.findFirst({
           where: {
             tenantId,
             OR: [
-              { technician: { equals: u.name, mode: 'insensitive' } },
-              { technician: { equals: u.email, mode: 'insensitive' } },
+              { technician: { contains: lastName, mode: 'insensitive' } },
+              { technician: { contains: u.email, mode: 'insensitive' } },
             ],
           },
           orderBy: { serviceDate: 'desc' },
