@@ -287,20 +287,28 @@ export class ReportsController {
     // Get activity metrics for each user
     const usersWithActivity = await Promise.all(
       users.map(async (u) => {
-        // Count inspections performed (matched by technician name)
+        console.log(`Checking activity for user: ${u.name} (${u.email})`);
+
+        // Count inspections performed (matched by technician name or email, case-insensitive)
         const inspectionsCount = await this.prisma.inspection.count({
           where: {
             tenantId,
-            technician: u.name,
+            OR: [
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              { technician: { equals: u.email, mode: 'insensitive' } },
+            ],
           },
         });
 
-        // Count service jobs (matched by technician name or createdByUserId)
+        console.log(`  - Inspections: ${inspectionsCount}`);
+
+        // Count service jobs (matched by technician name, email, or createdByUserId)
         const serviceJobsCount = await this.prisma.serviceJob.count({
           where: {
             tenantId,
             OR: [
-              { technician: u.name },
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              { technician: { equals: u.email, mode: 'insensitive' } },
               { createdByUserId: u.id },
             ],
           },
@@ -310,7 +318,10 @@ export class ReportsController {
         const photosCount = await this.prisma.inspectionPhoto.count({
           where: {
             tenantId,
-            uploadedBy: u.name,
+            OR: [
+              { uploadedBy: { equals: u.name, mode: 'insensitive' } },
+              { uploadedBy: { equals: u.email, mode: 'insensitive' } },
+            ],
           },
         });
 
@@ -321,7 +332,10 @@ export class ReportsController {
         const recentInspectionsCount = await this.prisma.inspection.count({
           where: {
             tenantId,
-            technician: u.name,
+            OR: [
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              { technician: { equals: u.email, mode: 'insensitive' } },
+            ],
             serviceDate: { gte: thirtyDaysAgo },
           },
         });
@@ -330,16 +344,24 @@ export class ReportsController {
         const repairsCount = await this.prisma.inspection.count({
           where: {
             tenantId,
-            technician: u.name,
+            OR: [
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              { technician: { equals: u.email, mode: 'insensitive' } },
+            ],
             partsReplaced: { not: null },
           },
         });
+
+        console.log(`  - Repairs: ${repairsCount}`);
 
         // Get last activity date
         const lastInspection = await this.prisma.inspection.findFirst({
           where: {
             tenantId,
-            technician: u.name,
+            OR: [
+              { technician: { equals: u.name, mode: 'insensitive' } },
+              { technician: { equals: u.email, mode: 'insensitive' } },
+            ],
           },
           orderBy: { serviceDate: 'desc' },
           select: { serviceDate: true },
