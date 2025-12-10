@@ -417,8 +417,6 @@ export class ReportsService {
             <div class="subtitle">${tenant.name}</div>
           </div>
 
-          ${photoUrl ? `<img src="${photoUrl}" class="extinguisher-photo" alt="Extinguisher Photo"/>` : ''}
-
           <p style="font-size: 16px; margin: 24px 0;">This certifies that the fire extinguisher described below has been inspected and tested in accordance with applicable regulations.</p>
 
           <div class="content">
@@ -640,5 +638,302 @@ export class ReportsService {
     // Generate buffer
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
+  }
+
+  // Generate User Management Report PDF
+  async buildUserReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    users: any[];
+  }) {
+    const { tenant, users } = params;
+
+    const html = `
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 24px; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #7c3aed; padding-bottom: 16px; }
+          h1 { margin: 0; color: #7c3aed; }
+          .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+          .summary-card { background: #f3f4f6; padding: 16px; border-radius: 8px; text-align: center; }
+          .summary-card .number { font-size: 32px; font-weight: bold; color: #7c3aed; }
+          .summary-card .label { font-size: 14px; color: #666; margin-top: 8px; }
+          table { width: 100%; border-collapse: collapse; margin: 24px 0; }
+          th { background: #7c3aed; color: white; padding: 12px; text-align: left; font-size: 14px; }
+          td { border: 1px solid #ddd; padding: 10px; font-size: 13px; }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+          .badge-active { background: #10b981; color: white; }
+          .badge-inactive { background: #ef4444; color: white; }
+          .badge-admin { background: #7c3aed; color: white; }
+          .badge-manager { background: #3b82f6; color: white; }
+          .badge-technician { background: #f59e0b; color: white; }
+          .badge-viewer { background: #6b7280; color: white; }
+          .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 12px; color: #777; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1>User Management Report</h1>
+            <p style="margin: 8px 0 0 0; color: #666;">${tenant.name}</p>
+            <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">Generated: ${new Date().toLocaleDateString()}</p>
+          </div>
+          ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height: 60px;"/>` : ''}
+        </div>
+
+        <div class="summary">
+          <div class="summary-card">
+            <div class="number">${users.length}</div>
+            <div class="label">Total Users</div>
+          </div>
+          <div class="summary-card">
+            <div class="number">${users.filter(u => u.status === 'active').length}</div>
+            <div class="label">Active</div>
+          </div>
+          <div class="summary-card">
+            <div class="number">${users.reduce((sum, u) => sum + (u.activity?.totalInspections || 0), 0)}</div>
+            <div class="label">Total Inspections</div>
+          </div>
+          <div class="summary-card">
+            <div class="number">${users.reduce((sum, u) => sum + (u.activity?.totalRepairs || 0), 0)}</div>
+            <div class="label">Total Repairs</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Inspections</th>
+              <th>Repairs</th>
+              <th>Last 30 Days</th>
+              <th>Last Activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(u => `
+              <tr>
+                <td>
+                  <strong>${u.name}</strong><br/>
+                  <span style="font-size: 11px; color: #666;">${u.email}</span>
+                </td>
+                <td><span class="badge badge-${u.role.toLowerCase()}">${u.role}</span></td>
+                <td><span class="badge ${u.status === 'active' ? 'badge-active' : 'badge-inactive'}">${u.status}</span></td>
+                <td style="text-align: center;">${u.activity?.totalInspections || 0}</td>
+                <td style="text-align: center;">${u.activity?.totalRepairs || 0}</td>
+                <td style="text-align: center;">${u.activity?.recentInspections || 0}</td>
+                <td>${u.activity?.lastActivity ? new Date(u.activity.lastActivity).toLocaleDateString() : 'Never'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <h2 style="color: #7c3aed; margin-top: 40px;">Activity Details</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Inspections</th>
+              <th>Service Jobs</th>
+              <th>Repairs</th>
+              <th>Photos</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(u => `
+              <tr>
+                <td>${u.name}</td>
+                <td style="text-align: center;">${u.activity?.totalInspections || 0}</td>
+                <td style="text-align: center;">${u.activity?.totalServiceJobs || 0}</td>
+                <td style="text-align: center;">${u.activity?.totalRepairs || 0}</td>
+                <td style="text-align: center;">${u.activity?.totalPhotos || 0}</td>
+                <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          <p>Generated with Fireexcheck.com - Professional Fire Safety Management</p>
+          <p>Report ID: ${Date.now()} | Generated: ${new Date().toISOString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const filename = `users-report-${Date.now()}.pdf`;
+    const filepath = path.join(this.reportsDir, filename);
+
+    let browser: Browser | undefined;
+    try {
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      // Wait for all images to load
+      await page.evaluate(() => {
+        return Promise.all(
+          Array.from(document.images)
+            .filter(img => !img.complete)
+            .map(img => new Promise(resolve => {
+              img.addEventListener('load', resolve);
+              img.addEventListener('error', resolve);
+              setTimeout(resolve, 5000);
+            }))
+        );
+      });
+
+      await page.pdf({ path: filepath, format: 'A4', printBackground: true });
+
+      return `/uploads/reports/${filename}`;
+    } finally {
+      if (browser) await browser.close();
+    }
+  }
+
+  // Generate Extinguishers by Type Report PDF
+  async buildExtinguishersByTypeReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    extinguishers: any[];
+    groupedByType: Record<string, any[]>;
+    filterType: string;
+  }) {
+    const { tenant, extinguishers, groupedByType, filterType } = params;
+
+    const html = `
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 24px; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #7c3aed; padding-bottom: 16px; }
+          h1 { margin: 0; color: #7c3aed; }
+          .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 24px 0; }
+          .summary-card { background: #f3f4f6; padding: 16px; border-radius: 8px; text-align: center; }
+          .summary-card .number { font-size: 28px; font-weight: bold; color: #7c3aed; }
+          .summary-card .label { font-size: 12px; color: #666; margin-top: 4px; }
+          .type-section { margin: 32px 0; page-break-inside: avoid; }
+          .type-section h2 { color: #7c3aed; border-bottom: 2px solid #7c3aed; padding-bottom: 8px; }
+          table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+          th { background: #7c3aed; color: white; padding: 10px; text-align: left; font-size: 13px; }
+          td { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+          .badge-active { background: #10b981; color: white; }
+          .badge-inactive { background: #ef4444; color: white; }
+          .badge-good { background: #10b981; color: white; }
+          .badge-fair { background: #f59e0b; color: white; }
+          .badge-poor { background: #ef4444; color: white; }
+          .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 12px; color: #777; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1>Extinguishers by Type Report</h1>
+            <p style="margin: 8px 0 0 0; color: #666;">${tenant.name}</p>
+            <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">Filter: ${filterType === 'all' ? 'All Types' : filterType} | Generated: ${new Date().toLocaleDateString()}</p>
+          </div>
+          ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height: 60px;"/>` : ''}
+        </div>
+
+        <div class="summary">
+          <div class="summary-card">
+            <div class="number">${extinguishers.length}</div>
+            <div class="label">Total Units</div>
+          </div>
+          ${Object.keys(groupedByType).map(type => `
+            <div class="summary-card">
+              <div class="number">${groupedByType[type].length}</div>
+              <div class="label">${type}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        ${Object.keys(groupedByType).sort().map(type => `
+          <div class="type-section">
+            <h2>${type} (${groupedByType[type].length} units)</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Serial #</th>
+                  <th>Location</th>
+                  <th>Building</th>
+                  <th>Capacity</th>
+                  <th>Status</th>
+                  <th>Condition</th>
+                  <th>Last Service</th>
+                  <th>Next Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${groupedByType[type].map(ext => `
+                  <tr>
+                    <td>${ext.serialNumber || 'N/A'}</td>
+                    <td>${ext.location}</td>
+                    <td>${ext.building}</td>
+                    <td>${ext.capacity || 'N/A'}</td>
+                    <td><span class="badge ${ext.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${ext.status}</span></td>
+                    <td><span class="badge badge-${ext.condition?.toLowerCase() || 'good'}">${ext.condition || 'Good'}</span></td>
+                    <td>${ext.lastMaintenance ? new Date(ext.lastMaintenance).toLocaleDateString() : ext.lastInspection ? new Date(ext.lastInspection).toLocaleDateString() : 'N/A'}</td>
+                    <td>${ext.nextMaintenance ? new Date(ext.nextMaintenance).toLocaleDateString() : ext.nextInspection ? new Date(ext.nextInspection).toLocaleDateString() : 'N/A'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `).join('')}
+
+        <div class="footer">
+          <p>Generated with Fireexcheck.com - Professional Fire Safety Management</p>
+          <p>Report ID: ${Date.now()} | Generated: ${new Date().toISOString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const filename = `extinguishers-by-type-${filterType}-${Date.now()}.pdf`;
+    const filepath = path.join(this.reportsDir, filename);
+
+    let browser: Browser | undefined;
+    try {
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      // Wait for all images to load
+      await page.evaluate(() => {
+        return Promise.all(
+          Array.from(document.images)
+            .filter(img => !img.complete)
+            .map(img => new Promise(resolve => {
+              img.addEventListener('load', resolve);
+              img.addEventListener('error', resolve);
+              setTimeout(resolve, 5000);
+            }))
+        );
+      });
+
+      await page.pdf({ path: filepath, format: 'A4', printBackground: true, landscape: true });
+
+      return `/uploads/reports/${filename}`;
+    } finally {
+      if (browser) await browser.close();
+    }
   }
 }

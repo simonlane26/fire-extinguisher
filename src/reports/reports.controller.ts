@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportsService } from './reports.service';
@@ -182,6 +182,12 @@ export class ReportsController {
       where: { id: tenantId },
     });
 
+    console.log('📋 Certificate generation - Tenant data:', {
+      id: tenant.id,
+      companyName: tenant.companyName,
+      logoUrl: tenant.logoUrl,
+    });
+
     const extinguisher = await this.prisma.extinguisher.findFirst({
       where: { id: extinguisherId, tenantId },
       include: {
@@ -262,6 +268,148 @@ export class ReportsController {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename=extinguisher-${extinguisherId}-history.xlsx`);
     res.send(excelBuffer);
+  }
+
+  // User Management Report
+  @Get('users/report')
+  async generateUserReport(@CurrentUser() user: CurrentUserData) {
+    const tenantId = user.tenantId;
+
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+    });
+
+    const users = await this.prisma.user.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Get activity metrics for each user
+    const usersWithActivity = await Promise.all(
+      users.map(async (u) => {
+        // Count inspections performed (matched by technician name)
+        const inspectionsCount = await this.prisma.inspection.count({
+          where: {
+            tenantId,
+            technician: u.name,
+          },
+        });
+
+        // Count service jobs (matched by technician name or createdByUserId)
+        const serviceJobsCount = await this.prisma.serviceJob.count({
+          where: {
+            tenantId,
+            OR: [
+              { technician: u.name },
+              { createdByUserId: u.id },
+            ],
+          },
+        });
+
+        // Count photos uploaded
+        const photosCount = await this.prisma.inspectionPhoto.count({
+          where: {
+            tenantId,
+            uploadedBy: u.name,
+          },
+        });
+
+        // Get last 30 days activity
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const recentInspectionsCount = await this.prisma.inspection.count({
+          where: {
+            tenantId,
+            technician: u.name,
+            serviceDate: { gte: thirtyDaysAgo },
+          },
+        });
+
+        // Count repairs (inspections with parts replaced)
+        const repairsCount = await this.prisma.inspection.count({
+          where: {
+            tenantId,
+            technician: u.name,
+            partsReplaced: { not: null },
+          },
+        });
+
+        // Get last activity date
+        const lastInspection = await this.prisma.inspection.findFirst({
+          where: {
+            tenantId,
+            technician: u.name,
+          },
+          orderBy: { serviceDate: 'desc' },
+          select: { serviceDate: true },
+        });
+
+        return {
+          ...u,
+          activity: {
+            totalInspections: inspectionsCount,
+            totalServiceJobs: serviceJobsCount,
+            totalRepairs: repairsCount,
+            totalPhotos: photosCount,
+            recentInspections: recentInspectionsCount,
+            lastActivity: lastInspection?.serviceDate || null,
+          },
+        };
+      })
+    );
+
+    const pdfUrl = await this.reports.buildUserReport({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      users: usersWithActivity,
+    });
+
+    return { pdfUrl };
+  }
+
+  // Extinguishers by Type Report
+  @Get('extinguishers/by-type')
+  async generateExtinguishersByTypeReport(
+    @CurrentUser() user: CurrentUserData,
+    @Query('type') type?: string,
+  ) {
+    const tenantId = user.tenantId;
+
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+    });
+
+    // Build where clause based on filter
+    const whereClause: any = { tenantId };
+    if (type && type !== 'all') {
+      whereClause.type = type;
+    }
+
+    const extinguishers = await this.prisma.extinguisher.findMany({
+      where: whereClause,
+      include: {
+        site: true,
+      },
+      orderBy: { type: 'asc' },
+    });
+
+    // Group by type for summary
+    const groupedByType = extinguishers.reduce((acc, ext) => {
+      if (!acc[ext.type]) {
+        acc[ext.type] = [];
+      }
+      acc[ext.type].push(ext);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const pdfUrl = await this.reports.buildExtinguishersByTypeReport({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      extinguishers,
+      groupedByType,
+      filterType: type || 'all',
+    });
+
+    return { pdfUrl };
   }
 }
 

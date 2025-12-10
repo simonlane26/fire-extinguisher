@@ -20,6 +20,7 @@ import {
   Filter,
   X,
   LogOut,
+  FileText,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
@@ -33,6 +34,7 @@ import QrCodesPage from './pages/QrCodesPage';
 import BillingPage from './pages/BillingPage';
 import InventoryPage from './pages/InventoryPage';
 import HelpPage from './pages/HelpPage';
+import ReportsPage from './pages/ReportsPage';
 import RoleSwitcherModal from './components/RoleSwitcher';
 import GenerateReportButton from './components/GenerateReportButton';
 import TabButton from './components/TabButton';
@@ -756,6 +758,15 @@ const FireExtinguisherApp: React.FC = () => {
             )}
 
             <TabButton
+              active={activeTab === 'reports'}
+              onClick={() => setActiveTab('reports')}
+              primaryColor={tenant.primaryColor}
+            >
+              <FileText size={16} />
+              <span>Reports</span>
+            </TabButton>
+
+            <TabButton
               active={activeTab === 'help'}
               onClick={() => setActiveTab('help')}
               primaryColor={tenant.primaryColor}
@@ -1055,6 +1066,9 @@ const FireExtinguisherApp: React.FC = () => {
         {activeTab === 'settings' && hasPermission('MANAGE_SETTINGS') && (
           <SettingsPage tenant={tenant} updateTenant={updateTenant} />
         )}
+
+        {/* Reports tab */}
+        {activeTab === 'reports' && <ReportsPage primaryColor={tenant.primaryColor} />}
 
         {/* Help tab */}
         {activeTab === 'help' && <HelpPage />}
