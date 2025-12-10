@@ -284,6 +284,14 @@ export class ReportsController {
       orderBy: { createdAt: 'desc' },
     });
 
+    // First, let's see what technician values exist in the database
+    const sampleInspections = await this.prisma.inspection.findMany({
+      where: { tenantId },
+      select: { technician: true, serviceDate: true },
+      take: 10,
+    });
+    console.log('Sample inspections with technician names:', JSON.stringify(sampleInspections, null, 2));
+
     // Get activity metrics for each user
     const usersWithActivity = await Promise.all(
       users.map(async (u) => {
