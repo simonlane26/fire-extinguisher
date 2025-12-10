@@ -38,7 +38,7 @@ export function clearToken(): void {
 }
 
 // Helper to get auth headers
-function getAuthHeaders(): Record<string, string> {
+export function getAuthHeaders(): Record<string, string> {
   const token = getToken();
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
