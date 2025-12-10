@@ -65,7 +65,7 @@ const ReportsPage: React.FC<Props> = ({
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${API_BASE}/users`, {
+      const res = await fetch(`${API_BASE}/reports/users`, {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to fetch users');

@@ -270,6 +270,25 @@ export class ReportsController {
     res.send(excelBuffer);
   }
 
+  // Get all users for dropdown
+  @Get('users')
+  async getUsers(@CurrentUser() user: CurrentUserData) {
+    const tenantId = user.tenantId;
+
+    const users = await this.prisma.user.findMany({
+      where: { tenantId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    return users;
+  }
+
   // User Management Report
   @Get('users/report')
   async generateUserReport(
