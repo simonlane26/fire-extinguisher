@@ -285,12 +285,21 @@ export class ReportsController {
     });
 
     // First, let's see what technician values exist in the database
-    const sampleInspections = await this.prisma.inspection.findMany({
+    const allInspections = await this.prisma.inspection.findMany({
       where: { tenantId },
-      select: { technician: true, serviceDate: true },
-      take: 10,
+      select: { technician: true, partsReplaced: true },
     });
-    console.log('Sample inspections with technician names:', JSON.stringify(sampleInspections, null, 2));
+
+    const uniqueTechnicians = [...new Set(allInspections.map(i => i.technician))].filter(Boolean);
+    const totalInspections = allInspections.length;
+    const inspectionsWithRepairs = allInspections.filter(i => i.partsReplaced).length;
+
+    console.log('\n=== DATABASE ANALYSIS ===');
+    console.log(`Total inspections in database: ${totalInspections}`);
+    console.log(`Inspections with repairs (partsReplaced not null): ${inspectionsWithRepairs}`);
+    console.log(`All unique technician names in database:`, uniqueTechnicians);
+    console.log('\n=== USER NAMES ===');
+    console.log('User names in system:', users.map(u => `"${u.name}" (${u.email})`));
 
     // Get activity metrics for each user
     const usersWithActivity = await Promise.all(
