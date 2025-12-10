@@ -1,8 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Users, Filter } from 'lucide-react';
-import { getAuthHeaders } from '../lib/api';
+import { getAuthHeaders, fetchExtinguishers } from '../lib/api';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
+// Determine API base URL based on environment
+const getApiBase = () => {
+  // In production, always use the environment variable
+  if ((import.meta as any).env?.VITE_API_URL) {
+    return (import.meta as any).env.VITE_API_URL;
+  }
+
+  // Check if we're on localhost (development)
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+  if (isLocalhost) {
+    // In development, use current hostname with port 3000
+    const protocol = window.location.protocol; // http: or https:
+    return `${protocol}//${hostname}:3000/api/v1`;
+  } else {
+    // In production (Railway), use relative path (same domain, different path)
+    return '/api/v1';
+  }
+};
+
+const API_BASE = getApiBase();
 
 type Props = {
   primaryColor?: string;
@@ -21,11 +42,7 @@ const ReportsPage: React.FC<Props> = ({ primaryColor = '#7c3aed' }) => {
 
   const fetchExtinguisherTypes = async () => {
     try {
-      const res = await fetch(`${API_BASE}/extinguishers`, {
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error('Failed to fetch extinguishers');
-      const extinguishers = await res.json();
+      const extinguishers = await fetchExtinguishers();
 
       // Extract unique types
       const types = [...new Set(extinguishers.map((e: any) => e.type))].sort();
