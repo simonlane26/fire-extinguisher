@@ -36,7 +36,6 @@ import InventoryPage from './pages/InventoryPage';
 import HelpPage from './pages/HelpPage';
 import ReportsPage from './pages/ReportsPage';
 import RoleSwitcherModal from './components/RoleSwitcher';
-import GenerateReportButton from './components/GenerateReportButton';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
 import { addExtinguisher, updateExtinguisher, fetchExtinguishers, fetchExtinguisherById, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers } from './lib/api';
@@ -775,14 +774,6 @@ const FireExtinguisherApp: React.FC = () => {
               <span>Help</span>
             </TabButton>
           </div>
-
-          <GenerateReportButton
-            tenantId={tenant.id}
-            primaryColor={tenant.primaryColor}
-            jobIds={[]}
-            photoIds={[]}
-            technicianName={currentUser.name}
-          />
         </div>
         {/* Sites tab */}
         {activeTab === 'sites' && <SitesPage />}
