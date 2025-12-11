@@ -27,8 +27,9 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
   const [foregroundColor, setForegroundColor] = useState('#000000');
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
 
-  // Manual generation
-  const [manualText, setManualText] = useState('');
+  // Label settings
+  const [labelText, setLabelText] = useState('');
+  const [labelPosition, setLabelPosition] = useState<'top' | 'bottom'>('bottom');
 
   // Batch generation
   const [prefix, setPrefix] = useState('QR-');
@@ -69,8 +70,8 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
     ? extinguishers
     : extinguishers.filter(ext => ext.building === buildingFilter);
 
-  const generateQrCodeDataUrl = async (text: string, label: string): Promise<QrCodeItem> => {
-    const dataUrl = await QRCode.toDataURL(text, {
+  const generateQrCodeDataUrl = async (text: string, label: string, customLabelText?: string): Promise<QrCodeItem> => {
+    const qrDataUrl = await QRCode.toDataURL(text, {
       errorCorrectionLevel: errorCorrection,
       width: size * scale,
       margin,
@@ -80,31 +81,70 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
       },
     });
 
+    // If we have a custom label, add it to the image
+    if (customLabelText && customLabelText.trim()) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const img = new Image();
+
+      await new Promise<void>((resolve) => {
+        img.onload = () => {
+          const fontSize = Math.floor(size * scale * 0.08); // 8% of QR code size
+          const padding = fontSize * 0.5;
+          const labelHeight = fontSize + padding * 2;
+
+          // Set canvas size to accommodate QR code + label
+          canvas.width = img.width;
+          canvas.height = img.height + labelHeight;
+
+          // Fill background
+          ctx.fillStyle = backgroundColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // Draw label and QR code based on position
+          if (labelPosition === 'top') {
+            // Draw label at top
+            ctx.fillStyle = foregroundColor;
+            ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(customLabelText, canvas.width / 2, labelHeight / 2);
+
+            // Draw QR code below label
+            ctx.drawImage(img, 0, labelHeight);
+          } else {
+            // Draw QR code at top
+            ctx.drawImage(img, 0, 0);
+
+            // Draw label at bottom
+            ctx.fillStyle = foregroundColor;
+            ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(customLabelText, canvas.width / 2, img.height + labelHeight / 2);
+          }
+
+          resolve();
+        };
+        img.src = qrDataUrl;
+      });
+
+      return {
+        id: `qr-${Date.now()}-${Math.random()}`,
+        label,
+        data: text,
+        dataUrl: canvas.toDataURL('image/png'),
+      };
+    }
+
     return {
       id: `qr-${Date.now()}-${Math.random()}`,
       label,
       data: text,
-      dataUrl,
+      dataUrl: qrDataUrl,
     };
   };
 
-  const handleGenerateManual = async () => {
-    if (!manualText.trim()) {
-      alert('Please enter text or URL');
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const qr = await generateQrCodeDataUrl(manualText, manualText);
-      setQrCodes([qr]);
-    } catch (error) {
-      alert('Failed to generate QR code');
-      console.error(error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const handleGenerateBatch = async () => {
     if (isNaN(startNum) || isNaN(endNum) || endNum < startNum) {
@@ -121,7 +161,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
       for (let i = 0; i < count; i++) {
         const num = String(startNum + i).padStart(padding, '0');
         const text = `${prefix}${num}${suffix}`;
-        const qr = await generateQrCodeDataUrl(text, text);
+        const qr = await generateQrCodeDataUrl(text, text, labelText || undefined);
         codes.push(qr);
         setProgress(((i + 1) / count) * 100);
       }
@@ -157,7 +197,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
         const ext = selected[i];
         const data = formatExtinguisherData(ext);
         const label = ext.location || ext.id;
-        const qr = await generateQrCodeDataUrl(data, label);
+        const qr = await generateQrCodeDataUrl(data, label, labelText || undefined);
         codes.push(qr);
         setProgress(((i + 1) / selected.length) * 100);
       }
@@ -349,28 +389,34 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
           </div>
         </div>
 
-        {/* Manual Generation */}
+        {/* Label Settings */}
         <div className="p-4 mb-6 border border-gray-200 rounded-lg">
-          <h3 className="mb-3 text-lg font-semibold">Manual Generation</h3>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={manualText}
-              onChange={(e) => setManualText(e.target.value)}
-              placeholder="Enter text or URL"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <button
-              onClick={handleGenerateManual}
-              disabled={isGenerating}
-              className="px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50"
-              style={{
-                backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#7c3aed',
-                color: '#ffffff'
-              }}
-            >
-              Generate
-            </button>
+          <h3 className="mb-3 text-lg font-semibold">Label Settings</h3>
+          <p className="mb-3 text-sm text-gray-600">
+            Add a custom label directly on the QR code. This will be applied to all generated QR codes.
+          </p>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div>
+              <label className="block mb-2 text-sm font-medium">Label Text (Optional)</label>
+              <input
+                type="text"
+                value={labelText}
+                onChange={(e) => setLabelText(e.target.value)}
+                placeholder="e.g., Company Name or Location"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block mb-2 text-sm font-medium">Label Position</label>
+              <select
+                value={labelPosition}
+                onChange={(e) => setLabelPosition(e.target.value as 'top' | 'bottom')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="bottom">Below QR Code</option>
+                <option value="top">Above QR Code</option>
+              </select>
+            </div>
           </div>
         </div>
 
