@@ -13,7 +13,7 @@ export class ExtinguishersService {
     private stripeService: StripeService,
   ) {}
 
-  create(tenantId: string, dto: CreateExtinguisherDto) {
+  async create(tenantId: string, dto: CreateExtinguisherDto) {
     const data: any = { ...dto, tenantId };
 
     // Convert date strings to DateTime objects
@@ -24,7 +24,66 @@ export class ExtinguishersService {
     if (data.lastMaintenance) data.lastMaintenance = new Date(data.lastMaintenance);
     if (data.nextMaintenance) data.nextMaintenance = new Date(data.nextMaintenance);
 
-    return this.prisma.extinguisher.create({ data });
+    const extinguisher = await this.prisma.extinguisher.create({ data });
+
+    // If this is a commission service, reduce extinguisher stock
+    if (data.serviceType === 'Commission Service' && data.type) {
+      await this.reduceExtinguisherStock(tenantId, data.type, data.inspector);
+    }
+
+    return extinguisher;
+  }
+
+  /**
+   * Reduce extinguisher stock when a new extinguisher is commissioned
+   */
+  private async reduceExtinguisherStock(tenantId: string, extinguisherType: string, usedBy?: string) {
+    try {
+      // Find matching extinguisher inventory item
+      const inventoryItem = await this.prisma.inventoryItem.findFirst({
+        where: {
+          tenantId,
+          category: 'Extinguisher',
+          supplierPartNo: extinguisherType, // Type is stored in supplierPartNo field
+        },
+      });
+
+      if (!inventoryItem) {
+        console.log(`No inventory item found for extinguisher type: ${extinguisherType}`);
+        return;
+      }
+
+      if (inventoryItem.quantityInStock <= 0) {
+        console.warn(`Cannot reduce stock for ${extinguisherType}: stock is already at 0`);
+        return;
+      }
+
+      // Reduce stock by 1
+      await this.prisma.inventoryItem.update({
+        where: { id: inventoryItem.id },
+        data: {
+          quantityInStock: {
+            decrement: 1,
+          },
+        },
+      });
+
+      // Record the usage
+      await this.prisma.partUsage.create({
+        data: {
+          tenantId,
+          inventoryItemId: inventoryItem.id,
+          quantityUsed: 1,
+          usedBy: usedBy || 'System (Commission)',
+          notes: `Extinguisher commissioned: ${extinguisherType}`,
+        },
+      });
+
+      console.log(`Reduced stock for ${extinguisherType}: ${inventoryItem.quantityInStock} -> ${inventoryItem.quantityInStock - 1}`);
+    } catch (error) {
+      console.error('Failed to reduce extinguisher stock:', error);
+      // Don't throw - we don't want to fail the extinguisher creation if stock tracking fails
+    }
   }
 
   findAll(tenantId: string) {

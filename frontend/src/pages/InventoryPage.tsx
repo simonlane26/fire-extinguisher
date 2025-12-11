@@ -10,6 +10,7 @@ import {
 } from '../lib/api';
 
 const CATEGORIES = [
+  'Extinguisher',
   'Seals',
   'Valves',
   'Gauges',
@@ -264,6 +265,7 @@ const InventoryModal: React.FC<ModalProps> = ({ item, onClose, onSave }) => {
     partNumber: item?.partNumber || '',
     partName: item?.partName || '',
     category: item?.category || '',
+    extinguisherType: item?.supplierPartNo || '', // Reusing supplierPartNo field for extinguisher type
     description: item?.description || '',
     unitPrice: item?.unitPrice ? (item.unitPrice / 100).toString() : '',
     quantityInStock: item?.quantityInStock?.toString() || '0',
@@ -288,6 +290,11 @@ const InventoryModal: React.FC<ModalProps> = ({ item, onClose, onSave }) => {
       return;
     }
 
+    if (form.category === 'Extinguisher' && !form.extinguisherType.trim()) {
+      setError('Extinguisher Type is required when category is Extinguisher');
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -300,7 +307,8 @@ const InventoryModal: React.FC<ModalProps> = ({ item, onClose, onSave }) => {
         quantityInStock: parseInt(form.quantityInStock) || 0,
         minStockLevel: parseInt(form.minStockLevel) || 10,
         supplier: form.supplier || undefined,
-        supplierPartNo: form.supplierPartNo || undefined,
+        // For extinguishers, store the type in supplierPartNo field
+        supplierPartNo: form.category === 'Extinguisher' ? form.extinguisherType : (form.supplierPartNo || undefined),
         location: form.location || undefined,
         notes: form.notes || undefined,
       };
@@ -372,6 +380,21 @@ const InventoryModal: React.FC<ModalProps> = ({ item, onClose, onSave }) => {
                 ))}
               </select>
             </div>
+
+            {form.category === 'Extinguisher' && (
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">Extinguisher Type *</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  value={form.extinguisherType}
+                  onChange={(e) => handleChange('extinguisherType', e.target.value)}
+                  placeholder="e.g., CO2 2kg, Foam 6L, Powder 9kg"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  This should match the extinguisher 'Type' field exactly for automatic stock reduction
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="block mb-1 text-sm font-medium text-gray-700">Unit Price (£)</label>
