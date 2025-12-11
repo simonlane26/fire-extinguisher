@@ -27,8 +27,17 @@ export class ExtinguishersService {
     const extinguisher = await this.prisma.extinguisher.create({ data });
 
     // If this is a commission service, reduce extinguisher stock
+    console.log(`\nExtinguisher created with serviceType: "${data.serviceType}", type: "${data.type}"`);
     if (data.serviceType === 'Commission Service' && data.type) {
+      console.log('✓ Conditions met for stock reduction - calling reduceExtinguisherStock()');
       await this.reduceExtinguisherStock(tenantId, data.type, data.inspector);
+    } else {
+      console.log('✗ Stock reduction skipped:', {
+        isCommissionService: data.serviceType === 'Commission Service',
+        hasType: !!data.type,
+        serviceType: data.serviceType,
+        type: data.type,
+      });
     }
 
     return extinguisher;
@@ -39,6 +48,10 @@ export class ExtinguishersService {
    */
   private async reduceExtinguisherStock(tenantId: string, extinguisherType: string, usedBy?: string) {
     try {
+      console.log(`\n=== ATTEMPTING STOCK REDUCTION ===`);
+      console.log(`Looking for extinguisher type: "${extinguisherType}"`);
+      console.log(`Tenant ID: ${tenantId}`);
+
       // Find matching extinguisher inventory item
       const inventoryItem = await this.prisma.inventoryItem.findFirst({
         where: {
@@ -49,9 +62,17 @@ export class ExtinguishersService {
       });
 
       if (!inventoryItem) {
-        console.log(`No inventory item found for extinguisher type: ${extinguisherType}`);
+        // Debug: Show all extinguisher inventory items
+        const allExtinguisherItems = await this.prisma.inventoryItem.findMany({
+          where: { tenantId, category: 'Extinguisher' },
+          select: { partName: true, supplierPartNo: true, quantityInStock: true },
+        });
+        console.log(`No inventory item found for extinguisher type: "${extinguisherType}"`);
+        console.log(`Available extinguisher inventory items:`, allExtinguisherItems);
         return;
       }
+
+      console.log(`Found matching inventory item: ${inventoryItem.partName} (Stock: ${inventoryItem.quantityInStock})`);
 
       if (inventoryItem.quantityInStock <= 0) {
         console.warn(`Cannot reduce stock for ${extinguisherType}: stock is already at 0`);
