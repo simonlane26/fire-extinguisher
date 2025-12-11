@@ -77,7 +77,8 @@
       "Bash(npx nest build:*)",
       "Bash(node_modules.binnest build)",
       "Bash(.node_modules.binnest.cmd build)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

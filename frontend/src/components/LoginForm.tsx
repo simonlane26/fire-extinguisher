@@ -182,15 +182,6 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
             )}
           </p>
         </div>
-
-        {!isRegister && (
-          <div className="p-4 mt-6 border border-blue-200 rounded-lg bg-blue-50">
-            <p className="mb-2 text-sm font-medium text-blue-800">Demo Credentials:</p>
-            <p className="text-xs text-blue-700">
-              Use the register form to create a new account, or contact your administrator for login credentials.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

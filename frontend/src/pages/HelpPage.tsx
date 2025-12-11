@@ -74,7 +74,8 @@ export default function HelpPage() {
       features: [
         'Record inspection results with photos',
         'Take photos directly from the app during inspections',
-        'Generate PDF service reports with photos',
+        'Generate user activity reports and extinguisher type reports from the Reports tab',
+        'Generate individual extinguisher history reports and certificates',
         'Track inspection history over time',
         'Set next inspection dates and receive reminders',
         'Professional branded reports for clients',
@@ -156,7 +157,7 @@ export default function HelpPage() {
     },
     {
       question: 'How do I record an inspection?',
-      answer: 'Open an extinguisher\'s details by clicking on it in the table. Update the condition status, last inspection date, and any notes. You can also upload photos of the inspection. Click "Generate Report" to create a PDF service report.',
+      answer: 'Open an extinguisher\'s details by clicking on it in the table. Update the condition status, last inspection date, and any notes. You can also upload photos of the inspection.',
     },
     {
       question: 'What do the condition statuses mean?',
@@ -183,8 +184,8 @@ export default function HelpPage() {
       answer: 'Go to the Sites tab and click "Add Site". Enter the site name, address, and contact information. Once created, you can assign extinguishers to this site when adding or editing them.',
     },
     {
-      question: 'How do I generate a service report?',
-      answer: 'Open an extinguisher\'s details and click the "Generate Report" button. The system will create a professional PDF report including all extinguisher details, inspection history, and any photos you\'ve uploaded.',
+      question: 'How do I generate reports?',
+      answer: 'Go to the Reports tab to generate user activity reports and extinguisher type reports. For individual extinguisher history reports and compliance certificates, open an extinguisher\'s details and use the report options in the detail view.',
     },
     {
       question: 'Can customers verify extinguisher status?',
@@ -331,9 +332,9 @@ export default function HelpPage() {
                 <div>
                   <h3 className="mb-1 font-semibold text-gray-900">Generate Reports</h3>
                   <p className="text-gray-600">
-                    Create professional PDF service reports with the "Generate Report" button. Reports
-                    include all extinguisher details, inspection history, and photos - perfect for client
-                    documentation.
+                    Go to the Reports tab to generate user activity reports and extinguisher type reports.
+                    For individual extinguisher reports and compliance certificates, use the report options
+                    in each extinguisher's detail view - perfect for client documentation.
                   </p>
                 </div>
               </div>

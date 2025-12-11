@@ -131,7 +131,7 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="https://firexcheck.com/about"
+                  href="/about.html"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"

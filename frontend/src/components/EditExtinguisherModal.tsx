@@ -1,7 +1,22 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import type { Extinguisher, Site, InventoryItem } from '../types';
-import { fetchSites, fetchInventoryItems, recordPartUsage } from '../lib/api';
+import { fetchSites, fetchInventoryItems, recordPartUsage, getAuthHeaders } from '../lib/api';
 import { Plus, Trash2 } from 'lucide-react';
+
+// Determine API base URL based on environment
+const getApiBase = () => {
+  if ((import.meta as any).env?.VITE_API_URL) {
+    return (import.meta as any).env.VITE_API_URL;
+  }
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  if (isLocalhost) {
+    const protocol = window.location.protocol;
+    return `${protocol}//${hostname}:3000/api/v1`;
+  } else {
+    return '/api/v1';
+  }
+};
 
 type Props = {
   open: boolean;
@@ -60,6 +75,8 @@ const EditExtinguisherModal: React.FC<Props> = ({
   const [loadingSites, setLoadingSites] = useState(false);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [partsUsed, setPartsUsed] = useState<Array<{ itemId: string; quantity: number; notes?: string }>>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Helper to format date for HTML date input (YYYY-MM-DD)
   const formatDateForInput = (dateString?: string | null): string => {
@@ -76,6 +93,7 @@ const EditExtinguisherModal: React.FC<Props> = ({
   useEffect(() => {
     if (open && extinguisher) {
       loadSites();
+      loadUsers();
       // Pre-fill form with current extinguisher data
       setForm({
         location: extinguisher.location || '',
@@ -115,6 +133,23 @@ const EditExtinguisherModal: React.FC<Props> = ({
       console.error('Failed to load data:', err);
     } finally {
       setLoadingSites(false);
+    }
+  }
+
+  async function loadUsers() {
+    try {
+      setLoadingUsers(true);
+      const API_BASE = getApiBase();
+      const res = await fetch(`${API_BASE}/reports/users`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    } finally {
+      setLoadingUsers(false);
     }
   }
 
@@ -356,13 +391,19 @@ const EditExtinguisherModal: React.FC<Props> = ({
 
             <div>
               <label className="block mb-1 text-sm text-gray-600">Inspector *</label>
-              <input
+              <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                placeholder="Inspector name"
                 value={form.inspector || ''}
                 onChange={(e) => handleChange('inspector', e.target.value)}
                 required
-              />
+              >
+                <option value="">Select inspector...</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.name}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

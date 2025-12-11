@@ -1,6 +1,21 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import type { Extinguisher, Site } from '../types';
-import { fetchSites } from '../lib/api';
+import { fetchSites, getAuthHeaders } from '../lib/api';
+
+// Determine API base URL based on environment
+const getApiBase = () => {
+  if ((import.meta as any).env?.VITE_API_URL) {
+    return (import.meta as any).env.VITE_API_URL;
+  }
+  const hostname = window.location.hostname;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  if (isLocalhost) {
+    const protocol = window.location.protocol;
+    return `${protocol}//${hostname}:3000/api/v1`;
+  } else {
+    return '/api/v1';
+  }
+};
 
 type Props = {
   open: boolean;
@@ -97,11 +112,14 @@ const AddExtinguisherModal: React.FC<Props> = ({
   const [error, setError] = useState<string | null>(null);
   const [sites, setSites] = useState<Site[]>([]);
   const [loadingSites, setLoadingSites] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
-  // Load sites when modal opens
+  // Load sites and users when modal opens
   useEffect(() => {
     if (open) {
       loadSites();
+      loadUsers();
     }
   }, [open]);
 
@@ -114,6 +132,23 @@ const AddExtinguisherModal: React.FC<Props> = ({
       console.error('Failed to load sites:', err);
     } finally {
       setLoadingSites(false);
+    }
+  }
+
+  async function loadUsers() {
+    try {
+      setLoadingUsers(true);
+      const API_BASE = getApiBase();
+      const res = await fetch(`${API_BASE}/reports/users`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    } finally {
+      setLoadingUsers(false);
     }
   }
 
@@ -362,12 +397,18 @@ const AddExtinguisherModal: React.FC<Props> = ({
 
             <div>
               <label className="block mb-1 text-sm text-gray-600">Inspector</label>
-              <input
+              <select
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                placeholder="Inspector name"
                 value={form.inspector || ''}
                 onChange={(e) => handleChange('inspector', e.target.value)}
-              />
+              >
+                <option value="">Select inspector...</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.name}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
