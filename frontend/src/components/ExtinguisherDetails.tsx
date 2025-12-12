@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Extinguisher } from '../types';
 import { Pencil, FileText, Award, Download, Upload, Image as ImageIcon, Trash2, X } from 'lucide-react';
 import { generateExtinguisherHistoryPDF, generateComplianceCertificate, downloadExtinguisherExcel } from '../api/reports';
-import { uploadPhoto, fetchExtinguisherPhotos, deletePhoto, type InspectionPhoto } from '../lib/api';
+import { uploadPhoto, fetchExtinguisherPhotos, deletePhoto, deleteExtinguisher, type InspectionPhoto } from '../lib/api';
 
 type Props = {
   open: boolean;
@@ -10,6 +10,7 @@ type Props = {
   data: Extinguisher | null;
   primaryColor?: string; // brand color for status badge
   onEdit?: (extinguisher: Extinguisher) => void; // callback to open edit modal
+  onDelete?: (id: string) => void; // callback when extinguisher is deleted
 };
 
 // --- helpers ---
@@ -57,11 +58,12 @@ const Section: React.FC<{ title: string; className?: string; children?: React.Re
   </section>
 );
 
-const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColor = '#7c3aed', onEdit }) => {
+const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColor = '#7c3aed', onEdit, onDelete }) => {
   const [loadingReport, setLoadingReport] = useState<string | null>(null);
   const [photos, setPhotos] = useState<InspectionPhoto[]>([]);
   const [uploading, setUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load photos when modal opens
@@ -125,6 +127,26 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
       setPhotos(prev => prev.filter(p => p.id !== photoId));
     } catch (error: any) {
       alert(error.message || 'Failed to delete photo');
+    }
+  };
+
+  const handleDeleteExtinguisher = async () => {
+    if (!data) return;
+
+    const confirmMessage = `Are you sure you want to delete this extinguisher?\n\nLocation: ${data.location}\nBuilding: ${data.building}\nType: ${data.type}\n\nThis action cannot be undone.`;
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      setDeleting(true);
+      await deleteExtinguisher(data.id);
+      if (onDelete) {
+        onDelete(data.id);
+      }
+      onClose();
+    } catch (error: any) {
+      alert(error.message || 'Failed to delete extinguisher');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -355,19 +377,31 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
 
         {/* Footer */}
         <div className="flex justify-between gap-2 px-5 py-3 border-t">
-          {onEdit && (
-            <button
-              onClick={() => {
-                onEdit(data);
-                onClose();
-              }}
-              className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
-              style={{ backgroundColor: effectiveColor }}
-            >
-              <Pencil size={16} />
-              Edit After Service
-            </button>
-          )}
+          <div className="flex gap-2">
+            {onEdit && (
+              <button
+                onClick={() => {
+                  onEdit(data);
+                  onClose();
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-white rounded-lg hover:opacity-90"
+                style={{ backgroundColor: effectiveColor }}
+              >
+                <Pencil size={16} />
+                Edit After Service
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={handleDeleteExtinguisher}
+                disabled={deleting}
+                className="flex items-center gap-2 px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Trash2 size={16} />
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            )}
+          </div>
           <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 ml-auto">
             Close
           </button>

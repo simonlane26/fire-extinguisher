@@ -417,6 +417,21 @@ export async function updateExtinguisher(
   return res.json() as Promise<Extinguisher>;
 }
 
+/** DELETE /extinguishers/:id - Delete an extinguisher */
+export async function deleteExtinguisher(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/extinguishers/${id}`, {
+    method: 'DELETE',
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to delete extinguisher (${res.status}): ${text}`);
+  }
+}
+
 /** GET /extinguishers/export/csv - Download CSV export */
 export async function exportExtinguishersCsv(): Promise<void> {
   const res = await fetch(`${API_BASE}/extinguishers/export/csv`, {

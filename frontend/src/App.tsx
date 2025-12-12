@@ -528,6 +528,22 @@ const FireExtinguisherApp: React.FC = () => {
     setOpenEdit(true);
   };
 
+  // Handle delete extinguisher
+  const handleDelete = async (id: string) => {
+    try {
+      // Remove from local state immediately
+      setExtinguishers((prev) => prev.filter((e) => e.id !== id));
+      // Optionally refresh from server to ensure sync
+      const refreshed = await fetchExtinguishers();
+      setExtinguishers(refreshed);
+    } catch (err) {
+      console.error('Failed to delete extinguisher:', err);
+      // Refresh to restore state if delete failed
+      const refreshed = await fetchExtinguishers();
+      setExtinguishers(refreshed);
+    }
+  };
+
   // Create with optimistic UI + server reconcile
   const handleCreate = async (payload: Partial<Extinguisher>) => {
     const today = new Date().toISOString().split('T')[0];
@@ -1086,6 +1102,7 @@ const FireExtinguisherApp: React.FC = () => {
         data={selectedExtinguisher}
         primaryColor={tenant.primaryColor}
         onEdit={handleEdit}
+        onDelete={handleDelete}
       />
 
       <EditExtinguisherModal
