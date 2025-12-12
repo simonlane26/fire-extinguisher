@@ -247,6 +247,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
               <div className="text-sm text-gray-500">
                 {billingCycle === 'monthly' ? 'per month' : 'per year'}
               </div>
+              <div className="text-xs text-gray-400 mt-1">
+                Prices exclude VAT
+              </div>
             </div>
             <ul className="mb-6 space-y-2">
               {plans.starter.features.map((feature, idx) => (
@@ -284,6 +287,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
               <div className="text-sm text-gray-500">
                 {billingCycle === 'monthly' ? 'per month' : 'per year'}
               </div>
+              <div className="text-xs text-gray-400 mt-1">
+                Prices exclude VAT
+              </div>
             </div>
             <ul className="mb-6 space-y-2">
               {plans.professional.features.map((feature, idx) => (
@@ -317,6 +323,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
               </div>
               <div className="text-sm text-gray-500">
                 {billingCycle === 'monthly' ? 'per month' : 'per year'}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                Prices exclude VAT
               </div>
             </div>
             <ul className="mb-6 space-y-2">
