@@ -52,23 +52,28 @@ export class ExtinguishersService {
       console.log(`Looking for extinguisher type: "${extinguisherType}"`);
       console.log(`Tenant ID: ${tenantId}`);
 
-      // Find matching extinguisher inventory item
-      const inventoryItem = await this.prisma.inventoryItem.findFirst({
-        where: {
-          tenantId,
-          category: 'Extinguisher',
-          supplierPartNo: extinguisherType, // Type is stored in supplierPartNo field
-        },
+      // Normalize the search string (trim and lowercase)
+      const normalizedType = extinguisherType.trim().toLowerCase();
+
+      // Find all extinguisher inventory items and match with flexible comparison
+      const allExtinguisherItems = await this.prisma.inventoryItem.findMany({
+        where: { tenantId, category: 'Extinguisher' },
       });
 
+      // Find matching item with case-insensitive, trimmed comparison
+      const inventoryItem = allExtinguisherItems.find(item =>
+        item.supplierPartNo?.trim().toLowerCase() === normalizedType
+      );
+
       if (!inventoryItem) {
-        // Debug: Show all extinguisher inventory items
-        const allExtinguisherItems = await this.prisma.inventoryItem.findMany({
-          where: { tenantId, category: 'Extinguisher' },
-          select: { partName: true, supplierPartNo: true, quantityInStock: true },
-        });
         console.log(`No inventory item found for extinguisher type: "${extinguisherType}"`);
-        console.log(`Available extinguisher inventory items:`, allExtinguisherItems);
+        console.log(`Available extinguisher inventory items:`,
+          allExtinguisherItems.map(i => ({
+            partName: i.partName,
+            supplierPartNo: i.supplierPartNo,
+            quantityInStock: i.quantityInStock
+          }))
+        );
         return;
       }
 
