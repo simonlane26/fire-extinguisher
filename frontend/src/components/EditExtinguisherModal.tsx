@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import type { Extinguisher, Site, InventoryItem } from '../types';
-import { fetchSites, fetchInventoryItems, recordPartUsage, getAuthHeaders } from '../lib/api';
+import { fetchSites, fetchInventoryItems, recordPartUsage, getAuthHeaders, fetchExtinguisherTypes } from '../lib/api';
 import { Plus, Trash2 } from 'lucide-react';
 
 // Determine API base URL based on environment
@@ -77,6 +77,8 @@ const EditExtinguisherModal: React.FC<Props> = ({
   const [partsUsed, setPartsUsed] = useState<Array<{ itemId: string; quantity: number; notes?: string }>>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [extinguisherTypes, setExtinguisherTypes] = useState<Array<{ type: string; name: string; stock: number }>>([]);
+  const [loadingTypes, setLoadingTypes] = useState(false);
 
   // Helper to format date for HTML date input (YYYY-MM-DD)
   const formatDateForInput = (dateString?: string | null): string => {
@@ -94,6 +96,7 @@ const EditExtinguisherModal: React.FC<Props> = ({
     if (open && extinguisher) {
       loadSites();
       loadUsers();
+      loadExtinguisherTypes();
       // Pre-fill form with current extinguisher data
       setForm({
         location: extinguisher.location || '',
@@ -150,6 +153,18 @@ const EditExtinguisherModal: React.FC<Props> = ({
       console.error('Failed to load users:', err);
     } finally {
       setLoadingUsers(false);
+    }
+  }
+
+  async function loadExtinguisherTypes() {
+    try {
+      setLoadingTypes(true);
+      const data = await fetchExtinguisherTypes();
+      setExtinguisherTypes(data);
+    } catch (err) {
+      console.error('Failed to load extinguisher types:', err);
+    } finally {
+      setLoadingTypes(false);
     }
   }
 
@@ -273,20 +288,33 @@ const EditExtinguisherModal: React.FC<Props> = ({
             </div>
             <div>
               <label className="block mb-1 text-sm text-gray-600">Type *</label>
-              <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                value={form.type || ''}
-                onChange={(e) => handleChange('type', e.target.value)}
-              >
-                <option value="" disabled>
-                  Select type…
-                </option>
-                {TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+              {loadingTypes ? (
+                <div className="w-full px-3 py-2 text-gray-500 border border-gray-300 rounded-lg">
+                  Loading types...
+                </div>
+              ) : extinguisherTypes.length > 0 ? (
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  value={form.type || ''}
+                  onChange={(e) => handleChange('type', e.target.value)}
+                >
+                  <option value="" disabled>
+                    Select type from inventory…
                   </option>
-                ))}
-              </select>
+                  {extinguisherTypes.map((et) => (
+                    <option key={et.type} value={et.type}>
+                      {et.type} ({et.stock} in stock)
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="w-full px-3 py-2 text-sm text-orange-600 border border-orange-300 rounded-lg bg-orange-50">
+                  No extinguishers in stock. Please add extinguishers to your inventory first.
+                </div>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Only types currently in stock are shown
+              </p>
             </div>
 
             <div>

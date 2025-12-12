@@ -20,6 +20,11 @@ export class InventoryController {
     return this.inventoryService.getLowStockItems(user.tenantId);
   }
 
+  @Get('extinguisher-types')
+  async getExtinguisherTypes(@CurrentUser() user: CurrentUserData) {
+    return this.inventoryService.getExtinguisherTypes(user.tenantId);
+  }
+
   @Get('items/:id')
   async getItem(@CurrentUser() user: CurrentUserData, @Param('id') id: string) {
     return this.inventoryService.findOneItem(user.tenantId, id);

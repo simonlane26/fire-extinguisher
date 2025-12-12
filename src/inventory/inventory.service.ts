@@ -76,6 +76,32 @@ export class InventoryService {
     return items.filter(item => item.quantityInStock <= item.minStockLevel);
   }
 
+  // Get available extinguisher types from inventory
+  async getExtinguisherTypes(tenantId: string) {
+    const extinguishers = await this.prisma.inventoryItem.findMany({
+      where: {
+        tenantId,
+        category: 'Extinguisher',
+        quantityInStock: { gt: 0 } // Only show types that are in stock
+      },
+      select: {
+        supplierPartNo: true, // This contains the extinguisher type
+        partName: true,
+        quantityInStock: true,
+      },
+      orderBy: { supplierPartNo: 'asc' }
+    });
+
+    // Return unique types with stock count
+    return extinguishers
+      .filter(e => e.supplierPartNo) // Filter out null/undefined
+      .map(e => ({
+        type: e.supplierPartNo!.trim(),
+        name: e.partName,
+        stock: e.quantityInStock,
+      }));
+  }
+
   // ===== PART USAGE =====
 
   async recordUsage(tenantId: string, data: {

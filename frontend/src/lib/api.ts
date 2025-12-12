@@ -753,6 +753,22 @@ export async function updateInventoryItem(id: string, data: Partial<InventoryIte
   return res.json() as Promise<InventoryItem>;
 }
 
+/** GET /inventory/extinguisher-types */
+export async function fetchExtinguisherTypes(): Promise<Array<{ type: string; name: string; stock: number }>> {
+  const res = await fetch(`${API_BASE}/inventory/extinguisher-types`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch extinguisher types (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
 /** DELETE /inventory/items/:id */
 export async function deleteInventoryItem(id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/inventory/items/${id}`, {
