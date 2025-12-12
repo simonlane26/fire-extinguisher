@@ -13,7 +13,8 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-1">
-            <h3 className="mb-3 text-lg font-semibold text-gray-900">Firexcheck</h3>
+            <h3 className="mb-1 text-lg font-semibold text-gray-900">Firexcheck</h3>
+            <p className="mb-2 text-xs text-gray-500 italic">An IgnisTech development</p>
             <p className="text-sm text-gray-600">
               Professional fire extinguisher management system. Keep your premises safe and compliant.
             </p>
