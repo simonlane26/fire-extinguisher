@@ -217,6 +217,16 @@ const AddExtinguisherModal: React.FC<Props> = ({
     updateNextMaintenance(form.type, value);
   };
 
+  const handleLastInspection = (value: string) => {
+    patch({ lastInspection: value });
+    // Auto-populate next inspection: 1 month from last inspection
+    if (value) {
+      const base = new Date(value);
+      const nextInspection = addDays(base, 30); // 1 month = 30 days
+      patch({ nextInspection: iso(nextInspection) });
+    }
+  };
+
   const handleSave = async () => {
     setError(null);
 
@@ -257,7 +267,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-5">
+        <div className="p-5 space-y-5 max-h-[70vh] overflow-y-auto">
           {error && (
             <div className="p-2 text-sm text-red-700 border border-red-200 rounded bg-red-50">
               {error}
@@ -511,7 +521,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 value={form.lastInspection || todayISO}
-                onChange={(e) => handleChange('lastInspection', e.target.value)}
+                onChange={(e) => handleLastInspection(e.target.value)}
               />
             </div>
             <div>
