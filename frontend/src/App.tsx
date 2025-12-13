@@ -1061,6 +1061,7 @@ const FireExtinguisherApp: React.FC = () => {
             primaryColor={tenant.primaryColor}
             buildingFilter={buildingFilter}
             allExtinguishers={extinguishers}
+            logoUrl={tenant.logoUrl}
           />
         )}
 

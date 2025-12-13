@@ -16,9 +16,10 @@ interface QrCodesPageProps {
   primaryColor: string;
   buildingFilter?: string;
   allExtinguishers?: Extinguisher[];
+  logoUrl?: string | null;
 }
 
-const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter = 'all', allExtinguishers = [] }) => {
+const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter = 'all', allExtinguishers = [], logoUrl }) => {
   // QR Generation Settings
   const [size, setSize] = useState(300);
   const [scale, setScale] = useState(2);
@@ -30,6 +31,8 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
   // Label settings
   const [labelText, setLabelText] = useState('');
   const [labelPosition, setLabelPosition] = useState<'top' | 'bottom'>('bottom');
+  const [includeLogo, setIncludeLogo] = useState(true);
+  const [useSequentialLabels, setUseSequentialLabels] = useState(false);
 
   // Batch generation
   const [prefix, setPrefix] = useState('QR-');
@@ -81,7 +84,81 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
       },
     });
 
-    // If we have a custom label, add it to the image
+    // If we have a logo to include, create rectangular label with QR and logo side-by-side
+    if (includeLogo && logoUrl) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const qrImg = new Image();
+      const logoImg = new Image();
+
+      await new Promise<void>((resolve, reject) => {
+        let qrLoaded = false;
+        let logoLoaded = false;
+
+        const checkBothLoaded = () => {
+          if (qrLoaded && logoLoaded) {
+            const qrSize = qrImg.height;
+            const logoWidth = qrSize * 0.4; // Logo is 40% of QR code width
+            const padding = qrSize * 0.05;
+            const fontSize = Math.floor(qrSize * 0.06);
+
+            // Rectangle: QR code + padding + logo
+            canvas.width = qrSize + padding * 3 + logoWidth;
+            canvas.height = qrSize;
+
+            // Fill background
+            ctx.fillStyle = backgroundColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw QR code on left
+            ctx.drawImage(qrImg, 0, 0);
+
+            // Draw logo on right, centered vertically
+            const logoHeight = (logoWidth / logoImg.width) * logoImg.height;
+            const logoY = (qrSize - logoHeight) / 2;
+            ctx.drawImage(logoImg, qrSize + padding * 2, logoY, logoWidth, logoHeight);
+
+            // Draw label text if provided
+            if (customLabelText && customLabelText.trim()) {
+              ctx.fillStyle = foregroundColor;
+              ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+
+              // Draw text below logo
+              const textY = logoY + logoHeight + padding + fontSize / 2;
+              ctx.fillText(customLabelText, qrSize + padding * 2 + logoWidth / 2, textY);
+            }
+
+            resolve();
+          }
+        };
+
+        qrImg.onload = () => {
+          qrLoaded = true;
+          checkBothLoaded();
+        };
+        qrImg.onerror = () => reject(new Error('Failed to load QR code'));
+
+        logoImg.onload = () => {
+          logoLoaded = true;
+          checkBothLoaded();
+        };
+        logoImg.onerror = () => reject(new Error('Failed to load logo'));
+
+        qrImg.src = qrDataUrl;
+        logoImg.src = logoUrl;
+      });
+
+      return {
+        id: `qr-${Date.now()}-${Math.random()}`,
+        label,
+        data: text,
+        dataUrl: canvas.toDataURL('image/png'),
+      };
+    }
+
+    // If we have a custom label but no logo, add it to the image (original behavior)
     if (customLabelText && customLabelText.trim()) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
@@ -197,7 +274,15 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
         const ext = selected[i];
         const data = formatExtinguisherData(ext);
         const label = ext.location || ext.id;
-        const qr = await generateQrCodeDataUrl(data, label, labelText || undefined);
+
+        // Generate sequential label if enabled, otherwise use custom label text
+        let customLabel = labelText || undefined;
+        if (useSequentialLabels) {
+          const num = String(startNum + i).padStart(padding, '0');
+          customLabel = `${prefix}${num}${suffix}`;
+        }
+
+        const qr = await generateQrCodeDataUrl(data, label, customLabel);
         codes.push(qr);
         setProgress(((i + 1) / selected.length) * 100);
       }
@@ -393,8 +478,27 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
         <div className="p-4 mb-6 border border-gray-200 rounded-lg">
           <h3 className="mb-3 text-lg font-semibold">Label Settings</h3>
           <p className="mb-3 text-sm text-gray-600">
-            Add a custom label directly on the QR code. This will be applied to all generated QR codes.
+            Configure label appearance and content for your QR codes.
           </p>
+
+          {/* Logo toggle */}
+          {logoUrl && (
+            <div className="mb-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeLogo}
+                  onChange={(e) => setIncludeLogo(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm font-medium">Include Company Logo (creates rectangular label)</span>
+              </label>
+              <p className="mt-1 ml-6 text-xs text-gray-500">
+                QR code and logo will be placed side-by-side in a rectangular format
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
               <label className="block mb-2 text-sm font-medium">Label Text (Optional)</label>
@@ -404,7 +508,13 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
                 onChange={(e) => setLabelText(e.target.value)}
                 placeholder="e.g., Company Name or Location"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                disabled={useSequentialLabels}
               />
+              {useSequentialLabels && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Sequential labeling is enabled - using batch settings below
+                </p>
+              )}
             </div>
             <div>
               <label className="block mb-2 text-sm font-medium">Label Position</label>
@@ -412,10 +522,16 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
                 value={labelPosition}
                 onChange={(e) => setLabelPosition(e.target.value as 'top' | 'bottom')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                disabled={includeLogo && !!logoUrl}
               >
                 <option value="bottom">Below QR Code</option>
                 <option value="top">Above QR Code</option>
               </select>
+              {includeLogo && logoUrl && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Position setting disabled when logo is included
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -494,6 +610,22 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
                 Deselect All
               </button>
             </div>
+          </div>
+
+          {/* Sequential labeling toggle */}
+          <div className="mb-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useSequentialLabels}
+                onChange={(e) => setUseSequentialLabels(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="text-sm font-medium">Use Sequential Labels from Batch Settings</span>
+            </label>
+            <p className="mt-1 ml-6 text-xs text-gray-500">
+              Apply sequential numbering (prefix, start number, padding, suffix) to selected extinguishers in order
+            </p>
           </div>
 
           <div className="mb-3 overflow-y-auto max-h-64">
