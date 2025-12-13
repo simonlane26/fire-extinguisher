@@ -119,6 +119,20 @@ async function bootstrap() {
     // Serve static assets (JS/CSS/images) with proper caching
     app.useStaticAssets(frontendPath, {
       index: false, // Don't auto-serve index.html for root
+      maxAge: '1y', // Cache static assets for 1 year (they have content hashes)
+      immutable: true, // Assets with hashed names never change
+      setHeaders: (res, path) => {
+        // Long-term caching for hashed assets (JS, CSS, images in /assets/)
+        if (path.includes('/assets/')) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+        // No caching for HTML files (to ensure latest version is always loaded)
+        else if (path.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+        }
+      },
     });
 
     // SPA fallback: serve index.html for all non-API, non-static routes
