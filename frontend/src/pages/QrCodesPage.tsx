@@ -105,21 +105,30 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
             const logoWidth = qrSize * 0.4; // Logo is 40% of QR code width
             const padding = qrSize * 0.05;
             const fontSize = Math.floor(qrSize * 0.06);
+            const labelHeight = customLabelText && customLabelText.trim() ? fontSize + padding * 2 : 0;
 
-            // Rectangle: QR code + padding + logo
-            canvas.width = qrSize + padding * 3 + logoWidth;
-            canvas.height = qrSize;
+            // Calculate canvas dimensions
+            const canvasWidth = qrSize + padding * 3 + logoWidth;
+            const canvasHeight = labelPosition === 'top'
+              ? qrSize + labelHeight
+              : qrSize + labelHeight;
+
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
 
             // Fill background
             ctx.fillStyle = backgroundColor;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw QR code on left
-            ctx.drawImage(qrImg, 0, 0);
+            // Calculate QR code position (move down if label is on top)
+            const qrY = labelPosition === 'top' && labelHeight > 0 ? labelHeight : 0;
 
-            // Draw logo on right, centered vertically
+            // Draw QR code
+            ctx.drawImage(qrImg, 0, qrY);
+
+            // Draw logo on right, centered vertically relative to QR code
             const logoHeight = (logoWidth / logoImg.width) * logoImg.height;
-            const logoY = (qrSize - logoHeight) / 2;
+            const logoY = qrY + (qrSize - logoHeight) / 2;
             ctx.drawImage(logoImg, qrSize + padding * 2, logoY, logoWidth, logoHeight);
 
             // Draw label text if provided
@@ -129,9 +138,13 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
 
-              // Draw text centered below QR code (not logo)
-              const textY = qrSize - padding - fontSize / 2;
-              ctx.fillText(customLabelText, qrSize / 2, textY);
+              // Position label above or below QR code
+              const textY = labelPosition === 'top'
+                ? labelHeight / 2
+                : qrY + qrSize + labelHeight / 2;
+
+              // Center text on entire canvas width
+              ctx.fillText(customLabelText, canvasWidth / 2, textY);
             }
 
             resolve();
@@ -545,16 +558,10 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
                 value={labelPosition}
                 onChange={(e) => setLabelPosition(e.target.value as 'top' | 'bottom')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                disabled={includeLogo && !!logoUrl}
               >
                 <option value="bottom">Below QR Code</option>
                 <option value="top">Above QR Code</option>
               </select>
-              {includeLogo && logoUrl && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Position setting disabled when logo is included
-                </p>
-              )}
             </div>
           </div>
         </div>
