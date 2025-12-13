@@ -219,10 +219,10 @@ const AddExtinguisherModal: React.FC<Props> = ({
 
   const handleLastInspection = (value: string) => {
     patch({ lastInspection: value });
-    // Auto-populate next inspection: 1 month from last inspection
+    // Auto-populate next inspection: 12 months from last inspection
     if (value) {
       const base = new Date(value);
-      const nextInspection = addDays(base, 30); // 1 month = 30 days
+      const nextInspection = addYears(base, 1); // 12 months = 1 year
       patch({ nextInspection: iso(nextInspection) });
     }
   };
