@@ -129,9 +129,9 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
 
-              // Draw text below logo
-              const textY = logoY + logoHeight + padding + fontSize / 2;
-              ctx.fillText(customLabelText, qrSize + padding * 2 + logoWidth / 2, textY);
+              // Draw text centered below QR code (not logo)
+              const textY = qrSize - padding - fontSize / 2;
+              ctx.fillText(customLabelText, qrSize / 2, textY);
             }
 
             resolve();
