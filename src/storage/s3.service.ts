@@ -33,6 +33,21 @@ export class S3Service {
     }
   }
 
+  /**
+   * Upload a buffer to S3
+   *
+   * IMPORTANT: For images used in canvas operations (like QR code generation),
+   * ensure your S3 bucket has CORS configured to allow cross-origin access:
+   *
+   * [
+   *   {
+   *     "AllowedHeaders": ["*"],
+   *     "AllowedMethods": ["GET", "HEAD"],
+   *     "AllowedOrigins": ["*"],
+   *     "ExposeHeaders": []
+   *   }
+   * ]
+   */
   async uploadBuffer(key: string, body: Buffer, contentType: string) {
     if (!this.isConfigured || !this.s3) {
       throw new Error('S3 service is not configured');
@@ -47,6 +62,7 @@ export class S3Service {
           Body: body,
           ContentType: contentType,
           ACL: 'public-read', // Make object publicly readable
+          CacheControl: 'public, max-age=31536000', // Cache for 1 year
         }));
       } catch (aclError: any) {
         // If ACL fails (disabled on bucket), upload without ACL
@@ -56,6 +72,7 @@ export class S3Service {
           Key: key,
           Body: body,
           ContentType: contentType,
+          CacheControl: 'public, max-age=31536000', // Cache for 1 year
         }));
       }
 
