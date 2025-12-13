@@ -50,7 +50,7 @@ const STATUSES = ['Active', 'Inactive'] as const;
 const SERVICE_TYPES = [
   'Commission Service',
   'Extended Service',
-  'Annual Inspection',
+  'Basic Inspection',
   'Monthly Check',
   'Pressure Test',
   'Discharge Test',
