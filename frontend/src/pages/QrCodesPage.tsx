@@ -146,6 +146,9 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
         };
         logoImg.onerror = () => reject(new Error('Failed to load logo'));
 
+        // Enable CORS for the logo image to avoid tainted canvas
+        logoImg.crossOrigin = 'anonymous';
+
         qrImg.src = qrDataUrl;
         logoImg.src = logoUrl;
       });
