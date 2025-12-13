@@ -34,7 +34,9 @@ export class SitesService {
           select: {
             extinguishers: {
               where: {
-                status: 'Active',
+                status: {
+                  in: ['Active', 'active'],
+                },
               },
             },
           },
