@@ -81,7 +81,7 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="mailto:support@firexcheck.com"
+                  href="mailto:ignistech999@gmail.com"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = primaryColor;
@@ -111,7 +111,7 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
               </li>
               <li>
                 <a
-                  href="mailto:security@firexcheck.com"
+                  href="mailto:ignistech999@gmail.com"
                   className="text-sm text-gray-600 transition-colors hover:text-gray-900"
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = primaryColor;
