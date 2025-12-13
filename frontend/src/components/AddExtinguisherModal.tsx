@@ -506,7 +506,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Last Extended Inspection</label>
+              <label className="block mb-1 text-sm text-gray-600">Last Service Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -515,7 +515,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
               />
             </div>
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Next Extended Inspection</label>
+              <label className="block mb-1 text-sm text-gray-600">Next Service Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
