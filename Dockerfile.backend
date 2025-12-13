@@ -140,4 +140,4 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 EXPOSE 8080
 
 # Start command with Chrome verification
-CMD ["sh", "-c", "echo 'Chrome version:' && google-chrome-stable --version && echo 'PUPPETEER_EXECUTABLE_PATH='$PUPPETEER_EXECUTABLE_PATH && npx prisma migrate resolve --applied 20251124202400_add_extinguisher_fields || true && npx prisma migrate deploy && node dist/src/main"]
+CMD ["sh", "-c", "echo 'Chrome version:' && google-chrome-stable --version && echo 'PUPPETEER_EXECUTABLE_PATH='$PUPPETEER_EXECUTABLE_PATH && npx prisma db push --accept-data-loss && node dist/src/main"]
