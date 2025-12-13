@@ -31,7 +31,13 @@ export class SitesService {
       },
       include: {
         _count: {
-          select: { extinguishers: true },
+          select: {
+            extinguishers: {
+              where: {
+                status: 'Active',
+              },
+            },
+          },
         },
       },
       orderBy: {
