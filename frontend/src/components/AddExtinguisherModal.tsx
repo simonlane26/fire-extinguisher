@@ -175,12 +175,30 @@ const AddExtinguisherModal: React.FC<Props> = ({
     patch({ [key]: value } as Partial<Extinguisher>);
   };
 
+  // Helper to determine extended service interval
+  const getExtendedServiceYears = (type?: string) => {
+    if (!type) return 5;
+    const lowerType = type.toLowerCase();
+    // CO2 and P50 types: 10 years
+    if (lowerType.includes('co2') || lowerType.includes('p50')) return 10;
+    // Foam, Water, Powder: 5 years
+    return 5;
+  };
+
   // Keep expiry date up-to-date when install date or type changes
   const updateExpiry = (nextType = form.type, nextInstall = form.installDate) => {
     if (!nextInstall) return;
     const base = new Date(nextInstall);
     const yearsToAdd = isCO2(nextType) ? 10 : 20;
     patch({ expiryDate: iso(addYears(base, yearsToAdd)) });
+  };
+
+  // Update next extended service date based on last extended date and type
+  const updateNextMaintenance = (nextType = form.type, lastMaintenance = form.lastMaintenance) => {
+    if (!lastMaintenance) return;
+    const base = new Date(lastMaintenance);
+    const yearsToAdd = getExtendedServiceYears(nextType);
+    patch({ nextMaintenance: iso(addYears(base, yearsToAdd)) });
   };
 
   const handleInstallDate = (value: string) => {
@@ -191,6 +209,12 @@ const AddExtinguisherModal: React.FC<Props> = ({
   const handleType = (value: string) => {
     patch({ type: value });
     if (form.installDate) updateExpiry(value, form.installDate);
+    if (form.lastMaintenance) updateNextMaintenance(value, form.lastMaintenance);
+  };
+
+  const handleLastMaintenance = (value: string) => {
+    patch({ lastMaintenance: value });
+    updateNextMaintenance(form.type, value);
   };
 
   const handleSave = async () => {
@@ -443,22 +467,28 @@ const AddExtinguisherModal: React.FC<Props> = ({
           {/* Service & Extended Inspection block */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Last Service Date</label>
+              <label className="block mb-1 text-sm text-gray-600">Last Extended Service Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 value={form.lastMaintenance || todayISO}
-                onChange={(e) => handleChange('lastMaintenance', e.target.value)}
+                onChange={(e) => handleLastMaintenance(e.target.value)}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Next extended service auto-calculates: {getExtendedServiceYears(form.type)} years from this date
+              </p>
             </div>
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Next Service Date</label>
+              <label className="block mb-1 text-sm text-gray-600">Next Extended Service Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 value={form.nextMaintenance || defaultNextMaintenance}
                 onChange={(e) => handleChange('nextMaintenance', e.target.value)}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Auto-calculated from last extended service date
+              </p>
             </div>
             <div>
               <label className="block mb-1 text-sm text-gray-600">Expiry Date</label>
@@ -468,6 +498,9 @@ const AddExtinguisherModal: React.FC<Props> = ({
                 value={form.expiryDate || ''}
                 onChange={(e) => handleChange('expiryDate', e.target.value)}
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Auto-calculated: CO2 = 10 years, Powder/Water/Foam/P50 = 20 years from install date
+              </p>
             </div>
           </div>
 
