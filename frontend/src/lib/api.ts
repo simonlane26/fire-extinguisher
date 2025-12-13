@@ -838,3 +838,83 @@ export async function fetchPartUsages(filters?: {
 
   return res.json() as Promise<PartUsage[]>;
 }
+
+/* --------------------------------- Users --------------------------------- */
+
+export async function fetchUsers(): Promise<any[]> {
+  const res = await fetch(`${API_BASE}/users`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch users (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function fetchUserSites(userId: string): Promise<Site[]> {
+  const res = await fetch(`${API_BASE}/users/${userId}/sites`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch user sites (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function setUserSiteAccess(userId: string, siteIds: string[]): Promise<any> {
+  const res = await fetch(`${API_BASE}/users/${userId}/sites`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ siteIds }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to update user site access (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
+export async function grantUserSiteAccess(userId: string, siteId: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/users/${userId}/sites/${siteId}`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to grant site access (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
+export async function revokeUserSiteAccess(userId: string, siteId: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/users/${userId}/sites/${siteId}`, {
+    method: 'DELETE',
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to revoke site access (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}

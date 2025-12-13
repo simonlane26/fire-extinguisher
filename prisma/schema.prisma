@@ -56,6 +56,7 @@ model Site {
   createdAt     DateTime       @default(now())
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   extinguishers Extinguisher[]
+  userSiteAccess UserSiteAccess[]
 
   @@index([tenantId])
   @@map("Site")
@@ -75,6 +76,7 @@ model User {
   tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   verificationTokens VerificationToken[]
   passwordResetTokens PasswordResetToken[]
+  siteAccess        UserSiteAccess[]
 
   @@index([tenantId])
   @@index([email])
@@ -310,4 +312,18 @@ model PushSubscription {
   @@index([userId])
   @@index([tenantId])
   @@map("PushSubscription")
+}
+
+model UserSiteAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  siteId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, siteId])
+  @@index([userId])
+  @@index([siteId])
+  @@map("UserSiteAccess")
 }
