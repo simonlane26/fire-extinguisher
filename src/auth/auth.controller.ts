@@ -1,5 +1,6 @@
-import { Controller, Post, Get, Body, UseGuards, Patch, Param, UseInterceptors, UploadedFile, BadRequestException, PayloadTooLargeException, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Patch, Param, UseInterceptors, UploadedFile, BadRequestException, PayloadTooLargeException, ForbiddenException, Res, StreamableFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -420,5 +421,47 @@ export class AuthController {
       success: true,
       user: updatedUser,
     };
+  }
+
+  /**
+   * Proxy endpoint to serve tenant logos with proper CORS headers
+   * This bypasses S3 CORS issues for canvas operations
+   */
+  @Public()
+  @Get('logo/:tenantId')
+  async getLogoProxy(
+    @Param('tenantId') tenantId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    // Fetch tenant logo URL from database
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { logoUrl: true },
+    });
+
+    if (!tenant?.logoUrl) {
+      throw new BadRequestException('Logo not found');
+    }
+
+    try {
+      // Fetch the logo from S3 or local storage
+      const response = await fetch(tenant.logoUrl);
+      if (!response.ok) {
+        throw new BadRequestException('Failed to fetch logo');
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const contentType = response.headers.get('content-type') || 'image/png';
+
+      // Set CORS headers
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+
+      return new StreamableFile(buffer);
+    } catch (error) {
+      throw new BadRequestException(`Failed to load logo: ${error.message}`);
+    }
   }
 }

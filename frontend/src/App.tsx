@@ -1062,6 +1062,7 @@ const FireExtinguisherApp: React.FC = () => {
             buildingFilter={buildingFilter}
             allExtinguishers={extinguishers}
             logoUrl={tenant.logoUrl}
+            tenantId={tenant.id}
           />
         )}
 

@@ -17,9 +17,10 @@ interface QrCodesPageProps {
   buildingFilter?: string;
   allExtinguishers?: Extinguisher[];
   logoUrl?: string | null;
+  tenantId: string;
 }
 
-const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter = 'all', allExtinguishers = [], logoUrl }) => {
+const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter = 'all', allExtinguishers = [], logoUrl, tenantId }) => {
   // QR Generation Settings
   const [size, setSize] = useState(300);
   const [scale, setScale] = useState(2);
@@ -146,11 +147,16 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
         };
         logoImg.onerror = () => reject(new Error('Failed to load logo'));
 
-        // Enable CORS for the logo image to avoid tainted canvas
+        // Set sources - crossOrigin must be set BEFORE src
         logoImg.crossOrigin = 'anonymous';
+        qrImg.crossOrigin = 'anonymous';
 
         qrImg.src = qrDataUrl;
-        logoImg.src = logoUrl;
+        // Use proxy URL to bypass S3 CORS issues
+        const apiBase = window.location.origin.includes('localhost')
+          ? 'http://localhost:3000/api/v1'
+          : '/api/v1';
+        logoImg.src = `${apiBase}/auth/logo/${tenantId}`;
       });
 
       return {
