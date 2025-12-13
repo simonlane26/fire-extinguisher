@@ -444,23 +444,30 @@ export class AuthController {
     }
 
     try {
-      // Fetch the logo from S3 or local storage
+      // Fetch the logo from S3 or local storage using native fetch
       const response = await fetch(tenant.logoUrl);
+
       if (!response.ok) {
-        throw new BadRequestException('Failed to fetch logo');
+        console.error(`Failed to fetch logo from ${tenant.logoUrl}: ${response.status} ${response.statusText}`);
+        throw new BadRequestException(`Failed to fetch logo: ${response.statusText}`);
       }
 
-      const buffer = Buffer.from(await response.arrayBuffer());
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
       const contentType = response.headers.get('content-type') || 'image/png';
+
+      console.log(`Successfully fetched logo for tenant ${tenantId}, size: ${buffer.length} bytes, type: ${contentType}`);
 
       // Set CORS headers
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET');
+      res.setHeader('Access-Control-Allow-Headers', '*');
       res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'public, max-age=31536000');
 
       return new StreamableFile(buffer);
     } catch (error) {
+      console.error(`Error in logo proxy for tenant ${tenantId}:`, error);
       throw new BadRequestException(`Failed to load logo: ${error.message}`);
     }
   }

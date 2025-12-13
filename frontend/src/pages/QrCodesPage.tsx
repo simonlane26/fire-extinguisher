@@ -156,7 +156,9 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
         const apiBase = window.location.origin.includes('localhost')
           ? 'http://localhost:3000/api/v1'
           : '/api/v1';
-        logoImg.src = `${apiBase}/auth/logo/${tenantId}`;
+        const logoProxyUrl = `${apiBase}/auth/logo/${tenantId}`;
+        console.log('Loading logo from proxy:', logoProxyUrl);
+        logoImg.src = logoProxyUrl;
       });
 
       return {
