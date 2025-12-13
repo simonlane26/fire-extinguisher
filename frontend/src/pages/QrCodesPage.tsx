@@ -75,6 +75,8 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
     : extinguishers.filter(ext => ext.building === buildingFilter);
 
   const generateQrCodeDataUrl = async (text: string, label: string, customLabelText?: string): Promise<QrCodeItem> => {
+    console.log(`Generating QR code - includeLogo: ${includeLogo}, logoUrl: ${logoUrl}, customLabel: ${customLabelText}`);
+
     const qrDataUrl = await QRCode.toDataURL(text, {
       errorCorrectionLevel: errorCorrection,
       width: size * scale,
@@ -142,10 +144,14 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
         qrImg.onerror = () => reject(new Error('Failed to load QR code'));
 
         logoImg.onload = () => {
+          console.log('Logo loaded successfully');
           logoLoaded = true;
           checkBothLoaded();
         };
-        logoImg.onerror = () => reject(new Error('Failed to load logo'));
+        logoImg.onerror = (error) => {
+          console.error('Logo loading failed:', error);
+          reject(new Error('Failed to load logo'));
+        };
 
         // Set sources - crossOrigin must be set BEFORE src
         logoImg.crossOrigin = 'anonymous';
@@ -293,14 +299,19 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
           customLabel = `${prefix}${num}${suffix}`;
         }
 
-        const qr = await generateQrCodeDataUrl(data, label, customLabel);
-        codes.push(qr);
-        setProgress(((i + 1) / selected.length) * 100);
+        try {
+          const qr = await generateQrCodeDataUrl(data, label, customLabel);
+          codes.push(qr);
+          setProgress(((i + 1) / selected.length) * 100);
+        } catch (qrError) {
+          console.error(`Failed to generate QR code for extinguisher ${ext.id}:`, qrError);
+          throw qrError;
+        }
       }
       setQrCodes(codes);
     } catch (error) {
-      alert('Failed to generate extinguisher QR codes');
-      console.error(error);
+      console.error('QR code generation error:', error);
+      alert(`Failed to generate extinguisher QR codes: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
       setProgress(0);
