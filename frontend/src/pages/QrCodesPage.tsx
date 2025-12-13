@@ -89,6 +89,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
 
     // If we have a logo to include, create rectangular label with QR and logo side-by-side
     if (includeLogo && logoUrl) {
+      console.log('Creating rectangular QR code with logo');
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       const qrImg = new Image();
