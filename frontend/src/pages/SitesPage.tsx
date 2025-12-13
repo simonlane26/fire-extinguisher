@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, MapPin, Phone, Mail, Plus, Pencil, Trash2, Users } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, Plus, Pencil, Trash2, Users, Eye } from 'lucide-react';
 import { fetchSites, createSite, updateSite, deleteSite } from '../lib/api';
 import type { Site } from '../types';
 
-export default function SitesPage() {
+type Props = {
+  onViewSite?: (siteId: string, siteName: string) => void;
+};
+
+export default function SitesPage({ onViewSite }: Props) {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -171,7 +175,7 @@ export default function SitesPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-sm mb-4">
                 {site.address && (
                   <div className="flex items-start gap-2 text-gray-600">
                     <MapPin size={16} className="mt-0.5 flex-shrink-0" />
@@ -198,6 +202,17 @@ export default function SitesPage() {
                   </div>
                 )}
               </div>
+
+              {onViewSite && (
+                <button
+                  type="button"
+                  onClick={() => onViewSite(site.id, site.name)}
+                  className="w-full mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye size={16} />
+                  View Extinguishers
+                </button>
+              )}
             </div>
           ))}
         </div>

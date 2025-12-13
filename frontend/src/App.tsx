@@ -38,7 +38,7 @@ import ReportsPage from './pages/ReportsPage';
 import RoleSwitcherModal from './components/RoleSwitcher';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
-import { addExtinguisher, updateExtinguisher, fetchExtinguishers, fetchExtinguisherById, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers } from './lib/api';
+import { addExtinguisher, updateExtinguisher, fetchExtinguishers, fetchExtinguisherById, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers, fetchSites } from './lib/api';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
   Extinguisher,
@@ -47,6 +47,7 @@ import type {
   AuthedUser,
   RoleKey,
   PermissionKey,
+  Site,
 } from './types';
 
 /* ----------------------------- Context contracts ----------------------------- */
@@ -240,6 +241,7 @@ const FireExtinguisherApp: React.FC = () => {
 
   const [activeTab, setActiveTab] =
     useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing'>('overview');
+  const [selectedSiteFilter, setSelectedSiteFilter] = useState<{ id: string; name: string } | null>(null);
 
   // Extinguishers state (seed with demo; will be replaced by API load)
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([
@@ -377,12 +379,30 @@ const FireExtinguisherApp: React.FC = () => {
     }
   };
 
+  // Sites state
+  const [sites, setSites] = useState<Site[]>([]);
+
+  // Load sites on mount
+  useEffect(() => {
+    loadSites();
+  }, []);
+
+  async function loadSites() {
+    try {
+      const data = await fetchSites();
+      setSites(data.filter(site => site.status === 'active'));
+    } catch (err) {
+      console.error('Failed to load sites:', err);
+    }
+  }
+
   // Filtering states
   const [searchQuery, setSearchQuery] = useState('');
   const [buildingFilter, setBuildingFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [conditionFilter, setConditionFilter] = useState<string>('all');
+  const [siteFilter, setSiteFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
   // CSV Export handler
@@ -451,6 +471,9 @@ const FireExtinguisherApp: React.FC = () => {
       if (!matchesSearch) return false;
     }
 
+    // Site filter
+    if (siteFilter !== 'all' && item.siteId !== siteFilter) return false;
+
     // Building filter
     if (buildingFilter !== 'all' && item.building !== buildingFilter) return false;
 
@@ -468,6 +491,7 @@ const FireExtinguisherApp: React.FC = () => {
 
   // Count active filters
   const activeFilterCount = [
+    siteFilter !== 'all',
     buildingFilter !== 'all',
     typeFilter !== 'all',
     statusFilter !== 'all',
@@ -792,7 +816,15 @@ const FireExtinguisherApp: React.FC = () => {
           </div>
         </div>
         {/* Sites tab */}
-        {activeTab === 'sites' && <SitesPage />}
+        {activeTab === 'sites' && (
+          <SitesPage
+            onViewSite={(siteId, siteName) => {
+              setSiteFilter(siteId);
+              setSelectedSiteFilter({ id: siteId, name: siteName });
+              setActiveTab('overview');
+            }}
+          />
+        )}
 
         {/* Stock tab */}
         {activeTab === 'stock' && <InventoryPage />}
@@ -813,6 +845,28 @@ const FireExtinguisherApp: React.FC = () => {
         {/* Overview tab: actions + table */}
         {activeTab === 'overview' && (
           <>
+            {/* Site Filter Indicator */}
+            {selectedSiteFilter && (
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Building2 size={16} className="text-blue-600" />
+                  <span className="text-sm font-medium text-blue-900">
+                    Viewing extinguishers for: <span className="font-bold">{selectedSiteFilter.name}</span>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSiteFilter('all');
+                    setSelectedSiteFilter(null);
+                  }}
+                  className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                >
+                  View All Sites
+                </button>
+              </div>
+            )}
+
             {/* Search and Filter Bar */}
             <div className="flex flex-col gap-4 p-4 bg-white rounded-lg shadow">
               <div className="flex flex-wrap items-center gap-3">
@@ -858,7 +912,26 @@ const FireExtinguisherApp: React.FC = () => {
 
               {/* Filter Dropdowns */}
               {showFilters && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-3 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 pt-3 border-t">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
+                    <select
+                      value={siteFilter}
+                      onChange={(e) => {
+                        setSiteFilter(e.target.value);
+                        if (e.target.value === 'all') {
+                          setSelectedSiteFilter(null);
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Sites</option>
+                      {sites.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Building</label>
                     <select
