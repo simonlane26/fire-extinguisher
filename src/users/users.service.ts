@@ -178,33 +178,42 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Verify all sites belong to tenant
-    const sites = await this.prisma.site.findMany({
-      where: {
-        id: { in: siteIds },
-        tenantId,
-      },
-    });
+    // Verify all sites belong to tenant (only if siteIds is not empty)
+    if (siteIds.length > 0) {
+      const sites = await this.prisma.site.findMany({
+        where: {
+          id: { in: siteIds },
+          tenantId,
+        },
+      });
 
-    if (sites.length !== siteIds.length) {
-      throw new BadRequestException('One or more sites not found');
+      if (sites.length !== siteIds.length) {
+        throw new BadRequestException('One or more sites not found');
+      }
     }
 
     // Delete existing access and create new ones in a transaction
-    await this.prisma.$transaction([
-      // Delete all existing access for this user
-      this.prisma.userSiteAccess.deleteMany({
+    if (siteIds.length > 0) {
+      await this.prisma.$transaction([
+        // Delete all existing access for this user
+        this.prisma.userSiteAccess.deleteMany({
+          where: { userId },
+        }),
+        // Create new access records
+        this.prisma.userSiteAccess.createMany({
+          data: siteIds.map((siteId) => ({
+            userId,
+            siteId,
+          })),
+          skipDuplicates: true,
+        }),
+      ]);
+    } else {
+      // If siteIds is empty, just delete all existing access
+      await this.prisma.userSiteAccess.deleteMany({
         where: { userId },
-      }),
-      // Create new access records
-      this.prisma.userSiteAccess.createMany({
-        data: siteIds.map((siteId) => ({
-          userId,
-          siteId,
-        })),
-        skipDuplicates: true,
-      }),
-    ]);
+      });
+    }
 
     return this.findOneUser(tenantId, userId);
   }
