@@ -121,6 +121,7 @@ async function bootstrap() {
       index: false, // Don't auto-serve index.html for root
       maxAge: '1y', // Cache static assets for 1 year (they have content hashes)
       immutable: true, // Assets with hashed names never change
+      etag: false, // Disable ETags to prevent caching issues
       setHeaders: (res, path) => {
         // Long-term caching for hashed assets (JS, CSS, images in /assets/)
         if (path.includes('/assets/')) {
@@ -128,9 +129,11 @@ async function bootstrap() {
         }
         // No caching for HTML files (to ensure latest version is always loaded)
         else if (path.endsWith('.html')) {
-          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
           res.setHeader('Pragma', 'no-cache');
           res.setHeader('Expires', '0');
+          res.setHeader('Surrogate-Control', 'no-store');
+          res.removeHeader('ETag');
         }
       },
     });
@@ -151,9 +154,12 @@ async function bootstrap() {
 
       // For all other routes, serve the React SPA
       // Prevent caching of index.html to ensure users always get the latest version
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+      // Disable ETag to prevent 304 responses
+      res.removeHeader('ETag');
       return res.sendFile(join(frontendPath, 'index.html'));
     });
   }
