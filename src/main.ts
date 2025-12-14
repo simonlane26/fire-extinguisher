@@ -119,8 +119,6 @@ async function bootstrap() {
     // Serve static assets (JS/CSS/images) with proper caching
     app.useStaticAssets(frontendPath, {
       index: false, // Don't auto-serve index.html for root
-      maxAge: '1y', // Cache static assets for 1 year (they have content hashes)
-      immutable: true, // Assets with hashed names never change
       etag: false, // Disable ETags to prevent caching issues
       setHeaders: (res, path) => {
         // Long-term caching for hashed assets (JS, CSS, images in /assets/)
@@ -128,12 +126,16 @@ async function bootstrap() {
           res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         }
         // No caching for HTML files (to ensure latest version is always loaded)
-        else if (path.endsWith('.html')) {
+        else if (path.endsWith('.html') || path.endsWith('/')) {
           res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
           res.setHeader('Pragma', 'no-cache');
           res.setHeader('Expires', '0');
           res.setHeader('Surrogate-Control', 'no-store');
           res.removeHeader('ETag');
+        }
+        // Default: no caching for other files
+        else {
+          res.setHeader('Cache-Control', 'no-cache');
         }
       },
     });
