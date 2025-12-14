@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, Printer, Trash2, CheckCircle } from 'lucide-react';
+import { Download, Printer, Trash2, CheckCircle, FileImage } from 'lucide-react';
 import QRCode from 'qrcode';
 import JSZip from 'jszip';
 import { fetchExtinguishers } from '../lib/api';
@@ -351,6 +351,88 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
     const a = document.createElement('a');
     a.href = url;
     a.download = `qr-codes-${Date.now()}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadPrintSheets = async () => {
+    if (qrCodes.length === 0) {
+      alert('No QR codes to download');
+      return;
+    }
+
+    const zip = new JSZip();
+    const itemsPerPage = 6; // 2 rows x 3 columns
+    const pageCount = Math.ceil(qrCodes.length / itemsPerPage);
+
+    // A4 size at 300 DPI for high-quality printing
+    const pageWidth = 2480; // A4 width at 300 DPI (210mm)
+    const pageHeight = 3508; // A4 height at 300 DPI (297mm)
+    const margin = 120; // 10mm margin at 300 DPI
+    const gapBetweenItems = 120; // 10mm gap at 300 DPI
+
+    for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+      const canvas = document.createElement('canvas');
+      canvas.width = pageWidth;
+      canvas.height = pageHeight;
+      const ctx = canvas.getContext('2d')!;
+
+      // Fill white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, pageWidth, pageHeight);
+
+      const startIndex = pageIndex * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, qrCodes.length);
+      const pageItems = qrCodes.slice(startIndex, endIndex);
+
+      // Calculate cell dimensions (2 rows x 3 columns)
+      const cols = 3;
+      const rows = 2;
+      const availableWidth = pageWidth - (margin * 2) - (gapBetweenItems * (cols - 1));
+      const availableHeight = pageHeight - (margin * 2) - (gapBetweenItems * (rows - 1));
+      const cellWidth = availableWidth / cols;
+      const cellHeight = availableHeight / rows;
+
+      // Draw each QR code
+      for (let i = 0; i < pageItems.length; i++) {
+        const qr = pageItems[i];
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+
+        const x = margin + (col * (cellWidth + gapBetweenItems));
+        const y = margin + (row * (cellHeight + gapBetweenItems));
+
+        // Load and draw the QR code image
+        const img = new Image();
+        await new Promise<void>((resolve) => {
+          img.onload = () => {
+            // Calculate scaling to fit within cell while maintaining aspect ratio
+            const scale = Math.min(cellWidth / img.width, cellHeight / img.height);
+            const scaledWidth = img.width * scale;
+            const scaledHeight = img.height * scale;
+
+            // Center within cell
+            const centerX = x + (cellWidth - scaledWidth) / 2;
+            const centerY = y + (cellHeight - scaledHeight) / 2;
+
+            ctx.drawImage(img, centerX, centerY, scaledWidth, scaledHeight);
+            resolve();
+          };
+          img.src = qr.dataUrl;
+        });
+      }
+
+      // Convert canvas to PNG and add to ZIP
+      const pageDataUrl = canvas.toDataURL('image/png', 1.0);
+      const base64Data = pageDataUrl.split(',')[1];
+      zip.file(`print-sheet-${pageIndex + 1}.png`, base64Data, { base64: true });
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `qr-print-sheets-${Date.now()}.zip`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -728,6 +810,12 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
                 className="flex items-center gap-2 px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
               >
                 <Download size={18} /> Download All (ZIP)
+              </button>
+              <button
+                onClick={handleDownloadPrintSheets}
+                className="flex items-center gap-2 px-4 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+              >
+                <FileImage size={18} /> Print Sheets (A4)
               </button>
               <button
                 onClick={handlePrint}
