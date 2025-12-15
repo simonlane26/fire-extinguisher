@@ -120,47 +120,35 @@ async function bootstrap() {
     app.useStaticAssets(frontendPath, {
       index: false, // Don't auto-serve index.html for root
       etag: false, // Disable ETags to prevent caching issues
-      setHeaders: (res, path) => {
+      setHeaders: (res, filePath) => {
         // Long-term caching for hashed assets (JS, CSS, images in /assets/)
-        if (path.includes('/assets/')) {
+        if (filePath.includes('/assets/')) {
           res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         }
-        // No caching for HTML files (to ensure latest version is always loaded)
-        else if (path.endsWith('.html') || path.endsWith('/')) {
-          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-          res.setHeader('Pragma', 'no-cache');
-          res.setHeader('Expires', '0');
-          res.setHeader('Surrogate-Control', 'no-store');
+        // Absolutely no caching for index.html
+        else if (filePath.endsWith('index.html')) {
+          res.setHeader('Cache-Control', 'no-store');
           res.removeHeader('ETag');
-        }
-        // Default: no caching for other files
-        else {
-          res.setHeader('Cache-Control', 'no-cache');
         }
       },
     });
 
     // SPA fallback: serve index.html for all non-API, non-static routes
     app.use((req: any, res: any, next: any) => {
-      // Skip API routes, uploads, and assets
+      // Skip API routes, uploads, and static assets
       if (req.path.startsWith('/api/') ||
           req.path.startsWith('/uploads/') ||
           req.path.startsWith('/assets/')) {
         return next();
       }
 
-      // Skip HTML files (handled by PublicController or static middleware)
-      if (req.path.endsWith('.html')) {
+      // Skip HTML policy files (handled by PublicController)
+      if (req.path.endsWith('.html') && req.path !== '/index.html' && req.path !== '/') {
         return next();
       }
 
-      // For all other routes, serve the React SPA
-      // Prevent caching of index.html to ensure users always get the latest version
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-      res.setHeader('Surrogate-Control', 'no-store');
-      // Disable ETag to prevent 304 responses
+      // For all other routes (SPA fallback): serve index.html with no-store
+      res.setHeader('Cache-Control', 'no-store');
       res.removeHeader('ETag');
       return res.sendFile(join(frontendPath, 'index.html'));
     });
