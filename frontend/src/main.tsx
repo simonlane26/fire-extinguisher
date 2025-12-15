@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AppWithAuth from './AppWithAuth';
+import LandingPage from './pages/LandingPage';
 import PublicVerificationPage from './pages/PublicVerificationPage';
 import SignupPage from './pages/SignupPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
@@ -13,6 +14,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
+        {/* Public landing page */}
+        <Route path="/" element={<LandingPage />} />
+
         {/* Public routes */}
         <Route path="/verify/:id" element={<PublicVerificationPage />} />
         <Route path="/signup" element={<SignupPage />} />
@@ -21,7 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Authenticated routes */}
-        <Route path="*" element={<AppWithAuth />} />
+        <Route path="/app/*" element={<AppWithAuth />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

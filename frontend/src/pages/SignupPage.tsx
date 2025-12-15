@@ -42,7 +42,7 @@ export default function SignupPage() {
       // Optional: Auto-login after signup
       if (response.access_token) {
         setTimeout(() => {
-          navigate('/');
+          navigate('/app');
         }, 3000);
       }
     } catch (err: any) {
@@ -69,7 +69,7 @@ export default function SignupPage() {
             Please check your inbox and click the verification link to activate your account.
           </p>
           <Link
-            to="/login"
+            to="/app"
             className="inline-block bg-violet-600 text-white px-6 py-2 rounded-lg hover:bg-violet-700 transition-colors"
           >
             Go to Login
@@ -193,11 +193,16 @@ export default function SignupPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-2">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="text-violet-600 hover:text-violet-700 font-medium">
+            <Link to="/app" className="text-violet-600 hover:text-violet-700 font-medium">
               Sign in
+            </Link>
+          </p>
+          <p className="text-sm text-gray-600">
+            <Link to="/" className="text-gray-600 hover:text-gray-900">
+              ← Back to Home
             </Link>
           </p>
         </div>

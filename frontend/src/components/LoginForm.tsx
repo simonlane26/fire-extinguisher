@@ -153,7 +153,7 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-2">
           <p className="text-sm text-gray-600">
             {isRegister ? (
               <>
@@ -180,6 +180,11 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                 </Link>
               </>
             )}
+          </p>
+          <p className="text-sm text-gray-600">
+            <Link to="/" className="text-gray-600 hover:text-gray-900">
+              ← Back to Home
+            </Link>
           </p>
         </div>
       </div>
