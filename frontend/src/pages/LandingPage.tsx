@@ -211,12 +211,65 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="hidden md:block">
-              <div className="bg-white rounded-2xl shadow-2xl p-8">
-                <img
-                  src="/api/placeholder/600/400"
-                  alt="FirexCheck Dashboard"
-                  className="rounded-lg"
-                />
+              <div className="bg-white rounded-2xl shadow-2xl p-6">
+                <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg p-6 space-y-4">
+                  {/* Mock dashboard header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                        <Flame className="text-white" size={20} />
+                      </div>
+                      <span className="font-semibold text-gray-700">FirexCheck Dashboard</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="w-16 h-6 bg-green-100 rounded"></div>
+                      <div className="w-16 h-6 bg-blue-100 rounded"></div>
+                    </div>
+                  </div>
+
+                  {/* Mock stats cards */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                      <div className="text-xs text-gray-500 mb-1">Total Extinguishers</div>
+                      <div className="text-2xl font-bold text-gray-900">247</div>
+                      <div className="text-xs text-green-600 mt-1">↑ 12% this month</div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                      <div className="text-xs text-gray-500 mb-1">Due This Week</div>
+                      <div className="text-2xl font-bold text-orange-600">18</div>
+                      <div className="text-xs text-gray-500 mt-1">Needs attention</div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                      <div className="text-xs text-gray-500 mb-1">Compliance</div>
+                      <div className="text-2xl font-bold text-green-600">98%</div>
+                      <div className="text-xs text-green-600 mt-1">Excellent</div>
+                    </div>
+                  </div>
+
+                  {/* Mock table */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="text-sm font-semibold text-gray-700 mb-3">Recent Inspections</div>
+                    <div className="space-y-2">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
+                              <QrCode size={16} className="text-red-600" />
+                            </div>
+                            <div>
+                              <div className="text-xs font-medium text-gray-900">FEP-{String(i).padStart(3, '0')}</div>
+                              <div className="text-xs text-gray-500">Building {i}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${i === 2 ? 'bg-orange-500' : 'bg-green-500'}`}></div>
+                            <span className="text-xs text-gray-600">{i === 2 ? 'Warning' : 'Passed'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
