@@ -110,6 +110,11 @@ export class StripeService {
       metadata: {
         tenantId: params.tenantId,
       },
+      subscription_data: {
+        metadata: {
+          tenantId: params.tenantId,
+        },
+      },
     });
 
     return session;
@@ -185,11 +190,27 @@ export class StripeService {
       metadata: subscription.metadata,
     });
 
-    const tenantId = subscription.metadata.tenantId;
+    // First try to get tenantId from subscription metadata
+    let tenantId = subscription.metadata.tenantId;
+
+    // If not in metadata, look up by Stripe customer ID
     if (!tenantId) {
-      console.error('❌ No tenantId in subscription metadata. Subscription:', subscription.id);
-      console.error('Available metadata:', subscription.metadata);
-      return;
+      console.log('⚠️  No tenantId in subscription metadata, looking up by customer ID...');
+      const customerId = typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
+
+      const tenant = await this.prisma.tenant.findFirst({
+        where: { stripeCustomerId: customerId },
+      });
+
+      if (!tenant) {
+        console.error('❌ No tenant found for customer:', customerId);
+        return;
+      }
+
+      tenantId = tenant.id;
+      console.log('✅ Found tenant by customer ID:', tenantId);
     }
 
     const priceId = subscription.items.data[0]?.price.id;
@@ -215,8 +236,26 @@ export class StripeService {
   }
 
   private async handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-    const tenantId = subscription.metadata.tenantId;
-    if (!tenantId) return;
+    // First try to get tenantId from subscription metadata
+    let tenantId = subscription.metadata.tenantId;
+
+    // If not in metadata, look up by Stripe customer ID
+    if (!tenantId) {
+      const customerId = typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
+
+      const tenant = await this.prisma.tenant.findFirst({
+        where: { stripeCustomerId: customerId },
+      });
+
+      if (!tenant) {
+        console.error('❌ No tenant found for canceled subscription, customer:', customerId);
+        return;
+      }
+
+      tenantId = tenant.id;
+    }
 
     await this.prisma.tenant.update({
       where: { id: tenantId },
