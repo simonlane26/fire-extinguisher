@@ -178,14 +178,29 @@ export class StripeService {
   }
 
   private async handleSubscriptionUpdate(subscription: Stripe.Subscription) {
+    console.log('🔔 Subscription update webhook received:', {
+      subscriptionId: subscription.id,
+      customerId: subscription.customer,
+      status: subscription.status,
+      metadata: subscription.metadata,
+    });
+
     const tenantId = subscription.metadata.tenantId;
     if (!tenantId) {
-      console.error('No tenantId in subscription metadata');
+      console.error('❌ No tenantId in subscription metadata. Subscription:', subscription.id);
+      console.error('Available metadata:', subscription.metadata);
       return;
     }
 
     const priceId = subscription.items.data[0]?.price.id;
     const plan = this.getPlanFromPriceId(priceId);
+
+    console.log('✅ Updating tenant:', {
+      tenantId,
+      plan,
+      subscriptionId: subscription.id,
+      status: subscription.status,
+    });
 
     await this.prisma.tenant.update({
       where: { id: tenantId },
@@ -195,6 +210,8 @@ export class StripeService {
         subscriptionStatus: subscription.status as any,
       },
     });
+
+    console.log('✅ Tenant updated successfully');
   }
 
   private async handleSubscriptionDeleted(subscription: Stripe.Subscription) {

@@ -55,12 +55,16 @@ export class StripeController {
     @Req() req: Request,
     @Headers('stripe-signature') signature: string
   ) {
+    console.log('🔔 Webhook received from Stripe');
+
     if (!this.stripeService.isConfigured()) {
+      console.error('❌ Stripe not configured');
       return { error: 'Billing is not configured' };
     }
 
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
+      console.error('❌ STRIPE_WEBHOOK_SECRET not configured');
       throw new Error('STRIPE_WEBHOOK_SECRET not configured');
     }
 
@@ -84,12 +88,19 @@ export class StripeController {
       );
 
       console.log('✅ Webhook signature verified:', event.type);
+      console.log('Event ID:', event.id);
     } catch (err) {
       console.error('❌ Webhook signature verification failed:', err);
       throw new Error('Invalid signature');
     }
 
-    await this.stripeService.handleWebhook(event);
+    try {
+      await this.stripeService.handleWebhook(event);
+      console.log('✅ Webhook processed successfully');
+    } catch (err) {
+      console.error('❌ Webhook processing failed:', err);
+      throw err;
+    }
 
     return { received: true };
   }
