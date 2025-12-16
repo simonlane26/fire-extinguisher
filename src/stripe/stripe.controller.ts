@@ -153,7 +153,7 @@ export class StripeController {
           ],
         },
         enterprise: {
-          name: 'Business',
+          name: 'Enterprise',
           monthlyPrice: '£99/mo',
           annualPrice: '£990/yr',
           priceIds: {
@@ -161,11 +161,11 @@ export class StripeController {
             annual: STRIPE_PRICE_IDS.enterprise_annual,
           },
           limits: {
-            extinguishers: 1000,
+            extinguishers: 'Unlimited',
             users: 'Unlimited',
           },
           features: [
-            'Up to 1,000 extinguishers',
+            'Unlimited extinguishers',
             'Unlimited users',
             'API access',
             'Custom domain/subdomain',

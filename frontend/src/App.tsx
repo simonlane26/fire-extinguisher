@@ -190,11 +190,11 @@ const TenantProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
 };
 
 /* --------------------------------- Helpers ---------------------------------- */
-const PLAN_LIMITS: Record<Tenant['subscriptionPlan'], number> = {
+const PLAN_LIMITS: Record<Tenant['subscriptionPlan'], number | string> = {
   trial: 10,
   starter: 50,
   professional: 250,
-  enterprise: 1000,
+  enterprise: 'Unlimited',
 };
 
 function computeKpis(list: Extinguisher[], plan: Tenant['subscriptionPlan']) {

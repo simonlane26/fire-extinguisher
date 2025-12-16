@@ -229,6 +229,8 @@ export class StripeService {
         stripeSubscriptionId: subscription.id,
         subscriptionPlan: plan,
         subscriptionStatus: subscription.status as any,
+        // Clear trial end date when upgrading from trial
+        trialEndsAt: plan !== 'trial' ? null : undefined,
       },
     });
 
@@ -322,6 +324,14 @@ export class StripeService {
     const tenant = await this.prisma.tenant.findUniqueOrThrow({
       where: { id: tenantId },
     });
+
+    // Check if trial has expired
+    if (tenant.subscriptionPlan === 'trial' && tenant.trialEndsAt) {
+      const now = new Date();
+      if (now > tenant.trialEndsAt) {
+        throw new Error('Your 14-day trial has expired. Please upgrade to continue using FirexCheck.');
+      }
+    }
 
     const limits = this.getPlanLimits(tenant.subscriptionPlan as SubscriptionPlan);
 

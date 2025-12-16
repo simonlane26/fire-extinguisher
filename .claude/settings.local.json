@@ -78,7 +78,8 @@
       "Bash(node_modules.binnest build)",
       "Bash(.node_modules.binnest.cmd build)",
       "Bash(npx tsc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(hard refresh\" caused by stale HTML referencing missing hashed assets.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

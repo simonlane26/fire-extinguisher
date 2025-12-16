@@ -187,13 +187,17 @@ export class AuthService {
 
     // Create tenant and user in transaction
     const result = await this.prisma.$transaction(async (tx) => {
-      // Create tenant
+      // Create tenant with 14-day trial
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
       const tenant = await tx.tenant.create({
         data: {
           companyName,
           subdomain: tenantSubdomain,
           subscriptionPlan: 'trial',
           subscriptionStatus: 'trial',
+          trialEndsAt,
         },
       });
 

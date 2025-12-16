@@ -310,12 +310,12 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
           </div>
         )}
 
-        {/* Business Plan */}
+        {/* Enterprise Plan */}
         {plans.enterprise && (
           <div className="relative p-6 bg-white border-2 border-gray-200 shadow rounded-2xl">
             <div className="flex items-center gap-2 mb-4">
               <Building2 className="w-6 h-6" style={{ color: safeColor }} />
-              <h3 className="text-xl font-bold">Business</h3>
+              <h3 className="text-xl font-bold">Enterprise</h3>
             </div>
             <div className="mb-4">
               <div className="text-3xl font-bold">
