@@ -190,14 +190,22 @@ const TenantProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
 };
 
 /* --------------------------------- Helpers ---------------------------------- */
-function computeKpis(list: Extinguisher[]) {
+const PLAN_LIMITS: Record<Tenant['subscriptionPlan'], number> = {
+  trial: 10,
+  starter: 50,
+  professional: 250,
+  enterprise: 1000,
+};
+
+function computeKpis(list: Extinguisher[], plan: Tenant['subscriptionPlan']) {
   const total = list.length;
   const active = list.filter((e) => e.status === 'Active').length;
   const needs =
     list.filter(
       (e) => e.condition === 'Needs Attention' || e.status !== 'Active',
     ).length;
-  return { total, active, needs, planLimit: { used: total, limit: 10 } };
+  const limit = PLAN_LIMITS[plan] || 10;
+  return { total, active, needs, planLimit: { used: total, limit } };
 }
 
 type KpiProps = {
@@ -522,7 +530,7 @@ const FireExtinguisherApp: React.FC = () => {
     return 'text-gray-900';
   };
 
-  const { total, active, needs, planLimit } = computeKpis(extinguishers);
+  const { total, active, needs, planLimit } = computeKpis(extinguishers, tenant.subscriptionPlan);
 
   // Helper: next ID
   const getNextExtinguisherId = (list: Extinguisher[]) => {
