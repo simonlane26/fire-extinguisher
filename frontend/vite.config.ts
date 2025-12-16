@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   root: path.resolve(__dirname),
+  base: '/',
   plugins: [react()],
   publicDir: 'public', // Copy public folder contents to dist during build
   build: {
@@ -13,6 +14,7 @@ export default defineConfig({
     // Force clean build
     emptyOutDir: true,
     outDir: 'dist',
+    assetsDir: 'assets', // Put all hashed assets in /assets/ folder
   },
   server: {
     port: 5173,

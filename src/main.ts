@@ -121,15 +121,26 @@ async function bootstrap() {
       index: false, // Don't auto-serve index.html for root
       etag: false, // Disable ETags to prevent caching issues
       setHeaders: (res, filePath) => {
-        // Long-term caching for hashed assets (JS, CSS, images in /assets/)
-        if (filePath.includes('/assets/')) {
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        }
-        // Absolutely no caching for index.html
-        else if (filePath.endsWith('index.html')) {
-          res.setHeader('Cache-Control', 'no-store');
+        const isHTML = filePath.endsWith('.html');
+
+        // Matches hashed files: index-ABCDEFG123.css, vendor-9a8b7c6d.js, etc.
+        // This catches files at ANY path with hash pattern, not just /assets/
+        const isHashedAsset = /-[a-zA-Z0-9]{8,}\.(css|js|mjs|woff2?|png|jpg|jpeg|svg|webp|gif)$/.test(filePath);
+
+        if (isHTML) {
+          res.setHeader('Cache-Control', 'no-store, max-age=0');
+          res.setHeader('Pragma', 'no-cache');
           res.removeHeader('ETag');
+          return;
         }
+
+        if (isHashedAsset) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          return;
+        }
+
+        // Non-hashed assets (manifest.json, robots.txt, etc.) - avoid sticky caching
+        res.setHeader('Cache-Control', 'no-cache');
       },
     });
 
@@ -148,7 +159,8 @@ async function bootstrap() {
       }
 
       // For all other routes (SPA fallback): serve index.html with no-store
-      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Cache-Control', 'no-store, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
       res.removeHeader('ETag');
       return res.sendFile(join(frontendPath, 'index.html'));
     });
