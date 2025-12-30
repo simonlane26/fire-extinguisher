@@ -21,12 +21,14 @@ import {
   X,
   LogOut,
   FileText,
+  TrendingUp,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
 import AddExtinguisherModal from './components/AddExtinguisherModal';
 import EditExtinguisherModal from './components/EditExtinguisherModal';
 import ExtinguisherDetails from './components/ExtinguisherDetails';
+import SimpleInspectionForm from './components/SimpleInspectionForm';
 import SettingsPage from './pages/SettingsPage';
 import UsersPage from './pages/UsersPage';
 import SitesPage from './pages/SitesPage';
@@ -35,6 +37,7 @@ import BillingPage from './pages/BillingPage';
 import InventoryPage from './pages/InventoryPage';
 import HelpPage from './pages/HelpPage';
 import ReportsPage from './pages/ReportsPage';
+import ComplianceDashboard from './pages/ComplianceDashboard';
 import RoleSwitcherModal from './components/RoleSwitcher';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
@@ -248,7 +251,7 @@ const FireExtinguisherApp: React.FC = () => {
   const { currentUser, setCurrentUser, hasPermission, logout } = actx;
 
   const [activeTab, setActiveTab] =
-    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing'>('overview');
+    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'reports' | 'help'>('overview');
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<{ id: string; name: string } | null>(null);
 
   // Extinguishers state (seed with demo; will be replaced by API load)
@@ -361,6 +364,7 @@ const FireExtinguisherApp: React.FC = () => {
   const [showQrScanner, setShowQrScanner] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [editingExtinguisher, setEditingExtinguisher] = useState<Extinguisher | null>(null);
+  const [showSimpleForm, setShowSimpleForm] = useState(false);
 
   // CSV import/export
   const [importing, setImporting] = useState(false);
@@ -805,6 +809,15 @@ const FireExtinguisherApp: React.FC = () => {
             )}
 
             <TabButton
+              active={activeTab === 'compliance'}
+              onClick={() => setActiveTab('compliance')}
+              primaryColor={tenant.primaryColor}
+            >
+              <TrendingUp size={16} />
+              <span>Compliance</span>
+            </TabButton>
+
+            <TabButton
               active={activeTab === 'reports'}
               onClick={() => setActiveTab('reports')}
               primaryColor={tenant.primaryColor}
@@ -1049,6 +1062,17 @@ const FireExtinguisherApp: React.FC = () => {
               </button>
 
               <button
+                onClick={() => setShowSimpleForm(true)}
+                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm hover:opacity-90"
+                style={{
+                  backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' ? tenant.primaryColor : '#7c3aed',
+                  color: '#ffffff'
+                }}
+              >
+                <FileText size={18} /> Simple Form
+              </button>
+
+              <button
                 onClick={() => setShowRoleSwitcher(true)}
                 className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm"
                 style={{ backgroundColor: '#374151', color: '#ffffff' }}
@@ -1155,6 +1179,11 @@ const FireExtinguisherApp: React.FC = () => {
         {/* Settings tab */}
         {activeTab === 'settings' && hasPermission('MANAGE_SETTINGS') && (
           <SettingsPage tenant={tenant} updateTenant={updateTenant} />
+        )}
+
+        {/* Compliance Dashboard tab */}
+        {activeTab === 'compliance' && (
+          <ComplianceDashboard primaryColor={tenant.primaryColor} />
         )}
 
         {/* Reports tab */}
@@ -1267,6 +1296,15 @@ const FireExtinguisherApp: React.FC = () => {
         roles={USER_ROLES}
         onSelect={handleSelectRole}
       />
+
+      {showSimpleForm && (
+        <SimpleInspectionForm
+          onClose={() => setShowSimpleForm(false)}
+          primaryColor={tenant.primaryColor}
+          siteId={siteFilter !== 'all' ? siteFilter : undefined}
+          siteName={selectedSiteFilter?.name}
+        />
+      )}
 
       {/* Footer */}
       <Footer primaryColor={tenant.primaryColor} />
