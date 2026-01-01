@@ -20,7 +20,7 @@ Allow: /*.jpg$
 Allow: /*.svg$
 
 # Sitemap location
-Sitemap: https://fire-extinguisher-management.com/sitemap.xml
+Sitemap: https://firexcheck.com/sitemap.xml
 
 # Crawl-delay to be respectful
 Crawl-delay: 1
