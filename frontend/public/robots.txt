@@ -1,0 +1,33 @@
+# Fire Extinguisher Management System - Robots.txt
+
+# Allow all crawlers to access public pages
+User-agent: *
+Allow: /
+
+# Disallow authenticated/private areas
+Disallow: /app/
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /settings
+
+# Allow access to assets
+Allow: /assets/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+
+# Sitemap location
+Sitemap: https://fire-extinguisher-management.com/sitemap.xml
+
+# Crawl-delay to be respectful
+Crawl-delay: 1
+
+# Block bad bots (optional)
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
