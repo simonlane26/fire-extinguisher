@@ -380,10 +380,10 @@ You have the right to:
 
 ---
 
-**Summary:** We use cookies to make Fireexcheck work better for you. Essential cookies are required for functionality. You can control optional cookies. We don't use intrusive tracking or advertising cookies.
+**Summary:** We use cookies to make Firexcheck work better for you. Essential cookies are required for functionality. You can control optional cookies. We don't use intrusive tracking or advertising cookies.
 
 **Questions?** Contact us at info@firexcheck.com
 
-**Fireexcheck - Fire Extinguisher Management System**
+**Firexcheck - Fire Extinguisher Management System**
 
 Keeping your premises safe and compliant.

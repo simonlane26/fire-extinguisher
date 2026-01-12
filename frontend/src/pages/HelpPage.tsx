@@ -165,7 +165,7 @@ export default function HelpPage() {
     },
     {
       question: 'How do I import extinguishers from a CSV file?',
-      answer: 'On the Overview page, click "Import CSV". Download the template to see the required format. Fill in your data and upload the file. The system will validate and import your extinguishers.',
+      answer: 'On the Overview page, click "Import CSV". Download the CSV template (link below) to see the required format with example data. Fill in your extinguisher data following the template format and upload the file. The system will validate and import your extinguishers. Template: /extinguisher-import-template.csv | Guide: /CSV-IMPORT-GUIDE.txt',
     },
     {
       question: 'How do I set up push notifications?',
@@ -376,6 +376,44 @@ export default function HelpPage() {
                 <span>Set next service dates to stay on top of maintenance schedules</span>
               </li>
             </ul>
+          </div>
+
+          {/* CSV Import Resources */}
+          <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <Download className="w-6 h-6 text-green-600" />
+              <h3 className="text-xl font-semibold text-gray-900">CSV Import Resources</h3>
+            </div>
+            <p className="mb-4 text-gray-600">
+              Bulk import your fire extinguisher data using our CSV template. Download the template below,
+              fill in your data, and upload it to quickly add multiple extinguishers at once.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <a
+                href="/extinguisher-import-template.csv"
+                download
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
+              >
+                <Download size={18} />
+                Download CSV Template
+              </a>
+              <a
+                href="/CSV-IMPORT-GUIDE.txt"
+                download
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-green-700 bg-green-100 rounded-lg hover:bg-green-200"
+              >
+                <Book size={18} />
+                Download Import Guide
+              </a>
+            </div>
+            <div className="p-3 mt-4 text-sm bg-gray-50 rounded-lg">
+              <p className="font-medium text-gray-900 mb-1">Template includes:</p>
+              <ul className="text-gray-600 space-y-1">
+                <li>• All required and optional fields with examples</li>
+                <li>• 4 sample extinguishers showing proper format</li>
+                <li>• Compatible with Excel, Google Sheets, and CSV editors</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}

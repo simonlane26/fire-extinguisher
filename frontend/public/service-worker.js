@@ -42,7 +42,7 @@ self.addEventListener('push', (event) => {
   console.log('[Service Worker] Push received:', event);
 
   let data = {
-    title: 'Fireexcheck Notification',
+    title: 'Firexcheck Notification',
     body: 'You have a new notification',
     icon: '/icon-192x192.png',
     badge: '/badge-72x72.png',

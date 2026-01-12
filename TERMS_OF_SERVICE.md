@@ -10,7 +10,7 @@ By accessing or using Firexcheck ("Service", "Platform", "we", "us", or "our"), 
 
 ## 2. Description of Service
 
-Fireexcheck is a cloud-based fire extinguisher management system that provides:
+Firexcheck is a cloud-based fire extinguisher management system that provides:
 - Fire extinguisher inventory tracking
 - Inspection scheduling and reminders
 - Maintenance record management
@@ -376,7 +376,7 @@ You may not use or export the Service in violation of export control laws.
 
 ---
 
-**By using Fireexcheck, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.**
+**By using Firexcheck, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.**
 
 **Firexcheck - Fire Extinguisher Management System**
 

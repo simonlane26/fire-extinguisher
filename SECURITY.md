@@ -1,4 +1,4 @@
-# Security Guide - Fireexcheck.com
+# Security Guide - Firexcheck.com
 
 ## Overview
 This document outlines security best practices and requirements for the Fire Extinguisher Management System.

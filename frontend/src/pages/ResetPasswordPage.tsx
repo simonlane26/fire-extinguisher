@@ -103,7 +103,7 @@ export default function ResetPasswordPage() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Set New Password</h1>
           <p className="text-gray-600">Enter your new password below</p>
-          <p className="text-sm text-violet-600 font-medium mt-1">Fireexcheck.com</p>
+          <p className="text-sm text-violet-600 font-medium mt-1">Firexcheck.com</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

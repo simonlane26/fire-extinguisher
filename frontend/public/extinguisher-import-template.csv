@@ -1,0 +1,5 @@
+location,building,floor,type,capacity,manufacturer,model,serialNumber,installDate,expiryDate,lastInspection,nextInspection,lastMaintenance,nextMaintenance,status,condition,serviceType,inspector,notes
+"Reception Desk","Main Building","Ground Floor","Water","6L","FireSafe Ltd","WS-6L","WS123456","2023-01-15","2033-01-15","2024-11-20","2025-11-20","2024-06-10","2025-06-10","Active","Good","Annual Service","John Smith","Next to main entrance"
+"Kitchen Area","Main Building","Ground Floor","Wet Chemical","2KG","SafetyFirst","WC-2K","SF789012","2022-08-10","2032-08-10","2024-10-15","2025-10-15","2024-05-20","2025-05-20","Active","Excellent","6 Month Check","Jane Doe","Above cooking range"
+"Server Room","Main Building","1st Floor","CO2","5KG","TechSafe","CO2-5","TS345678","2023-03-22","2033-03-22","2024-12-01","2025-12-01","2024-07-15","2025-07-15","Active","Good","Quarterly","Mike Johnson","Near server rack A"
+"Warehouse","Storage Building","Ground Floor","Dry Powder","9KG","ProFire","DP-9","PF567890","2023-06-12","2033-06-12","","2025-12-15","","2025-06-15","Active","Fair","Basic Service","Sarah Lee","Near loading bay"

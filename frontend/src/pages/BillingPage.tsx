@@ -348,12 +348,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         )}
       </div>
 
-      {/* Enterprise Custom Plan */}
+      {/* Need Help Contact Box */}
       <div className="p-6 text-center bg-white shadow rounded-2xl">
-        <h3 className="mb-2 text-xl font-bold">Need more?</h3>
-        <p className="mb-4 text-gray-600">
-          Enterprise plan available with unlimited extinguishers, SSO, audit logs, and dedicated support.
-        </p>
+        <h3 className="mb-2 text-xl font-bold">Need Help?</h3>
         <a
           href="mailto:notification.firexcheck@gmail.com"
           className="inline-block px-6 py-2 text-white rounded-lg hover:opacity-90"

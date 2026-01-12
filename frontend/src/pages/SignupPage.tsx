@@ -88,7 +88,7 @@ export default function SignupPage() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Account</h1>
           <p className="text-gray-600">Start managing your fire safety equipment</p>
-          <p className="text-sm text-violet-600 font-medium mt-1">Fireexcheck.com</p>
+          <p className="text-sm text-violet-600 font-medium mt-1">Firexcheck.com</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

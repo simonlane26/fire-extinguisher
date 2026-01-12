@@ -1,4 +1,4 @@
-# Deployment Guide - Fireexcheck.com
+# Deployment Guide - Firexcheck.com
 ## Fire Extinguisher Management System
 
 ---

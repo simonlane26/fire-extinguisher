@@ -67,7 +67,7 @@ export default function VerifyEmailPage() {
             <Flame className="text-violet-600" size={48} />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Email Verification</h1>
-          <p className="text-sm text-violet-600 font-medium">Fireexcheck.com</p>
+          <p className="text-sm text-violet-600 font-medium">Firexcheck.com</p>
         </div>
 
         {status === 'verifying' && (

@@ -174,7 +174,7 @@ export class ReportsService {
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
           <div>
             <h1 style="margin:0">${tenant.name} – Service Report</h1>
-            <p style="margin:4px 0 0 0; font-size:12px; color:#7c3aed">Powered by Fireexcheck.com</p>
+            <p style="margin:4px 0 0 0; font-size:12px; color:#7c3aed">Powered by Firexcheck.com</p>
           </div>
           ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height:48px"/>` : ''}
         </div>
@@ -336,7 +336,7 @@ export class ReportsService {
         ` : ''}
 
         <div style="margin-top: 48px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 12px; color: #777;">
-          <p>Generated with Fireexcheck.com - Professional Fire Safety Management</p>
+          <p>Generated with Firexcheck.com - Professional Fire Safety Management</p>
           <p>Report ID: ${extinguisher.id} | Generated: ${new Date().toISOString()}</p>
         </div>
       </body>
@@ -552,7 +552,7 @@ export class ReportsService {
     const { extinguisher, inspections, partsUsage } = params;
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'Fireexcheck.com';
+    workbook.creator = 'Firexcheck.com';
     workbook.created = new Date();
 
     // Sheet 1: Extinguisher Details
@@ -758,7 +758,7 @@ export class ReportsService {
         </table>
 
         <div class="footer">
-          <p>Generated with Fireexcheck.com - Professional Fire Safety Management</p>
+          <p>Generated with Firexcheck.com - Professional Fire Safety Management</p>
           <p>Report ID: ${Date.now()} | Generated: ${new Date().toISOString()}</p>
         </div>
       </body>
@@ -902,7 +902,7 @@ export class ReportsService {
         `).join('')}
 
         <div class="footer">
-          <p>Generated with Fireexcheck.com - Professional Fire Safety Management</p>
+          <p>Generated with Firexcheck.com - Professional Fire Safety Management</p>
           <p>Report ID: ${Date.now()} | Generated: ${new Date().toISOString()}</p>
         </div>
       </body>

@@ -142,7 +142,7 @@ If you are in the European Economic Area (EEA), you have additional rights under
 - **Consent:** Marketing communications (you can opt-out anytime)
 - **Legal Obligation:** Compliance with fire safety regulations
 
-**Data Controller:** Fireexcheck is the data controller for your personal information.
+**Data Controller:** Firexcheck is the data controller for your personal information.
 
 **Data Protection Officer:** Contact us at: dpo@firexcheck.com
 
@@ -238,6 +238,6 @@ In the event of a data breach affecting your personal information:
 
 ---
 
-**Fireexcheck - Fire Extinguisher Management System**
+**Firexcheck - Fire Extinguisher Management System**
 
 Keeping your premises safe and compliant.
