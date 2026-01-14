@@ -101,10 +101,28 @@ export default function HelpPage() {
       features: [
         'Add inventory items with stock levels',
         'Set minimum stock thresholds for alerts',
+        'Set customer pricing separate from cost pricing',
         'Track usage and consumption',
         'Record when items are used on extinguishers',
         'View low stock alerts',
         'Generate inventory reports',
+      ],
+    },
+    {
+      title: 'Quote Management',
+      icon: <FileText className="w-6 h-6 text-teal-500" />,
+      description: 'Generate professional quotes for repairs and replacements.',
+      features: [
+        'Auto-generate quotes for failed extinguishers',
+        'Add parts from inventory with customer pricing',
+        'Include labour charges in quotes',
+        'Configure VAT rate per quote',
+        'Set quote validity period (default 30 days)',
+        'Track quote status: Draft, Sent, Accepted, Rejected',
+        'View acceptance rate and revenue statistics',
+        'Sequential quote numbering (Q-2026-0001)',
+        'Add notes and terms & conditions',
+        'Link quotes to specific extinguishers',
       ],
     },
     {
@@ -193,7 +211,35 @@ export default function HelpPage() {
     },
     {
       question: 'How do I track inventory/stock?',
-      answer: 'Go to the Stock tab to manage your inventory. Add items with their current quantity and minimum stock level. When you use items during servicing, record the usage to keep counts accurate.',
+      answer: 'Go to the Stock tab to manage your inventory. Add items with their current quantity and minimum stock level. Set customer pricing for items that will appear on quotes. When you use items during servicing, record the usage to keep counts accurate.',
+    },
+    {
+      question: 'How do I generate a quote for a failed extinguisher?',
+      answer: 'When you mark an extinguisher as "Out of Service" or "Needs Attention", open its details page. A "Generate Quote" button will appear in the Reports section. Click it to create a quote with the extinguisher pre-selected. You can also go to the Quotes tab and click "Create Quote" manually.',
+    },
+    {
+      question: 'How do I add parts to a quote?',
+      answer: 'On the quote creation page, click "Add Part". Select an item from your inventory - the customer price will auto-fill. You can adjust quantity and price as needed. Click "Add Labour" to add service charges. Each line calculates its total automatically.',
+    },
+    {
+      question: 'What\'s the difference between cost price and customer price?',
+      answer: 'Cost price is what you pay for an item (shown in grey in inventory). Customer price is what you charge clients (shown on quotes). Set both in the Stock tab when adding inventory items. This helps you track profit margins.',
+    },
+    {
+      question: 'How do I send a quote to a customer?',
+      answer: 'Create a quote and save it as Draft. Review the details, then click "Send to Customer". This changes the status to Sent and locks editing. You can then mark it as Accepted or Rejected based on customer response.',
+    },
+    {
+      question: 'Can I edit a quote after sending it?',
+      answer: 'No. Once a quote is marked as Sent, you cannot edit the line items. This ensures quote integrity. If you need to change it, create a new quote. You can only edit Draft quotes.',
+    },
+    {
+      question: 'How do quote numbers work?',
+      answer: 'Quote numbers follow the format Q-YEAR-0001, Q-YEAR-0002, etc. They\'re sequential per year and unique to your company. For example: Q-2026-0001 is the first quote of 2026. The system auto-generates these when you create quotes.',
+    },
+    {
+      question: 'Where can I see my quote statistics?',
+      answer: 'Go to the Quotes tab to see your dashboard with total quotes, accepted quotes, total value, acceptance rate, and revenue from accepted quotes. You can filter quotes by status (Draft, Sent, Accepted, Rejected, Expired).',
     },
     {
       question: 'How do I upgrade my subscription?',
@@ -376,6 +422,90 @@ export default function HelpPage() {
                 <span>Set next service dates to stay on top of maintenance schedules</span>
               </li>
             </ul>
+          </div>
+
+          {/* Quote Workflow */}
+          <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <FileText className="w-6 h-6 text-teal-600" />
+              <h3 className="text-xl font-semibold text-gray-900">Quote Workflow for Failed Extinguishers</h3>
+            </div>
+            <p className="mb-4 text-gray-600">
+              When an extinguisher fails inspection, generate professional quotes for repairs or replacement.
+              Follow this workflow to track quotes from creation to acceptance.
+            </p>
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 bg-teal-100 rounded-full">
+                  <span className="text-sm font-bold text-teal-600">1</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Mark Extinguisher as Failed</h4>
+                  <p className="text-sm text-gray-600">
+                    During inspection, set condition to "Out of Service" or "Needs Attention". Open the
+                    extinguisher details and you'll see a "Generate Quote" button appear.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 bg-teal-100 rounded-full">
+                  <span className="text-sm font-bold text-teal-600">2</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Build the Quote</h4>
+                  <p className="text-sm text-gray-600">
+                    Add parts from your inventory (prices auto-fill from customer pricing). Add labour charges
+                    for service time. The system calculates VAT and totals automatically. Add notes and terms.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 bg-teal-100 rounded-full">
+                  <span className="text-sm font-bold text-teal-600">3</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Save as Draft</h4>
+                  <p className="text-sm text-gray-600">
+                    Review the quote details. While in Draft status, you can edit line items, pricing, and VAT rate.
+                    The quote gets a unique number like Q-2026-0001.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 bg-teal-100 rounded-full">
+                  <span className="text-sm font-bold text-teal-600">4</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Send to Customer</h4>
+                  <p className="text-sm text-gray-600">
+                    When ready, change status to "Sent". This locks editing and records the sent date. The customer
+                    has until the validity date (default 30 days) to respond.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex items-center justify-center flex-shrink-0 w-8 h-8 bg-teal-100 rounded-full">
+                  <span className="text-sm font-bold text-teal-600">5</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Track Acceptance</h4>
+                  <p className="text-sm text-gray-600">
+                    Mark quote as "Accepted" or "Rejected" based on customer response. View your acceptance rate
+                    and revenue statistics in the Quotes tab dashboard.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 mt-4 text-sm bg-teal-50 rounded-lg">
+              <p className="font-medium text-teal-900 mb-1">Pro Tips:</p>
+              <ul className="text-teal-800 space-y-1">
+                <li>• Set customer pricing in Stock tab before creating quotes</li>
+                <li>• Customer price should include your markup over cost price</li>
+                <li>• Use the notes field for internal information</li>
+                <li>• Terms & conditions appear on the quote PDF (if PDF generation is added)</li>
+                <li>• Filter quotes by status to see what needs follow-up</li>
+              </ul>
+            </div>
           </div>
 
           {/* CSV Import Resources */}
