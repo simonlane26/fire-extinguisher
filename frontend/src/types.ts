@@ -13,7 +13,7 @@ export type AuthedUser = User & { tenantId: string };
 
 export type Tenant = {
   id: string; companyName: string; subdomain: string; logoUrl?: string|null;
-  primaryColor: string; secondaryColor: string;
+  primaryColor: string; secondaryColor: string; contactEmail?: string|null;
   subscriptionPlan: 'trial'|'starter'|'professional'|'enterprise';
   subscriptionStatus: string; createdAt: string;
 };

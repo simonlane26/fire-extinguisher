@@ -38,6 +38,7 @@ const looksLikeDemo = (name?: string | null) =>
 const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
   const [companyName, setCompanyName] = useState(tenant.companyName);
   const [subdomain, setSubdomain] = useState(tenant.subdomain);
+  const [contactEmail, setContactEmail] = useState(tenant.contactEmail ?? '');
   const [primary, setPrimary] = useState(tenant.primaryColor);
   const [secondary, setSecondary] = useState(tenant.secondaryColor);
   const [logoUrl, setLogoUrl] = useState<string | null>(tenant.logoUrl ?? null);
@@ -69,6 +70,7 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
   function handleReset() {
     setCompanyName(tenant.companyName);
     setSubdomain(tenant.subdomain);
+    setContactEmail(tenant.contactEmail ?? '');
     setPrimary(tenant.primaryColor);
     setSecondary(tenant.secondaryColor);
     setLogoUrl(tenant.logoUrl ?? null);
@@ -135,6 +137,7 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
     const patch: Partial<Tenant> = {
       companyName,
       subdomain,
+      contactEmail: contactEmail || null,
       primaryColor: primary,
       secondaryColor: secondary,
       logoUrl,
@@ -257,6 +260,20 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Enter company name"
               />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block mb-1 text-sm font-medium">Contact Email</label>
+              <input
+                type="email"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="contact@yourcompany.com"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                This email will receive problem reports from QR code scans.
+              </p>
             </div>
 
             <div className="sm:col-span-2">

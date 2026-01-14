@@ -128,6 +128,7 @@ export class AuthController {
     @Body() body: {
       companyName?: string;
       subdomain?: string;
+      contactEmail?: string;
       primaryColor?: string;
       secondaryColor?: string;
       logoUrl?: string;
@@ -139,6 +140,7 @@ export class AuthController {
       data: {
         ...(body.companyName !== undefined && { companyName: body.companyName }),
         ...(body.subdomain !== undefined && { subdomain: body.subdomain }),
+        ...(body.contactEmail !== undefined && { contactEmail: body.contactEmail }),
         ...(body.primaryColor !== undefined && { primaryColor: body.primaryColor }),
         ...(body.secondaryColor !== undefined && { secondaryColor: body.secondaryColor }),
         ...(body.logoUrl !== undefined && { logoUrl: body.logoUrl }),
