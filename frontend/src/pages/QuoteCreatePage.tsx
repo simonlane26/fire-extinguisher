@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Trash2, Save, Send, ArrowLeft } from 'lucide-react';
-import { createQuote, fetchInventoryItems, fetchExtinguisher } from '../lib/api';
+import { createQuote, fetchInventoryItems, fetchExtinguisherById } from '../lib/api';
 import type { InventoryItem, Extinguisher } from '../types';
 
 interface QuoteLine {
@@ -36,7 +36,7 @@ const QuoteCreatePage: React.FC = () => {
       try {
         setLoading(true);
         const [extData, inventoryData] = await Promise.all([
-          fetchExtinguisher(extinguisherId),
+          fetchExtinguisherById(extinguisherId),
           fetchInventoryItems(),
         ]);
         setExtinguisher(extData);
