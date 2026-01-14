@@ -150,6 +150,7 @@ export class ExtinguishersService {
           select: {
             companyName: true,
             logoUrl: true,
+            contactEmail: true,
           },
         },
       },
