@@ -232,7 +232,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
       </div>
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Starter Plan */}
         {plans.starter && (
           <div className="relative p-6 bg-white border-2 border-gray-200 shadow rounded-2xl">
@@ -346,6 +346,50 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
             </button>
           </div>
         )}
+
+        {/* Custom Enterprise Plan */}
+        <div className="relative p-6 bg-gradient-to-br from-gray-900 to-gray-800 text-white shadow-xl rounded-2xl border-2 border-gray-700">
+          <div className="flex items-center gap-2 mb-4">
+            <Building2 className="w-6 h-6 text-yellow-400" />
+            <h3 className="text-xl font-bold">Custom</h3>
+          </div>
+          <div className="mb-4">
+            <div className="text-3xl font-bold">Contact Us</div>
+            <div className="text-sm text-gray-300">For 1000+ extinguishers</div>
+          </div>
+          <ul className="mb-6 space-y-2">
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
+              <span>Unlimited extinguishers</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
+              <span>Unlimited users</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
+              <span>Dedicated account manager</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
+              <span>Custom SLA & support</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
+              <span>Volume-based pricing</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
+              <span>Custom integrations</span>
+            </li>
+          </ul>
+          <a
+            href="mailto:notification.firexcheck@gmail.com?subject=Custom Enterprise Plan Inquiry"
+            className="w-full block text-center px-4 py-2 bg-yellow-500 text-gray-900 font-semibold rounded-lg hover:bg-yellow-400 transition"
+          >
+            Contact Sales
+          </a>
+        </div>
       </div>
 
       {/* Need Help Contact Box */}

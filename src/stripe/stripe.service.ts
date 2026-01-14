@@ -28,9 +28,9 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     features: ['Advanced analytics', 'Custom branding', 'Export to PDF/CSV', 'Priority email support'],
   },
   enterprise: {
-    maxExtinguishers: -1, // unlimited
+    maxExtinguishers: 1000,
     maxUsers: -1, // unlimited
-    features: ['Multi-tenant management', 'API access', 'Custom domain', 'Priority support', 'SSO', 'Audit logs', 'SLA'],
+    features: ['API access', 'Custom domain/subdomain', 'Priority support'],
   },
 };
 

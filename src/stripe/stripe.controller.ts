@@ -161,11 +161,11 @@ export class StripeController {
             annual: STRIPE_PRICE_IDS.enterprise_annual,
           },
           limits: {
-            extinguishers: 'Unlimited',
+            extinguishers: 1000,
             users: 'Unlimited',
           },
           features: [
-            'Unlimited extinguishers',
+            'Up to 1000 extinguishers',
             'Unlimited users',
             'API access',
             'Custom domain/subdomain',
