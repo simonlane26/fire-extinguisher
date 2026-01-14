@@ -38,6 +38,9 @@ import InventoryPage from './pages/InventoryPage';
 import HelpPage from './pages/HelpPage';
 import ReportsPage from './pages/ReportsPage';
 import ComplianceDashboard from './pages/ComplianceDashboard';
+import QuotesListPage from './pages/QuotesListPage';
+import QuoteCreatePage from './pages/QuoteCreatePage';
+import QuoteDetailPage from './pages/QuoteDetailPage';
 import RoleSwitcherModal from './components/RoleSwitcher';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
@@ -251,7 +254,7 @@ const FireExtinguisherApp: React.FC = () => {
   const { currentUser, setCurrentUser, hasPermission, logout } = actx;
 
   const [activeTab, setActiveTab] =
-    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'reports' | 'help'>('overview');
+    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'reports' | 'help' | 'quotes'>('overview');
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<{ id: string; name: string } | null>(null);
 
   // Extinguishers state (seed with demo; will be replaced by API load)
@@ -766,6 +769,15 @@ const FireExtinguisherApp: React.FC = () => {
               <span>Stock</span>
             </TabButton>
 
+            <TabButton
+              active={activeTab === 'quotes'}
+              onClick={() => setActiveTab('quotes')}
+              primaryColor={tenant.primaryColor}
+            >
+              <FileText size={16} />
+              <span>Quotes</span>
+            </TabButton>
+
             {hasPermission('VIEW_USERS') && (
               <TabButton
                 active={activeTab === 'users'}
@@ -849,6 +861,9 @@ const FireExtinguisherApp: React.FC = () => {
 
         {/* Stock tab */}
         {activeTab === 'stock' && <InventoryPage />}
+
+        {/* Quotes tab */}
+        {activeTab === 'quotes' && <QuotesListPage />}
 
         {/* Users tab */}
         {activeTab === 'users' && (

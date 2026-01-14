@@ -372,6 +372,26 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
             <p className="mt-2 text-xs text-gray-600">
               Generate comprehensive lifecycle reports, compliance certificates, or export complete history to Excel.
             </p>
+
+            {/* Generate Quote Button (shown for failed extinguishers) */}
+            {(data.condition === 'Out of Service' || data.condition === 'Needs Attention') && (
+              <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-orange-900">Repairs Required</h4>
+                    <p className="text-sm text-orange-700">Generate a quote for repair or replacement</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => window.location.href = `/quotes/create?extinguisherId=${data.id}`}
+                    className="flex items-center gap-2 px-4 py-2 text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors"
+                  >
+                    <FileText size={18} />
+                    Generate Quote
+                  </button>
+                </div>
+              </div>
+            )}
           </Section>
         </div>
 

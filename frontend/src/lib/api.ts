@@ -1,5 +1,5 @@
 // src/lib/api.ts
-import type { Extinguisher, AuthedUser, Tenant, Site, InventoryItem, PartUsage } from '../types';
+import type { Extinguisher, AuthedUser, Tenant, Site, InventoryItem, PartUsage, Quote, QuoteLine } from '../types';
 
 // Determine API base URL based on environment
 const getApiBase = () => {
@@ -914,6 +914,166 @@ export async function revokeUserSiteAccess(userId: string, siteId: string): Prom
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to revoke site access (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
+/* --------------------------------- Quotes --------------------------------- */
+
+/** GET /quotes */
+export async function fetchQuotes(status?: string): Promise<Quote[]> {
+  const url = status ? `${API_BASE}/quotes?status=${status}` : `${API_BASE}/quotes`;
+  const res = await fetch(url, {
+    headers: {
+      'Accept': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch quotes (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Quote[]>;
+}
+
+/** GET /quotes/:id */
+export async function fetchQuoteById(id: string): Promise<Quote> {
+  const res = await fetch(`${API_BASE}/quotes/${id}`, {
+    headers: {
+      'Accept': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch quote (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Quote>;
+}
+
+/** GET /quotes/by-extinguisher/:extinguisherId */
+export async function fetchQuotesByExtinguisher(extinguisherId: string): Promise<Quote[]> {
+  const res = await fetch(`${API_BASE}/quotes/by-extinguisher/${extinguisherId}`, {
+    headers: {
+      'Accept': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch quotes for extinguisher (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Quote[]>;
+}
+
+/** POST /quotes */
+export async function createQuote(data: {
+  extinguisherId: string;
+  inspectionId?: string;
+  validUntil?: string;
+  vatRate?: number;
+  notes?: string;
+  termsConditions?: string;
+  lines?: {
+    inventoryItemId?: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    isLabour?: boolean;
+  }[];
+}): Promise<Quote> {
+  const res = await fetch(`${API_BASE}/quotes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to create quote (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Quote>;
+}
+
+/** PATCH /quotes/:id */
+export async function updateQuote(id: string, data: {
+  status?: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+  validUntil?: string;
+  vatRate?: number;
+  notes?: string;
+  termsConditions?: string;
+  lines?: {
+    inventoryItemId?: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    isLabour?: boolean;
+  }[];
+}): Promise<Quote> {
+  const res = await fetch(`${API_BASE}/quotes/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to update quote (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Quote>;
+}
+
+/** DELETE /quotes/:id */
+export async function deleteQuote(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/quotes/${id}`, {
+    method: 'DELETE',
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to delete quote (${res.status}): ${text}`);
+  }
+}
+
+/** GET /quotes/stats */
+export async function fetchQuoteStats(): Promise<{
+  total: number;
+  draft: number;
+  sent: number;
+  accepted: number;
+  rejected: number;
+  totalValue: number;
+  acceptedValue: number;
+  acceptanceRate: number;
+}> {
+  const res = await fetch(`${API_BASE}/quotes/stats`, {
+    headers: {
+      'Accept': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch quote stats (${res.status}): ${text}`);
   }
 
   return res.json();

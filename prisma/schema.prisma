@@ -35,6 +35,7 @@ model Tenant {
   serviceReports       ServiceReport[]
   inventoryItems       InventoryItem[]
   partUsages           PartUsage[]
+  quotes               Quote[]
 
   @@index([subdomain])
   @@index([stripeCustomerId])
@@ -141,6 +142,8 @@ model Extinguisher {
   tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   site            Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
   inspections     Inspection[]
+  quotes          Quote[]
+  inspectionPhotos InspectionPhoto[] @relation("ExtinguisherPhotos")
 
   @@index([tenantId])
   @@index([siteId])
@@ -226,7 +229,7 @@ model ServiceJob {
 }
 
 model InspectionPhoto {
-  id             String   @id @default(cuid())
+  id             String        @id @default(cuid())
   tenantId       String
   extinguisherId String?
   inspectionId   String?
@@ -234,10 +237,12 @@ model InspectionPhoto {
   caption        String?
   uploadedBy     String?
   findings       Json?
-  createdAt      DateTime @default(now())
-  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  extinguisher   Extinguisher? @relation("ExtinguisherPhotos", fields: [extinguisherId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
+  @@index([extinguisherId])
   @@map("InspectionPhoto")
 }
 
@@ -262,7 +267,8 @@ model InventoryItem {
   partName         String      // e.g., "O-Ring Seal", "CO2 Valve"
   category         String?     // e.g., "Seals", "Valves", "Gauges", "Hoses"
   description      String?
-  unitPrice        Float?      // Cost per unit in pence/cents
+  unitPrice        Float?      // Cost per unit (internal cost)
+  customerPrice    Float?      // Price charged to customers
   quantityInStock  Int         @default(0)
   minStockLevel    Int         @default(10) // Alert when below this
   supplier         String?
@@ -273,6 +279,7 @@ model InventoryItem {
   updatedAt        DateTime    @updatedAt
   tenant           Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   usages           PartUsage[]
+  quoteLines       QuoteLine[]
 
   @@unique([tenantId, partNumber])
   @@index([tenantId])
@@ -327,4 +334,54 @@ model UserSiteAccess {
   @@index([userId])
   @@index([siteId])
   @@map("UserSiteAccess")
+}
+
+model Quote {
+  id              String       @id @default(cuid())
+  tenantId        String
+  extinguisherId  String
+  inspectionId    String?      // Link to the inspection that triggered it
+  quoteNumber     String       // Q-2026-0001
+  status          String       @default("draft") // draft, sent, accepted, rejected, expired
+  validUntil      DateTime
+  subtotal        Float        @default(0)
+  vatRate         Float        @default(20) // VAT percentage
+  vatAmount       Float        @default(0)
+  totalAmount     Float        @default(0)
+  notes           String?
+  termsConditions String?
+  createdBy       String?      // User name or email
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  sentAt          DateTime?    // When quote was sent to customer
+  acceptedAt      DateTime?    // When quote was accepted
+  rejectedAt      DateTime?    // When quote was rejected
+
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  extinguisher    Extinguisher @relation(fields: [extinguisherId], references: [id], onDelete: Cascade)
+  lines           QuoteLine[]
+
+  @@unique([tenantId, quoteNumber])
+  @@index([tenantId])
+  @@index([extinguisherId])
+  @@index([tenantId, status])
+  @@map("Quote")
+}
+
+model QuoteLine {
+  id              String         @id @default(cuid())
+  quoteId         String
+  inventoryItemId String?        // If it's a part from inventory
+  description     String         // Description of work/part
+  quantity        Float          @default(1)
+  unitPrice       Float          // Customer price
+  lineTotal       Float          // quantity × unitPrice
+  isLabour        Boolean        @default(false)
+  sortOrder       Int            @default(0) // For ordering lines
+
+  quote           Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@map("QuoteLine")
 }

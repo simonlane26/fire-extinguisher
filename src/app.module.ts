@@ -22,6 +22,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PublicModule } from './public/public.module';
 import { PhotosModule } from './photos/photos.module';
 import { UsersModule } from './users/users.module';
+import { QuotesModule } from './quotes/quotes.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { UsersModule } from './users/users.module';
     PublicModule,
     PhotosModule,
     UsersModule,
+    QuotesModule,
   ],
   controllers: [AppController],
   providers: [

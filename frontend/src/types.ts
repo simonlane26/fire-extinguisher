@@ -72,6 +72,7 @@ export type InventoryItem = {
   category?: string;
   description?: string;
   unitPrice?: number;
+  customerPrice?: number;
   quantityInStock: number;
   minStockLevel: number;
   supplier?: string;
@@ -101,4 +102,54 @@ export type PartUsage = {
     partName: string;
     category?: string;
   };
+};
+
+export type QuoteLine = {
+  id: string;
+  quoteId: string;
+  inventoryItemId?: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  isLabour: boolean;
+  sortOrder: number;
+  inventoryItem?: {
+    partNumber: string;
+    partName: string;
+    category?: string;
+  };
+};
+
+export type Quote = {
+  id: string;
+  tenantId: string;
+  extinguisherId: string;
+  inspectionId?: string;
+  quoteNumber: string;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+  validUntil: string;
+  subtotal: number;
+  vatRate: number;
+  vatAmount: number;
+  totalAmount: number;
+  notes?: string;
+  termsConditions?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
+  acceptedAt?: string;
+  rejectedAt?: string;
+  extinguisher?: {
+    location: string;
+    building: string;
+    floor?: string;
+    type: string;
+    capacity?: string;
+    serialNumber?: string;
+    manufacturer?: string;
+    model?: string;
+  };
+  lines: QuoteLine[];
 };

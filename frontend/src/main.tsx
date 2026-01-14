@@ -8,6 +8,9 @@ import SignupPage from './pages/SignupPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import QuoteCreatePage from './pages/QuoteCreatePage';
+import QuoteDetailPage from './pages/QuoteDetailPage';
+import AuthWrapper from './components/AuthWrapper';
 import './index.css';   // ✅ import Tailwind CSS here
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -26,6 +29,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
         {/* Authenticated routes */}
         <Route path="/app/*" element={<AppWithAuth />} />
+
+        {/* Quote routes (authenticated) */}
+        <Route path="/quotes/create" element={<AuthWrapper><QuoteCreatePage /></AuthWrapper>} />
+        <Route path="/quotes/:id" element={<AuthWrapper><QuoteDetailPage /></AuthWrapper>} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
