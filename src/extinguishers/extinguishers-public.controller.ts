@@ -82,6 +82,7 @@ export class ExtinguishersPublicController {
       tenant: {
         companyName: extinguisher.tenant.companyName,
         logoUrl: extinguisher.tenant.logoUrl,
+        contactEmail: extinguisher.tenant.contactEmail,
       },
       certificateNumber: `${extinguisher.id}-${new Date().getFullYear()}`,
       verifiedAt: new Date().toISOString(),

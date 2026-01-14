@@ -1,7 +1,7 @@
 // frontend/src/pages/PublicVerificationPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Shield, CheckCircle, AlertCircle, XCircle, Calendar, MapPin, Building2, Flame, Package } from 'lucide-react';
+import { Shield, CheckCircle, AlertCircle, XCircle, Calendar, MapPin, Building2, Flame, Package, AlertTriangle } from 'lucide-react';
 
 // Get API base URL - same logic as api.ts
 const getApiBase = () => {
@@ -48,6 +48,7 @@ interface VerificationData {
   tenant: {
     companyName: string;
     logoUrl: string | null;
+    contactEmail: string | null;
   };
   certificateNumber: string;
   verifiedAt: string;
@@ -238,7 +239,7 @@ const PublicVerificationPage: React.FC = () => {
         </div>
 
         {/* Equipment Status */}
-        <div className="bg-white rounded-b-lg shadow-xl p-6">
+        <div className="bg-white shadow-xl p-6">
           <div className="grid grid-cols-2 gap-4 text-center">
             <div className="border-r">
               <p className="text-sm text-gray-500 mb-1">Status</p>
@@ -255,6 +256,28 @@ const PublicVerificationPage: React.FC = () => {
               }`}>
                 {data.condition}
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Report a Problem */}
+        <div className="bg-white rounded-b-lg shadow-xl p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-red-900 mb-1">Spotted an Issue?</h3>
+                <p className="text-sm text-red-800 mb-3">
+                  If you notice any problems with this fire extinguisher (damage, missing parts, accessibility issues, etc.), please report it immediately.
+                </p>
+                <a
+                  href={`mailto:${data.tenant.contactEmail || 'info@firexcheck.com'}?subject=Problem Report - Fire Extinguisher ${data.certificateNumber}&body=Company: ${data.tenant.companyName}%0D%0ALocation: ${data.building} - ${data.location}%0D%0AFloor: ${data.floor}%0D%0AType: ${data.type}%0D%0ACapacity: ${data.capacity}%0D%0A%0D%0AProblem Description:%0D%0A`}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+                >
+                  <AlertTriangle size={18} />
+                  Report a Problem
+                </a>
+              </div>
             </div>
           </div>
         </div>
