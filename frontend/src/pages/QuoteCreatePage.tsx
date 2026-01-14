@@ -248,10 +248,13 @@ const QuoteCreatePage: React.FC = () => {
                               <option value="">-- Custom Description --</option>
                               {inventoryItems.map(item => (
                                 <option key={item.id} value={item.id}>
-                                  {item.partName} ({item.partNumber}) - £{(item.customerPrice || item.unitPrice || 0).toFixed(2)}
+                                  {item.partName} ({item.partNumber}) - £{(item.customerPrice || item.unitPrice || 0).toFixed(2)} each
                                 </option>
                               ))}
                             </select>
+                            <p className="mt-1 text-xs text-gray-500">
+                              Selecting a part will auto-fill the description and customer price
+                            </p>
                           </div>
                         )}
 
@@ -281,7 +284,10 @@ const QuoteCreatePage: React.FC = () => {
                             />
                           </div>
                           <div>
-                            <label className="block mb-1 text-sm font-medium">Unit Price (£)</label>
+                            <label className="block mb-1 text-sm font-medium">
+                              Unit Price (£)
+                              <span className="ml-1 text-xs font-normal text-gray-500">(selling price)</span>
+                            </label>
                             <input
                               type="number"
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg"
