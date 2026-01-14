@@ -91,11 +91,11 @@ const QuoteDetailPage: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <button
-          onClick={() => navigate('/quotes')}
+          onClick={() => navigate('/app')}
           className="flex items-center gap-2 mb-4 text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft size={20} />
-          Back to Quotes
+          Return to Dashboard
         </button>
         <div className="flex items-center justify-between">
           <div>

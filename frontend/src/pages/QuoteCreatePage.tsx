@@ -84,7 +84,7 @@ const QuoteCreatePage: React.FC = () => {
       updateLine(index, {
         inventoryItemId: item.id,
         description: item.partName,
-        unitPrice: item.customerPrice || item.unitPrice || 0,
+        unitPrice: (item.customerPrice || item.unitPrice || 0) / 100,
       });
     }
   };
@@ -158,11 +158,11 @@ const QuoteCreatePage: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <button
-          onClick={() => navigate('/quotes')}
+          onClick={() => navigate('/app')}
           className="flex items-center gap-2 mb-4 text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft size={20} />
-          Back to Quotes
+          Return to Dashboard
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Create Quote</h1>
         <p className="text-gray-600">Generate a quote for failed extinguisher repairs</p>
@@ -248,7 +248,7 @@ const QuoteCreatePage: React.FC = () => {
                               <option value="">-- Custom Description --</option>
                               {inventoryItems.map(item => (
                                 <option key={item.id} value={item.id}>
-                                  {item.partName} ({item.partNumber}) - £{(item.customerPrice || item.unitPrice || 0).toFixed(2)} each
+                                  {item.partName} ({item.partNumber}) - £{((item.customerPrice || item.unitPrice || 0) / 100).toFixed(2)} each
                                 </option>
                               ))}
                             </select>
