@@ -436,4 +436,236 @@ export class EmailService {
       message: 'Email service not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM in environment variables.',
     };
   }
+
+  // ==================== QUOTE EMAILS ====================
+
+  async sendQuoteEmail(params: {
+    recipientEmail: string;
+    recipientName: string;
+    quoteNumber: string;
+    validUntil: Date;
+    subtotal: number;
+    vatRate: number;
+    vatAmount: number;
+    totalAmount: number;
+    companyName: string;
+    companyLogoUrl?: string;
+    notes?: string;
+    termsConditions?: string;
+    lines: {
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      lineTotal: number;
+      isLabour: boolean;
+      extinguisherInfo?: {
+        building: string;
+        location: string;
+        type: string;
+        capacity?: string;
+      };
+    }[];
+    isBulkQuote: boolean;
+  }): Promise<boolean> {
+    const {
+      recipientEmail,
+      recipientName,
+      quoteNumber,
+      validUntil,
+      subtotal,
+      vatRate,
+      vatAmount,
+      totalAmount,
+      companyName,
+      notes,
+      termsConditions,
+      lines,
+      isBulkQuote,
+    } = params;
+
+    const subject = `Quote ${quoteNumber} from ${companyName}`;
+
+    // Group lines by extinguisher for bulk quotes
+    const groupedLines = isBulkQuote
+      ? this.groupLinesByExtinguisher(lines)
+      : [{ extinguisherInfo: null, lines }];
+
+    const linesHtml = groupedLines.map(group => {
+      let html = '';
+
+      if (group.extinguisherInfo) {
+        html += `
+          <tr style="background-color: #f3f4f6;">
+            <td colspan="4" style="padding: 12px; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb;">
+              ${group.extinguisherInfo.building} - ${group.extinguisherInfo.location}
+              <span style="font-weight: normal; color: #6b7280; margin-left: 8px;">
+                (${group.extinguisherInfo.type}${group.extinguisherInfo.capacity ? ` ${group.extinguisherInfo.capacity}` : ''})
+              </span>
+            </td>
+          </tr>
+        `;
+      }
+
+      html += group.lines.map(line => `
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
+            ${line.description}
+            ${line.isLabour ? '<span style="background: #dbeafe; color: #1e40af; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">LABOUR</span>' : ''}
+          </td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${line.quantity}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">£${line.unitPrice.toFixed(2)}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 500;">£${line.lineTotal.toFixed(2)}</td>
+        </tr>
+      `).join('');
+
+      return html;
+    }).join('');
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quote ${quoteNumber}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f3f4f6;">
+  <div style="max-width: 700px; margin: 0 auto; padding: 20px;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h1 style="margin: 0; font-size: 28px; font-weight: bold;">QUOTE</h1>
+          <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 18px;">${quoteNumber}</p>
+        </div>
+        <div style="text-align: right;">
+          <p style="margin: 0; font-size: 16px; font-weight: 600;">${companyName}</p>
+          <p style="margin: 4px 0 0 0; opacity: 0.9; font-size: 14px;">Fire Safety Services</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quote Details -->
+    <div style="background: white; padding: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <p style="margin: 0 0 20px 0; font-size: 16px;">Dear ${recipientName},</p>
+
+      <p style="margin: 0 0 20px 0;">
+        Thank you for your enquiry. Please find below our quote for the requested fire extinguisher ${isBulkQuote ? 'services' : 'service'}.
+      </p>
+
+      <!-- Quote Info -->
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 4px 0; color: #6b7280;">Quote Number:</td>
+            <td style="padding: 4px 0; font-weight: 600; text-align: right;">${quoteNumber}</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; color: #6b7280;">Date:</td>
+            <td style="padding: 4px 0; font-weight: 600; text-align: right;">${this.formatDate(new Date())}</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; color: #6b7280;">Valid Until:</td>
+            <td style="padding: 4px 0; font-weight: 600; text-align: right; color: #dc2626;">${this.formatDate(validUntil)}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Line Items Table -->
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <thead>
+          <tr style="background: #7c3aed; color: white;">
+            <th style="padding: 12px; text-align: left; border-radius: 8px 0 0 0;">Description</th>
+            <th style="padding: 12px; text-align: center; width: 60px;">Qty</th>
+            <th style="padding: 12px; text-align: right; width: 80px;">Unit Price</th>
+            <th style="padding: 12px; text-align: right; border-radius: 0 8px 0 0; width: 80px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${linesHtml}
+        </tbody>
+      </table>
+
+      <!-- Totals -->
+      <div style="margin: 20px 0; padding: 20px; background: #f9fafb; border-radius: 8px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280;">Subtotal:</td>
+            <td style="padding: 8px 0; text-align: right; font-weight: 500;">£${subtotal.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280;">VAT (${vatRate}%):</td>
+            <td style="padding: 8px 0; text-align: right; font-weight: 500;">£${vatAmount.toFixed(2)}</td>
+          </tr>
+          <tr style="border-top: 2px solid #7c3aed;">
+            <td style="padding: 12px 0 0 0; font-size: 18px; font-weight: 700;">Total:</td>
+            <td style="padding: 12px 0 0 0; text-align: right; font-size: 24px; font-weight: 700; color: #7c3aed;">£${totalAmount.toFixed(2)}</td>
+          </tr>
+        </table>
+      </div>
+
+      ${notes ? `
+      <!-- Notes -->
+      <div style="margin: 20px 0; padding: 16px; background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #92400e;">Notes:</p>
+        <p style="margin: 0; color: #78350f; white-space: pre-line;">${notes}</p>
+      </div>
+      ` : ''}
+
+      ${termsConditions ? `
+      <!-- Terms -->
+      <div style="margin: 20px 0; padding: 16px; background: #f3f4f6; border-radius: 8px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #374151;">Terms & Conditions:</p>
+        <p style="margin: 0; color: #6b7280; font-size: 14px; white-space: pre-line;">${termsConditions}</p>
+      </div>
+      ` : ''}
+
+      <p style="margin: 30px 0 20px 0;">
+        To accept this quote, please reply to this email or contact us directly. We look forward to being of service.
+      </p>
+
+      <p style="margin: 0;">
+        Kind regards,<br/>
+        <strong>${companyName}</strong>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #f9fafb; padding: 20px; border-radius: 0 0 12px 12px; text-align: center; color: #6b7280; font-size: 14px;">
+      <p style="margin: 0 0 10px 0;">This quote was generated by the Fire Safety Management System.</p>
+      <p style="margin: 0; font-size: 12px;">
+        © ${new Date().getFullYear()} ${companyName}. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail({
+      to: recipientEmail,
+      subject,
+      html,
+    });
+  }
+
+  private groupLinesByExtinguisher(lines: any[]): { extinguisherInfo: any; lines: any[] }[] {
+    const groups = new Map<string, { extinguisherInfo: any; lines: any[] }>();
+
+    for (const line of lines) {
+      const key = line.extinguisherInfo
+        ? `${line.extinguisherInfo.building}-${line.extinguisherInfo.location}`
+        : 'no-extinguisher';
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          extinguisherInfo: line.extinguisherInfo || null,
+          lines: [],
+        });
+      }
+      groups.get(key)!.lines.push(line);
+    }
+
+    return Array.from(groups.values());
+  }
 }

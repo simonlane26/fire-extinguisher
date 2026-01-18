@@ -1,12 +1,18 @@
 // src/quotes/quotes.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import { CreateQuoteDto, CreateQuoteLineDto, CreateBulkQuoteDto, BulkQuoteFilterDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
 
 @Injectable()
 export class QuotesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(QuotesService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async create(tenantId: string, createdBy: string, createQuoteDto: CreateQuoteDto) {
     const { extinguisherId, inspectionId, isBulkQuote, validUntil, vatRate, notes, termsConditions, lines } = createQuoteDto;
@@ -392,7 +398,7 @@ export class QuotesService {
       }
     }
 
-    return this.prisma.quote.update({
+    const updatedQuote = await this.prisma.quote.update({
       where: { id },
       data: dataToUpdate,
       include: {
@@ -403,10 +409,34 @@ export class QuotesService {
             floor: true,
             type: true,
             capacity: true,
+            site: {
+              select: {
+                name: true,
+                contactEmail: true,
+                contactName: true,
+              },
+            },
           },
         },
         lines: {
           include: {
+            extinguisher: {
+              select: {
+                id: true,
+                location: true,
+                building: true,
+                floor: true,
+                type: true,
+                capacity: true,
+                site: {
+                  select: {
+                    name: true,
+                    contactEmail: true,
+                    contactName: true,
+                  },
+                },
+              },
+            },
             inventoryItem: {
               select: {
                 partNumber: true,
@@ -421,6 +451,82 @@ export class QuotesService {
         },
       },
     });
+
+    // Send email when status changes to 'sent'
+    if (status === 'sent' && !quote.sentAt) {
+      await this.sendQuoteEmail(tenantId, updatedQuote);
+    }
+
+    return updatedQuote;
+  }
+
+  private async sendQuoteEmail(tenantId: string, quote: any) {
+    try {
+      // Get the tenant/company info
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { companyName: true },
+      });
+
+      // Determine recipient email - for bulk quotes, get from first line's extinguisher site
+      // For regular quotes, get from the extinguisher's site
+      let recipientEmail: string | null = null;
+      let recipientName: string | null = null;
+
+      if (quote.isBulkQuote && quote.lines?.length > 0) {
+        // Find the first line with an extinguisher that has a site with contact email
+        for (const line of quote.lines) {
+          if (line.extinguisher?.site?.contactEmail) {
+            recipientEmail = line.extinguisher.site.contactEmail;
+            recipientName = line.extinguisher.site.contactName || line.extinguisher.site.name;
+            break;
+          }
+        }
+      } else if (quote.extinguisher?.site?.contactEmail) {
+        recipientEmail = quote.extinguisher.site.contactEmail;
+        recipientName = quote.extinguisher.site.contactName || quote.extinguisher.site.name;
+      }
+
+      if (!recipientEmail) {
+        this.logger.warn(`No contact email found for quote ${quote.quoteNumber}`);
+        return;
+      }
+
+      // Prepare lines for email
+      const emailLines = quote.lines.map((line: any) => ({
+        description: line.description,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        lineTotal: line.lineTotal,
+        isLabour: line.isLabour,
+        extinguisherInfo: line.extinguisher ? {
+          type: line.extinguisher.type,
+          capacity: line.extinguisher.capacity,
+          location: line.extinguisher.location,
+          building: line.extinguisher.building,
+          floor: line.extinguisher.floor,
+        } : undefined,
+      }));
+
+      await this.emailService.sendQuoteEmail({
+        recipientEmail,
+        recipientName: recipientName || 'Customer',
+        quoteNumber: quote.quoteNumber,
+        validUntil: quote.validUntil,
+        subtotal: quote.subtotal,
+        vatRate: quote.vatRate,
+        vatAmount: quote.vatAmount,
+        totalAmount: quote.totalAmount,
+        companyName: tenant?.companyName || 'Fire Safety Services',
+        lines: emailLines,
+        isBulkQuote: quote.isBulkQuote,
+      });
+
+      this.logger.log(`Quote email sent successfully to ${recipientEmail} for quote ${quote.quoteNumber}`);
+    } catch (error) {
+      this.logger.error(`Failed to send quote email: ${error.message}`, error.stack);
+      // Don't throw - we don't want to fail the status update if email fails
+    }
   }
 
   async delete(tenantId: string, id: string) {
