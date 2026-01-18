@@ -1078,3 +1078,81 @@ export async function fetchQuoteStats(): Promise<{
 
   return res.json();
 }
+
+/** GET /quotes/bulk-filters - Get available filter options for bulk quotes */
+export async function fetchBulkQuoteFilters(): Promise<{
+  sites: { id: string; name: string }[];
+  buildings: string[];
+  conditions: string[];
+  totalCount: number;
+}> {
+  const res = await fetch(`${API_BASE}/quotes/bulk-filters`, {
+    headers: {
+      'Accept': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch bulk quote filters (${res.status}): ${text}`);
+  }
+
+  return res.json();
+}
+
+/** POST /quotes/bulk-extinguishers - Get extinguishers matching bulk quote filters */
+export async function fetchExtinguishersForBulkQuote(filters: {
+  siteId?: string;
+  building?: string;
+  conditions?: string[];
+}): Promise<Extinguisher[]> {
+  const res = await fetch(`${API_BASE}/quotes/bulk-extinguishers`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(filters),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch extinguishers for bulk quote (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Extinguisher[]>;
+}
+
+/** POST /quotes - Create bulk quote */
+export async function createBulkQuote(data: {
+  isBulkQuote: true;
+  validUntil?: string;
+  vatRate?: number;
+  notes?: string;
+  termsConditions?: string;
+  lines: {
+    extinguisherId: string;
+    inventoryItemId?: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    isLabour?: boolean;
+  }[];
+}): Promise<Quote> {
+  const res = await fetch(`${API_BASE}/quotes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to create bulk quote (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Quote>;
+}

@@ -107,6 +107,7 @@ export type PartUsage = {
 export type QuoteLine = {
   id: string;
   quoteId: string;
+  extinguisherId?: string;
   inventoryItemId?: string;
   description: string;
   quantity: number;
@@ -119,15 +120,24 @@ export type QuoteLine = {
     partName: string;
     category?: string;
   };
+  extinguisher?: {
+    id: string;
+    location: string;
+    building: string;
+    floor?: string;
+    type: string;
+    capacity?: string;
+  };
 };
 
 export type Quote = {
   id: string;
   tenantId: string;
-  extinguisherId: string;
+  extinguisherId?: string;
   inspectionId?: string;
   quoteNumber: string;
   status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+  isBulkQuote: boolean;
   validUntil: string;
   subtotal: number;
   vatRate: number;
@@ -152,4 +162,12 @@ export type Quote = {
     model?: string;
   };
   lines: QuoteLine[];
+};
+
+export type StandardServicePart = {
+  id: string;
+  name: string;
+  description: string;
+  defaultPrice: number;
+  category: string;
 };

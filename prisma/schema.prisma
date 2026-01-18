@@ -143,6 +143,7 @@ model Extinguisher {
   site            Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
   inspections     Inspection[]
   quotes          Quote[]
+  quoteLines      QuoteLine[]  // Lines in bulk quotes referencing this extinguisher
   inspectionPhotos InspectionPhoto[] @relation("ExtinguisherPhotos")
 
   @@index([tenantId])
@@ -339,10 +340,11 @@ model UserSiteAccess {
 model Quote {
   id              String       @id @default(cuid())
   tenantId        String
-  extinguisherId  String
+  extinguisherId  String?      // Optional for bulk quotes (multiple extinguishers)
   inspectionId    String?      // Link to the inspection that triggered it
   quoteNumber     String       // Q-2026-0001
   status          String       @default("draft") // draft, sent, accepted, rejected, expired
+  isBulkQuote     Boolean      @default(false) // True if quote covers multiple extinguishers
   validUntil      DateTime
   subtotal        Float        @default(0)
   vatRate         Float        @default(20) // VAT percentage
@@ -358,7 +360,7 @@ model Quote {
   rejectedAt      DateTime?    // When quote was rejected
 
   tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  extinguisher    Extinguisher @relation(fields: [extinguisherId], references: [id], onDelete: Cascade)
+  extinguisher    Extinguisher? @relation(fields: [extinguisherId], references: [id], onDelete: Cascade)
   lines           QuoteLine[]
 
   @@unique([tenantId, quoteNumber])
@@ -371,6 +373,7 @@ model Quote {
 model QuoteLine {
   id              String         @id @default(cuid())
   quoteId         String
+  extinguisherId  String?        // For bulk quotes - which extinguisher this line belongs to
   inventoryItemId String?        // If it's a part from inventory
   description     String         // Description of work/part
   quantity        Float          @default(1)
@@ -380,8 +383,10 @@ model QuoteLine {
   sortOrder       Int            @default(0) // For ordering lines
 
   quote           Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  extinguisher    Extinguisher?  @relation(fields: [extinguisherId], references: [id], onDelete: SetNull)
   inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
 
   @@index([quoteId])
+  @@index([extinguisherId])
   @@map("QuoteLine")
 }

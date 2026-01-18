@@ -89,7 +89,12 @@
       "Bash(git remote get-url:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nUpdate SEO domain URLs to firexcheck.com\n\n- Update Open Graph URLs in index.html\n- Update Twitter Card URLs in index.html  \n- Update canonical URL in index.html\n- Update all sitemap.xml locations to firexcheck.com\n- Update robots.txt sitemap reference to firexcheck.com\n\nAll SEO files now reference the correct production domain.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Report a Problem feature to public QR verification page\n\nFrontend Changes:\n- Add \"Report a Problem\" section with red alert box\n- Include AlertTriangle icon from lucide-react\n- Button opens email client with pre-filled details\n- Email routes to tenant''s contact email \\(falls back to info@firexcheck.com\\)\n- Pre-populates email with:\n  - Company name\n  - Extinguisher location details\n  - Building, floor, type, capacity\n  - Space for problem description\n\nBackend Changes:\n- Add contactEmail to public verification response\n- Include tenant.contactEmail in extinguisher verification endpoint\n- Allows public users to report issues to the correct company\n\nBenefits:\n- Public safety - anyone can report extinguisher problems\n- Reports go directly to the company managing that equipment\n- Pre-filled email saves time and ensures accurate context\n- Improves response time for safety issues\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(npx prisma migrate dev:*)"
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(timeout:*)",
+      "Bash(npm run start:dev:*)",
+      "Bash(npm run:*)",
+      "Bash(dir /s /b d:Simonfire-extinguisherprisma*.ts)",
+      "Bash(npx prisma studio:*)"
     ],
     "deny": [],
     "ask": []

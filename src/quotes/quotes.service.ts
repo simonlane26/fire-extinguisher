@@ -1,7 +1,7 @@
 // src/quotes/quotes.service.ts
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateQuoteDto, CreateQuoteLineDto } from './dto/create-quote.dto';
+import { CreateQuoteDto, CreateQuoteLineDto, CreateBulkQuoteDto, BulkQuoteFilterDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
 
 @Injectable()
@@ -9,15 +9,33 @@ export class QuotesService {
   constructor(private prisma: PrismaService) {}
 
   async create(tenantId: string, createdBy: string, createQuoteDto: CreateQuoteDto) {
-    const { extinguisherId, inspectionId, validUntil, vatRate, notes, termsConditions, lines } = createQuoteDto;
+    const { extinguisherId, inspectionId, isBulkQuote, validUntil, vatRate, notes, termsConditions, lines } = createQuoteDto;
 
-    // Verify extinguisher exists and belongs to tenant
-    const extinguisher = await this.prisma.extinguisher.findFirst({
-      where: { id: extinguisherId, tenantId },
-    });
+    // For non-bulk quotes, verify extinguisher exists and belongs to tenant
+    if (!isBulkQuote && extinguisherId) {
+      const extinguisher = await this.prisma.extinguisher.findFirst({
+        where: { id: extinguisherId, tenantId },
+      });
 
-    if (!extinguisher) {
-      throw new NotFoundException('Extinguisher not found');
+      if (!extinguisher) {
+        throw new NotFoundException('Extinguisher not found');
+      }
+    }
+
+    // For bulk quotes with lines, verify all extinguisher IDs in lines exist
+    if (isBulkQuote && lines) {
+      const extinguisherIds = [...new Set(lines.filter(l => l.extinguisherId).map(l => l.extinguisherId))];
+      if (extinguisherIds.length > 0) {
+        const extinguishers = await this.prisma.extinguisher.findMany({
+          where: { id: { in: extinguisherIds as string[] }, tenantId },
+          select: { id: true },
+        });
+        const foundIds = new Set(extinguishers.map(e => e.id));
+        const missingIds = extinguisherIds.filter(id => !foundIds.has(id!));
+        if (missingIds.length > 0) {
+          throw new NotFoundException(`Extinguishers not found: ${missingIds.join(', ')}`);
+        }
+      }
     }
 
     // Generate quote number
@@ -64,10 +82,11 @@ export class QuotesService {
     const quote = await this.prisma.quote.create({
       data: {
         tenantId,
-        extinguisherId,
+        extinguisherId: isBulkQuote ? null : extinguisherId,
         inspectionId: inspectionId || null,
         quoteNumber,
         status: 'draft',
+        isBulkQuote: isBulkQuote || false,
         validUntil: validUntil ? new Date(validUntil) : defaultValidUntil,
         subtotal,
         vatRate: vat,
@@ -92,6 +111,16 @@ export class QuotesService {
         },
         lines: {
           include: {
+            extinguisher: {
+              select: {
+                id: true,
+                location: true,
+                building: true,
+                floor: true,
+                type: true,
+                capacity: true,
+              },
+            },
             inventoryItem: {
               select: {
                 partNumber: true,
@@ -108,6 +137,84 @@ export class QuotesService {
     });
 
     return quote;
+  }
+
+  async getExtinguishersForBulkQuote(tenantId: string, filters: BulkQuoteFilterDto) {
+    const { siteId, building, conditions } = filters;
+
+    // Default conditions if not specified
+    const conditionFilter = conditions && conditions.length > 0
+      ? conditions
+      : ['Out of Service', 'Needs Attention'];
+
+    const where: any = {
+      tenantId,
+      condition: { in: conditionFilter },
+    };
+
+    if (siteId) {
+      where.siteId = siteId;
+    }
+
+    if (building) {
+      where.building = building;
+    }
+
+    const extinguishers = await this.prisma.extinguisher.findMany({
+      where,
+      include: {
+        site: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: [
+        { building: 'asc' },
+        { location: 'asc' },
+      ],
+    });
+
+    return extinguishers;
+  }
+
+  async getBulkQuoteFilters(tenantId: string) {
+    // Get distinct sites and buildings for extinguishers needing attention
+    const extinguishers = await this.prisma.extinguisher.findMany({
+      where: {
+        tenantId,
+        condition: { in: ['Out of Service', 'Needs Attention'] },
+      },
+      select: {
+        siteId: true,
+        building: true,
+        condition: true,
+        site: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    const sites = [...new Map(
+      extinguishers
+        .filter(e => e.site)
+        .map(e => [e.site!.id, e.site!])
+    ).values()];
+
+    const buildings = [...new Set(extinguishers.map(e => e.building))].sort();
+
+    const conditions = [...new Set(extinguishers.map(e => e.condition))];
+
+    return {
+      sites,
+      buildings,
+      conditions,
+      totalCount: extinguishers.length,
+    };
   }
 
   async findAll(tenantId: string, status?: string) {
@@ -130,6 +237,16 @@ export class QuotesService {
         },
         lines: {
           include: {
+            extinguisher: {
+              select: {
+                id: true,
+                location: true,
+                building: true,
+                floor: true,
+                type: true,
+                capacity: true,
+              },
+            },
             inventoryItem: {
               select: {
                 partNumber: true,
@@ -166,6 +283,16 @@ export class QuotesService {
         },
         lines: {
           include: {
+            extinguisher: {
+              select: {
+                id: true,
+                location: true,
+                building: true,
+                floor: true,
+                type: true,
+                capacity: true,
+              },
+            },
             inventoryItem: {
               select: {
                 partNumber: true,

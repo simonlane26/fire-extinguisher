@@ -10,6 +10,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import QuoteCreatePage from './pages/QuoteCreatePage';
 import QuoteDetailPage from './pages/QuoteDetailPage';
+import BulkQuoteCreatePage from './pages/BulkQuoteCreatePage';
 import AuthWrapper from './components/AuthWrapper';
 import './index.css';   // ✅ import Tailwind CSS here
 
@@ -32,6 +33,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
         {/* Quote routes (authenticated) */}
         <Route path="/quotes/create" element={<AuthWrapper><QuoteCreatePage /></AuthWrapper>} />
+        <Route path="/quotes/bulk/create" element={<AuthWrapper><BulkQuoteCreatePage /></AuthWrapper>} />
         <Route path="/quotes/:id" element={<AuthWrapper><QuoteDetailPage /></AuthWrapper>} />
       </Routes>
     </BrowserRouter>

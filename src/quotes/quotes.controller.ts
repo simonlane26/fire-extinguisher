@@ -1,7 +1,7 @@
 // src/quotes/quotes.controller.ts
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { QuotesService } from './quotes.service';
-import { CreateQuoteDto } from './dto/create-quote.dto';
+import { CreateQuoteDto, BulkQuoteFilterDto } from './dto/create-quote.dto';
 import { UpdateQuoteDto } from './dto/update-quote.dto';
 import { TenantGuard } from '../auth/tenant.guard';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
@@ -31,6 +31,19 @@ export class QuotesController {
   @Get('stats')
   async getStats(@CurrentUser() user: CurrentUserData) {
     return this.quotesService.getStats(user.tenantId);
+  }
+
+  @Get('bulk-filters')
+  async getBulkQuoteFilters(@CurrentUser() user: CurrentUserData) {
+    return this.quotesService.getBulkQuoteFilters(user.tenantId);
+  }
+
+  @Post('bulk-extinguishers')
+  async getExtinguishersForBulkQuote(
+    @CurrentUser() user: CurrentUserData,
+    @Body() filters: BulkQuoteFilterDto,
+  ) {
+    return this.quotesService.getExtinguishersForBulkQuote(user.tenantId, filters);
   }
 
   @Get('by-extinguisher/:extinguisherId')

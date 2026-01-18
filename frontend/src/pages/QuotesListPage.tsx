@@ -1,9 +1,10 @@
 // src/pages/QuotesListPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Trash2, Send, CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
+import { Plus, Eye, Trash2, Send, CheckCircle, XCircle, Clock, FileText, Layers } from 'lucide-react';
 import { fetchQuotes, deleteQuote, updateQuote, fetchQuoteStats } from '../lib/api';
-import type { Quote } from '../types';
+import { BulkQuoteDialog } from '../components/BulkQuoteDialog';
+import type { Quote, Extinguisher } from '../types';
 
 const QuotesListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,12 @@ const QuotesListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [showBulkQuoteDialog, setShowBulkQuoteDialog] = useState(false);
+
+  const handleBulkQuoteCreate = (extinguishers: Extinguisher[]) => {
+    setShowBulkQuoteDialog(false);
+    navigate('/quotes/bulk/create', { state: { extinguishers } });
+  };
 
   const loadData = async () => {
     try {
@@ -145,7 +152,22 @@ const QuotesListPage: React.FC = () => {
             <option value="expired">Expired</option>
           </select>
         </div>
+        <button
+          type="button"
+          onClick={() => setShowBulkQuoteDialog(true)}
+          className="flex items-center gap-2 px-4 py-2 text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors"
+        >
+          <Layers size={18} />
+          Generate Bulk Quote
+        </button>
       </div>
+
+      {/* Bulk Quote Dialog */}
+      <BulkQuoteDialog
+        isOpen={showBulkQuoteDialog}
+        onClose={() => setShowBulkQuoteDialog(false)}
+        onCreateQuote={handleBulkQuoteCreate}
+      />
 
       {/* Quotes Table */}
       <div className="bg-white border rounded-lg shadow-sm">
@@ -192,7 +214,20 @@ const QuotesListPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {quote.extinguisher && (
+                      {quote.isBulkQuote ? (
+                        <div>
+                          <div className="font-medium text-gray-900 flex items-center gap-2">
+                            <Layers size={16} className="text-violet-500" />
+                            Bulk Quote
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {(() => {
+                              const uniqueExtIds = new Set(quote.lines.map(l => l.extinguisherId).filter(Boolean));
+                              return `${uniqueExtIds.size} extinguisher${uniqueExtIds.size !== 1 ? 's' : ''}`;
+                            })()}
+                          </div>
+                        </div>
+                      ) : quote.extinguisher ? (
                         <div>
                           <div className="font-medium text-gray-900">
                             {quote.extinguisher.building} - {quote.extinguisher.location}
@@ -201,7 +236,7 @@ const QuotesListPage: React.FC = () => {
                             {quote.extinguisher.type} {quote.extinguisher.capacity}
                           </div>
                         </div>
-                      )}
+                      ) : null}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
