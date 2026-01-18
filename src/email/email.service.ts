@@ -1,6 +1,7 @@
 // src/email/email.service.ts
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface EmailOptions {
@@ -10,16 +11,43 @@ export interface EmailOptions {
   text?: string;
 }
 
+type EmailProvider = 'resend' | 'smtp' | 'none';
+
 @Injectable()
 export class EmailService {
   private transporter: nodemailer.Transporter | null = null;
+  private resend: Resend | null = null;
   private isConfigured = false;
+  private provider: EmailProvider = 'none';
+  private fromEmail: string = '';
 
   constructor(private prisma: PrismaService) {
-    this.initializeTransporter();
+    this.initializeEmailProvider();
   }
 
-  private initializeTransporter() {
+  private initializeEmailProvider() {
+    // Try Resend first (preferred for production)
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const resendFrom = process.env.RESEND_FROM || process.env.SMTP_FROM;
+
+    if (resendApiKey && resendFrom) {
+      try {
+        this.resend = new Resend(resendApiKey);
+        this.fromEmail = resendFrom;
+        this.provider = 'resend';
+        this.isConfigured = true;
+        console.log('✅ Email service configured (Resend)');
+        return;
+      } catch (error) {
+        console.warn(`⚠️  Failed to configure Resend: ${error.message}`);
+      }
+    }
+
+    // Fall back to SMTP
+    this.initializeSmtpTransporter();
+  }
+
+  private initializeSmtpTransporter() {
     const host = process.env.SMTP_HOST;
     const port = process.env.SMTP_PORT;
     const user = process.env.SMTP_USER;
@@ -27,7 +55,7 @@ export class EmailService {
     const from = process.env.SMTP_FROM;
 
     if (!host || !port || !user || !pass || !from) {
-      console.warn('⚠️  Email not configured. Set SMTP_* environment variables to enable email notifications.');
+      console.warn('⚠️  Email not configured. Set RESEND_API_KEY or SMTP_* environment variables to enable email notifications.');
       return;
     }
 
@@ -48,8 +76,10 @@ export class EmailService {
         },
       });
 
+      this.fromEmail = from;
+      this.provider = 'smtp';
       this.isConfigured = true;
-      console.log('✅ Email service configured');
+      console.log('✅ Email service configured (SMTP)');
     } catch (error) {
       console.warn(`⚠️  Failed to configure email service: ${error.message}`);
       this.isConfigured = false;
@@ -57,21 +87,41 @@ export class EmailService {
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
-    if (!this.isConfigured || !this.transporter) {
+    if (!this.isConfigured) {
       console.warn('Email not sent - service not configured');
       return false;
     }
 
     try {
-      await this.transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text || this.stripHtml(options.html),
-      });
-      console.log(`✅ Email sent to ${options.to}: ${options.subject}`);
-      return true;
+      if (this.provider === 'resend' && this.resend) {
+        const { error } = await this.resend.emails.send({
+          from: this.fromEmail,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text || this.stripHtml(options.html),
+        });
+
+        if (error) {
+          console.error('❌ Failed to send email via Resend:', error);
+          return false;
+        }
+
+        console.log(`✅ Email sent to ${options.to}: ${options.subject} (Resend)`);
+        return true;
+      } else if (this.provider === 'smtp' && this.transporter) {
+        await this.transporter.sendMail({
+          from: this.fromEmail,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text || this.stripHtml(options.html),
+        });
+        console.log(`✅ Email sent to ${options.to}: ${options.subject} (SMTP)`);
+        return true;
+      }
+
+      return false;
     } catch (error) {
       console.error('❌ Failed to send email:', error);
       return false;
@@ -427,13 +477,14 @@ export class EmailService {
     });
   }
 
-  getConfigurationStatus(): { configured: boolean; message: string } {
+  getConfigurationStatus(): { configured: boolean; message: string; provider: string } {
     if (this.isConfigured) {
-      return { configured: true, message: 'Email service is configured and ready' };
+      return { configured: true, message: `Email service is configured and ready (${this.provider})`, provider: this.provider };
     }
     return {
       configured: false,
-      message: 'Email service not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM in environment variables.',
+      message: 'Email service not configured. Set RESEND_API_KEY or SMTP_* environment variables to enable email notifications.',
+      provider: 'none',
     };
   }
 
