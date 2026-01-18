@@ -672,7 +672,7 @@ export class EmailService {
       ` : ''}
 
       <p style="margin: 30px 0 20px 0;">
-        To accept this quote, please reply to this email or contact us directly. We look forward to being of service.
+        To accept this quote, please contact us directly. We look forward to being of service.
       </p>
 
       <p style="margin: 0;">
