@@ -103,23 +103,33 @@ export interface OfflineInventoryItem {
 }
 
 class OfflineDatabase {
-  private sqlite: SQLiteConnection;
+  private sqlite: SQLiteConnection | null = null;
   private db: SQLiteDBConnection | null = null;
   private dbName = 'firexcheck.db';
   private initialized = false;
   private initPromise: Promise<void> | null = null;
+  private useLocalStorage = false; // Fallback for web when SQLite isn't available
 
   constructor() {
-    this.sqlite = new SQLiteConnection(CapacitorSQLite);
+    try {
+      this.sqlite = new SQLiteConnection(CapacitorSQLite);
+    } catch (e) {
+      console.warn('SQLite not available, will use localStorage fallback');
+      this.sqlite = null;
+    }
   }
 
   isInitialized(): boolean {
-    return this.initialized && this.db !== null;
+    return this.initialized;
+  }
+
+  isUsingLocalStorage(): boolean {
+    return this.useLocalStorage;
   }
 
   // Ensures database is initialized before any operation
   async ensureInitialized(): Promise<boolean> {
-    if (this.initialized && this.db) return true;
+    if (this.initialized) return true;
 
     if (this.initPromise) {
       await this.initPromise;
@@ -138,37 +148,48 @@ class OfflineDatabase {
 
   async initialize(): Promise<void> {
     try {
-      // Check if the platform supports SQLite
+      // Check if the platform supports native SQLite
       const platform = Capacitor.getPlatform();
-      if (platform === 'web') {
-        console.warn('Web platform detected - using in-memory SQLite');
+
+      // On web or if SQLite isn't available, use localStorage
+      if (platform === 'web' || !this.sqlite) {
+        console.log('Using localStorage for offline data (web platform)');
+        this.useLocalStorage = true;
+        this.initialized = true;
+        return;
       }
 
-      // Create or open database
-      const ret = await this.sqlite.checkConnectionsConsistency();
-      const isConn = (await this.sqlite.isConnection(this.dbName, false)).result;
+      // Try native SQLite
+      try {
+        const ret = await this.sqlite.checkConnectionsConsistency();
+        const isConn = (await this.sqlite.isConnection(this.dbName, false)).result;
 
-      if (ret.result && isConn) {
-        this.db = await this.sqlite.retrieveConnection(this.dbName, false);
-      } else {
-        this.db = await this.sqlite.createConnection(
-          this.dbName,
-          false,
-          'no-encryption',
-          1,
-          false
-        );
+        if (ret.result && isConn) {
+          this.db = await this.sqlite.retrieveConnection(this.dbName, false);
+        } else {
+          this.db = await this.sqlite.createConnection(
+            this.dbName,
+            false,
+            'no-encryption',
+            1,
+            false
+          );
+        }
+
+        await this.db.open();
+        await this.createTables();
+        this.initialized = true;
+        console.log('Offline database initialized (SQLite)');
+      } catch (sqliteError) {
+        console.warn('SQLite failed, falling back to localStorage:', sqliteError);
+        this.useLocalStorage = true;
+        this.initialized = true;
       }
-
-      await this.db.open();
-      await this.createTables();
-      this.initialized = true;
-
-      console.log('Offline database initialized');
     } catch (error) {
       console.error('Failed to initialize offline database:', error);
-      this.initialized = false;
-      throw error;
+      // Fall back to localStorage on any error
+      this.useLocalStorage = true;
+      this.initialized = true;
     }
   }
 
@@ -361,12 +382,33 @@ class OfflineDatabase {
   // ==================== EXTINGUISHERS ====================
 
   async cacheExtinguishers(extinguishers: any[]): Promise<void> {
+    await this.ensureInitialized();
+
+    // Use localStorage fallback for web
+    if (this.useLocalStorage) {
+      const now = new Date().toISOString();
+      const cached = extinguishers.map(ext => ({
+        id: ext.id,
+        siteId: ext.siteId || '',
+        siteName: ext.site?.name || '',
+        number: ext.serialNumber || ext.id,
+        type: ext.type,
+        size: ext.capacity || '',
+        location: ext.location,
+        building: ext.building || null,
+        floor: ext.floor || null,
+        status: ext.status,
+        condition: ext.condition || null,
+        lastSyncedAt: now,
+      }));
+      localStorage.setItem('offline_extinguishers', JSON.stringify(cached));
+      console.log(`Cached ${cached.length} extinguishers to localStorage`);
+      return;
+    }
+
     if (!this.db) {
-      const ready = await this.ensureInitialized();
-      if (!ready || !this.db) {
-        console.warn('Database not available for cacheExtinguishers');
-        return;
-      }
+      console.warn('Database not available for cacheExtinguishers');
+      return;
     }
 
     // Clear existing cache
@@ -445,13 +487,21 @@ class OfflineDatabase {
   }
 
   async getCachedExtinguishers(): Promise<OfflineExtinguisher[]> {
-    if (!this.db) {
-      // Try to initialize if not already
-      const ready = await this.ensureInitialized();
-      if (!ready || !this.db) {
-        console.warn('Database not available for getCachedExtinguishers');
+    await this.ensureInitialized();
+
+    // Use localStorage fallback for web
+    if (this.useLocalStorage) {
+      try {
+        const cached = localStorage.getItem('offline_extinguishers');
+        return cached ? JSON.parse(cached) : [];
+      } catch {
         return [];
       }
+    }
+
+    if (!this.db) {
+      console.warn('Database not available for getCachedExtinguishers');
+      return [];
     }
 
     const result = await this.db.query(
@@ -561,12 +611,31 @@ class OfflineDatabase {
   // ==================== INVENTORY ====================
 
   async cacheInventory(items: any[]): Promise<void> {
+    await this.ensureInitialized();
+
+    // Use localStorage fallback for web
+    if (this.useLocalStorage) {
+      const now = new Date().toISOString();
+      const cached = items.map(item => ({
+        id: item.id,
+        partNumber: item.partNumber,
+        partName: item.partName,
+        category: item.category || null,
+        description: item.description || null,
+        quantity: item.quantity || 0,
+        minStockLevel: item.minStockLevel || 0,
+        unitPrice: item.unitPrice || 0,
+        supplier: item.supplier || null,
+        lastSyncedAt: now,
+      }));
+      localStorage.setItem('offline_inventory', JSON.stringify(cached));
+      console.log(`Cached ${cached.length} inventory items to localStorage`);
+      return;
+    }
+
     if (!this.db) {
-      const ready = await this.ensureInitialized();
-      if (!ready || !this.db) {
-        console.warn('Database not available for cacheInventory');
-        return;
-      }
+      console.warn('Database not available for cacheInventory');
+      return;
     }
 
     // Clear existing cache
@@ -597,12 +666,21 @@ class OfflineDatabase {
   }
 
   async getCachedInventory(): Promise<OfflineInventoryItem[]> {
-    if (!this.db) {
-      const ready = await this.ensureInitialized();
-      if (!ready || !this.db) {
-        console.warn('Database not available for getCachedInventory');
+    await this.ensureInitialized();
+
+    // Use localStorage fallback for web
+    if (this.useLocalStorage) {
+      try {
+        const cached = localStorage.getItem('offline_inventory');
+        return cached ? JSON.parse(cached) : [];
+      } catch {
         return [];
       }
+    }
+
+    if (!this.db) {
+      console.warn('Database not available for getCachedInventory');
+      return [];
     }
 
     const result = await this.db.query(
@@ -750,9 +828,23 @@ class OfflineDatabase {
     cachedInventory: number;
     queuedItems: number;
   }> {
-    if (!this.db) {
-      const ready = await this.ensureInitialized();
-      if (!ready || !this.db) {
+    await this.ensureInitialized();
+
+    // Use localStorage fallback for web
+    if (this.useLocalStorage) {
+      try {
+        const extinguishers = JSON.parse(localStorage.getItem('offline_extinguishers') || '[]');
+        const inventory = JSON.parse(localStorage.getItem('offline_inventory') || '[]');
+        return {
+          totalInspections: 0,
+          unsyncedInspections: 0,
+          totalExtinguishers: extinguishers.length,
+          unsyncedExtinguishers: 0,
+          unsyncedPhotos: 0,
+          cachedInventory: inventory.length,
+          queuedItems: 0,
+        };
+      } catch {
         return {
           totalInspections: 0,
           unsyncedInspections: 0,
@@ -763,6 +855,18 @@ class OfflineDatabase {
           queuedItems: 0,
         };
       }
+    }
+
+    if (!this.db) {
+      return {
+        totalInspections: 0,
+        unsyncedInspections: 0,
+        totalExtinguishers: 0,
+        unsyncedExtinguishers: 0,
+        unsyncedPhotos: 0,
+        cachedInventory: 0,
+        queuedItems: 0,
+      };
     }
 
     const [inspections, unsyncedInsp, extinguishers, pendingExt, photos, inventory, queue] = await Promise.all([
@@ -787,7 +891,7 @@ class OfflineDatabase {
   }
 
   async close(): Promise<void> {
-    if (this.db) {
+    if (this.db && this.sqlite) {
       await this.sqlite.closeConnection(this.dbName, false);
       this.db = null;
     }
