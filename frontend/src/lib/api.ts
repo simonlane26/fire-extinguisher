@@ -1,6 +1,9 @@
 // src/lib/api.ts
 import type { Extinguisher, AuthedUser, Tenant, Site, InventoryItem, PartUsage, Quote, QuoteLine } from '../types';
 
+// Railway production backend URL
+const RAILWAY_API_URL = 'https://fire-extinguisher-production.up.railway.app/api/v1';
+
 // Determine API base URL based on environment
 const getApiBase = () => {
   // In production, always use the environment variable
@@ -8,21 +11,24 @@ const getApiBase = () => {
     return (import.meta as any).env.VITE_API_URL;
   }
 
-  // Check if we're on localhost (development)
   const hostname = window.location.hostname;
-  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
 
-  if (isLocalhost) {
-    // In development, use current hostname with port 3000
-    const protocol = window.location.protocol; // http: or https:
-    return `${protocol}//${hostname}:3000/api/v1`;
-  } else {
-    // In production (Railway), use relative path (same domain, different path)
+  // If we're on the Railway domain, use relative path
+  if (hostname === 'fire-extinguisher-production.up.railway.app') {
     return '/api/v1';
   }
+
+  // For local development with backend running on port 3000
+  if ((hostname === 'localhost' || hostname === '127.0.0.1') && window.location.port === '5173') {
+    return 'http://localhost:3000/api/v1';
+  }
+
+  // Everything else (including Android app, other environments) -> use Railway
+  console.log('Using Railway API for hostname:', hostname);
+  return RAILWAY_API_URL;
 };
 
-const API_BASE = getApiBase();
+export const API_BASE = getApiBase();
 
 // Token management
 export function getToken(): string | null {
@@ -626,7 +632,66 @@ export async function fetchLowStockItems(): Promise<InventoryItem[]> {
 
   return res.json() as Promise<InventoryItem[]>;
 }
+// Add this section to your api.ts file, right BEFORE the "Photos" section (around line 620)
 
+/* ------------------------------- Inspections ------------------------------ */
+
+export interface Inspection {
+  id: string;
+  tenantId: string;
+  extinguisherId: string;
+  inspectorName: string;
+  date: string;
+  condition: string;
+  notes?: string;
+  photoUrl?: string;
+  createdAt: string;
+}
+
+/** POST /inspections - Create a new inspection */
+export async function createInspection(inspection: {
+  extinguisherId: string;
+  inspectorName: string;
+  date: string;
+  condition: string;
+  notes?: string;
+  photoUrl?: string;
+}): Promise<Inspection> {
+  const res = await fetch(`${API_BASE}/inspections`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(inspection),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to create inspection (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Inspection>;
+}
+
+/** GET /inspections/extinguisher/:extinguisherId - Get inspections for an extinguisher */
+export async function fetchExtinguisherInspections(extinguisherId: string): Promise<Inspection[]> {
+  const res = await fetch(`${API_BASE}/inspections/extinguisher/${extinguisherId}`, {
+    headers: {
+      'Accept': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch inspections (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<Inspection[]>;
+}
+
+// Continue with your existing Photos section...
 /* ---------------------------------- Photos -------------------------------- */
 
 export interface InspectionPhoto {

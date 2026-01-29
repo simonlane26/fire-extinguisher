@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, AlertTriangle, TrendingDown } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, AlertTriangle, TrendingDown, CloudOff } from 'lucide-react';
 import type { InventoryItem } from '../types';
 import {
   fetchInventoryItems,
@@ -8,6 +8,8 @@ import {
   updateInventoryItem,
   deleteInventoryItem,
 } from '../lib/api';
+import { getInventoryOffline } from '../lib/offline/offlineApi';
+import { syncManager } from '../lib/offline/syncManager';
 
 const CATEGORIES = [
   'Extinguisher',
@@ -31,6 +33,7 @@ const InventoryPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+  const [isOffline, setIsOffline] = useState(!syncManager.getOnlineStatus());
 
   useEffect(() => {
     loadData();
@@ -39,12 +42,27 @@ const InventoryPage: React.FC = () => {
   async function loadData() {
     try {
       setLoading(true);
-      const [allItems, lowStock] = await Promise.all([
-        fetchInventoryItems(),
-        fetchLowStockItems()
-      ]);
-      setItems(allItems);
-      setLowStockItems(lowStock);
+      setIsOffline(!syncManager.getOnlineStatus());
+
+      // Use offline-aware API that falls back to cached data when offline
+      const allItems = await getInventoryOffline();
+      setItems(allItems as InventoryItem[]);
+
+      // Low stock items - calculate from cached data when offline
+      if (syncManager.getOnlineStatus()) {
+        try {
+          const lowStock = await fetchLowStockItems();
+          setLowStockItems(lowStock);
+        } catch {
+          // Calculate low stock from loaded items
+          const lowStock = allItems.filter((item: any) => item.quantityInStock <= item.minStockLevel);
+          setLowStockItems(lowStock as InventoryItem[]);
+        }
+      } else {
+        // Calculate low stock from cached items when offline
+        const lowStock = allItems.filter((item: any) => item.quantityInStock <= item.minStockLevel);
+        setLowStockItems(lowStock as InventoryItem[]);
+      }
     } catch (err) {
       console.error('Failed to load inventory:', err);
     } finally {
@@ -94,6 +112,16 @@ const InventoryPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Offline Banner */}
+      {isOffline && (
+        <div className="flex items-center gap-2 p-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-lg">
+          <CloudOff size={18} />
+          <span className="text-sm">
+            You're viewing cached inventory data. Changes will sync when back online.
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -102,7 +130,11 @@ const InventoryPage: React.FC = () => {
         </div>
         <button
           onClick={handleAdd}
-          className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          disabled={isOffline}
+          className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg ${
+            isOffline ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+          title={isOffline ? 'Cannot add items while offline' : undefined}
         >
           <Plus size={18} />
           Add Item
@@ -208,15 +240,21 @@ const InventoryPage: React.FC = () => {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEdit(item)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                          title="Edit"
+                          disabled={isOffline}
+                          className={`p-2 rounded ${
+                            isOffline ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'
+                          }`}
+                          title={isOffline ? 'Cannot edit while offline' : 'Edit'}
                         >
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded"
-                          title="Delete"
+                          disabled={isOffline}
+                          className={`p-2 rounded ${
+                            isOffline ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'
+                          }`}
+                          title={isOffline ? 'Cannot delete while offline' : 'Delete'}
                         >
                           <Trash2 size={16} />
                         </button>

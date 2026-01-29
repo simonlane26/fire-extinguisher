@@ -1,5 +1,6 @@
 // src/App.tsx
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+
 import {
   Plus,
   AlertTriangle,
@@ -22,6 +23,8 @@ import {
   LogOut,
   FileText,
   TrendingUp,
+  Cloud,
+  CloudOff,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
@@ -29,6 +32,9 @@ import AddExtinguisherModal from './components/AddExtinguisherModal';
 import EditExtinguisherModal from './components/EditExtinguisherModal';
 import ExtinguisherDetails from './components/ExtinguisherDetails';
 import SimpleInspectionForm from './components/SimpleInspectionForm';
+import { SyncStatusBadge } from './components/SyncStatusBadge';
+import { offlineDB } from './lib/offline/database';
+import { syncManager } from './lib/offline/syncManager';
 import SettingsPage from './pages/SettingsPage';
 import UsersPage from './pages/UsersPage';
 import SitesPage from './pages/SitesPage';
@@ -45,6 +51,7 @@ import RoleSwitcherModal from './components/RoleSwitcher';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
 import { addExtinguisher, updateExtinguisher, fetchExtinguishers, fetchExtinguisherById, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers, fetchSites } from './lib/api';
+import { addExtinguisherOffline } from './lib/offline/offlineApi';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
   Extinguisher,
@@ -305,17 +312,99 @@ const FireExtinguisherApp: React.FC = () => {
     },
   ]);
 
-  // Load from API (replaces demo data if backend is up)
+  // State to track if offline DB is ready
+  const [offlineReady, setOfflineReady] = useState(false);
+  // Track online/offline status for header display
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Load from API (replaces demo data if backend is up) with offline caching
   useEffect(() => {
     (async () => {
+      // Wait for offline DB to be ready first
+      if (!offlineReady) {
+        console.log('Waiting for offline DB to initialize...');
+        return;
+      }
+
       try {
         const data = await fetchExtinguishers(); // uses authenticated user's tenant
-        setExtinguishers(data);
+
+        // Also get any pending offline extinguishers and merge them
+        try {
+          const pending = await offlineDB.getAllPendingExtinguishers();
+          const pendingAsExtinguishers = pending
+            .filter(p => !p.synced)
+            .map(p => ({
+              id: p.id,
+              location: p.location,
+              building: p.building || '',
+              floor: p.floor || '',
+              type: p.type,
+              capacity: p.capacity || '',
+              manufacturer: p.manufacturer || '',
+              serialNumber: p.serialNumber || '',
+              installDate: p.installDate || '',
+              expiryDate: p.expiryDate || '',
+              status: p.status as any,
+              condition: p.condition as any,
+              notes: p.notes || '',
+              _pendingSync: true,
+            }));
+
+          setExtinguishers([...data, ...pendingAsExtinguishers] as any);
+        } catch {
+          setExtinguishers(data);
+        }
+
+        // Cache for offline use
+        try {
+          await offlineDB.cacheExtinguishers(data);
+          console.log('Extinguishers cached for offline use');
+        } catch (cacheErr) {
+          console.warn('Failed to cache extinguishers:', cacheErr);
+        }
       } catch (err) {
-        console.warn('API load failed, keeping demo data:', err);
+        console.warn('API load failed, trying offline cache:', err);
+
+        // Try to load from offline cache
+        try {
+          const cached = await offlineDB.getCachedExtinguishers();
+          const pending = await offlineDB.getAllPendingExtinguishers();
+
+          // Combine cached server data with pending offline data
+          const pendingAsExtinguishers = pending
+            .filter(p => !p.synced)
+            .map(p => ({
+              id: p.id,
+              location: p.location,
+              building: p.building || '',
+              floor: p.floor || '',
+              type: p.type,
+              capacity: p.capacity || '',
+              manufacturer: p.manufacturer || '',
+              serialNumber: p.serialNumber || '',
+              installDate: p.installDate || '',
+              expiryDate: p.expiryDate || '',
+              status: p.status as any,
+              condition: p.condition as any,
+              notes: p.notes || '',
+              _pendingSync: true,
+            }));
+
+          const combined = [...(cached as any[]), ...pendingAsExtinguishers];
+
+          if (combined.length > 0) {
+            setExtinguishers(combined as any);
+            console.log(`Loaded ${cached.length} cached + ${pendingAsExtinguishers.length} pending extinguishers from offline storage`);
+          } else {
+            console.log('No offline data available');
+          }
+        } catch (cacheErr) {
+          console.warn('Offline cache also failed:', cacheErr);
+        }
       }
     })();
-  }, [tenant.id]);
+  }, [tenant.id, offlineReady]);
 
   // Users (for UsersPage)
   const [users, setUsers] = useState<User[]>([]);
@@ -332,7 +421,36 @@ const FireExtinguisherApp: React.FC = () => {
     };
     loadUsers();
   }, []);
+// Initialize offline database and sync on mount
+useEffect(() => {
+  const initOffline = async () => {
+    try {
+      await offlineDB.initialize();
+      setOfflineReady(true);
+      syncManager.startAutoSync(5); // Auto-sync every 5 minutes
+      console.log('Offline mode initialized successfully');
+    } catch (err) {
+      console.error('Failed to initialize offline mode:', err);
+      // Still set ready so app can function (just without offline support)
+      setOfflineReady(true);
+    }
+  };
 
+  initOffline();
+
+  // Track online/offline status changes
+  const checkStatus = () => {
+    setIsOnline(syncManager.getOnlineStatus());
+  };
+  checkStatus();
+  const statusInterval = setInterval(checkStatus, 2000);
+
+  // Cleanup on unmount
+  return () => {
+    syncManager.stopAutoSync();
+    clearInterval(statusInterval);
+  };
+}, []);
   const handleAddUser = (u: User) => setUsers((prev) => [...prev, u]);
   const handleUpdateUser = async (id: string, patch: Partial<User>) => {
     // If updating role, make API call
@@ -583,7 +701,7 @@ const FireExtinguisherApp: React.FC = () => {
     }
   };
 
-  // Create with optimistic UI + server reconcile
+  // Create with optimistic UI + server reconcile (with offline support)
   const handleCreate = async (payload: Partial<Extinguisher>) => {
     const today = new Date().toISOString().split('T')[0];
     const type = payload.type ?? '';
@@ -592,8 +710,9 @@ const FireExtinguisherApp: React.FC = () => {
     const expiry = new Date(install);
     expiry.setFullYear(expiry.getFullYear() + years);
 
+    const optimisticId = getNextExtinguisherId(extinguishers);
     const optimistic: Extinguisher = {
-      id: getNextExtinguisherId(extinguishers),
+      id: optimisticId,
       location: payload.location!,
       building: payload.building!,
       floor: payload.floor ?? '',
@@ -623,22 +742,45 @@ const FireExtinguisherApp: React.FC = () => {
     setExtinguishers((prev) => [...prev, optimistic]);
 
     try {
-      // send to server (make sure your API adds tenantId server-side or accept it here)
-      const created = await addExtinguisher({
-        ...payload,
-        // tenantId: tenant.id, // uncomment if your API expects it in body
+      // Use offline-aware API that handles both online and offline scenarios
+      const result = await addExtinguisherOffline({
+        siteId: payload.siteId,
+        location: payload.location!,
+        building: payload.building,
+        floor: payload.floor,
+        type: payload.type!,
+        capacity: payload.capacity,
+        manufacturer: payload.manufacturer,
+        serialNumber: payload.serialNumber,
+        installDate: payload.installDate,
+        expiryDate: expiry.toISOString().split('T')[0],
+        status: payload.status,
+        condition: payload.condition,
+        notes: payload.notes,
       });
 
-      // replace optimistic with server row (assumes created is the real row)
-      setExtinguishers((prev) => {
-        const copy = [...prev];
-        copy[copy.length - 1] = created;
-        return copy;
-      });
+      if (result.synced) {
+        // Server responded - refresh from server to get the real data
+        try {
+          const refreshed = await fetchExtinguishers();
+          setExtinguishers(refreshed);
+        } catch {
+          // If refresh fails, keep optimistic data with server ID
+          setExtinguishers((prev) =>
+            prev.map((e) => (e.id === optimisticId ? { ...e, id: result.id } : e))
+          );
+        }
+      } else {
+        // Saved offline - update ID to match offline ID
+        setExtinguishers((prev) =>
+          prev.map((e) => (e.id === optimisticId ? { ...e, id: result.id, _pendingSync: true } as any : e))
+        );
+        alert('Saved offline. Will sync when back online.');
+      }
     } catch (err) {
       console.error('Failed to create extinguisher:', err);
       // rollback
-      setExtinguishers((prev) => prev.filter((e) => e.id !== optimistic.id));
+      setExtinguishers((prev) => prev.filter((e) => e.id !== optimisticId));
       alert('Failed to add extinguisher. Please try again.');
     }
   };
@@ -694,6 +836,31 @@ const FireExtinguisherApp: React.FC = () => {
           {currentUser.name} ({USER_ROLES[currentUser.role]?.name})
         </span>
       </div>
+      {/* Offline Status & Download Button */}
+      <div className="flex items-center gap-2">
+        <div className={`flex items-center px-3 py-1 space-x-2 rounded-lg ${isOnline ? 'bg-green-500/30' : 'bg-orange-500/30'}`}>
+          {isOnline ? <Cloud size={16} /> : <CloudOff size={16} />}
+          <span className="text-sm font-medium">{isOnline ? 'Online' : 'Offline'}</span>
+        </div>
+        {isOnline && (
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await syncManager.downloadExtinguishersForOffline();
+                alert('Data downloaded for offline use!');
+              } catch (error: any) {
+                alert(`Download failed: ${error.message}`);
+              }
+            }}
+            className="flex items-center px-3 py-1 space-x-2 text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30"
+            title="Download data for offline use"
+          >
+            <Download size={16} />
+            <span className="text-sm font-medium">Download</span>
+          </button>
+        )}
+      </div>
       <button
         type="button"
         onClick={logout}
@@ -706,7 +873,8 @@ const FireExtinguisherApp: React.FC = () => {
     </div>
   </div>
 </header>
-
+{/* Sync Status Badge - Fixed position in bottom-right */}
+      <SyncStatusBadge />
       <div className="p-6 mx-auto space-y-6 max-w-7xl">
         {/* KPI cards */}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -883,7 +1051,7 @@ const FireExtinguisherApp: React.FC = () => {
           <>
             {/* Site Filter Indicator */}
             {selectedSiteFilter && (
-              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50">
                 <div className="flex items-center gap-2">
                   <Building2 size={16} className="text-blue-600" />
                   <span className="text-sm font-medium text-blue-900">
@@ -896,7 +1064,7 @@ const FireExtinguisherApp: React.FC = () => {
                     setSiteFilter('all');
                     setSelectedSiteFilter(null);
                   }}
-                  className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-800"
                 >
                   View All Sites
                 </button>
@@ -908,18 +1076,18 @@ const FireExtinguisherApp: React.FC = () => {
               <div className="flex flex-wrap items-center gap-3">
                 {/* Search Input */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <Search className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2" size={18} />
                   <input
                     type="text"
                     placeholder="Search by location, building, type, serial number..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
                     >
                       <X size={18} />
                     </button>
@@ -948,9 +1116,9 @@ const FireExtinguisherApp: React.FC = () => {
 
               {/* Filter Dropdowns */}
               {showFilters && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 pt-3 border-t">
+                <div className="grid grid-cols-1 gap-3 pt-3 border-t md:grid-cols-2 lg:grid-cols-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
+                    <label className="block mb-1 text-sm font-medium text-gray-700">Site</label>
                     <select
                       value={siteFilter}
                       onChange={(e) => {
@@ -969,7 +1137,7 @@ const FireExtinguisherApp: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Building</label>
+                    <label className="block mb-1 text-sm font-medium text-gray-700">Building</label>
                     <select
                       value={buildingFilter}
                       onChange={(e) => setBuildingFilter(e.target.value)}
@@ -983,7 +1151,7 @@ const FireExtinguisherApp: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <label className="block mb-1 text-sm font-medium text-gray-700">Type</label>
                     <select
                       value={typeFilter}
                       onChange={(e) => setTypeFilter(e.target.value)}
@@ -997,7 +1165,7 @@ const FireExtinguisherApp: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block mb-1 text-sm font-medium text-gray-700">Status</label>
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
@@ -1011,7 +1179,7 @@ const FireExtinguisherApp: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Condition</label>
+                    <label className="block mb-1 text-sm font-medium text-gray-700">Condition</label>
                     <select
                       value={conditionFilter}
                       onChange={(e) => setConditionFilter(e.target.value)}
