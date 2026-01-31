@@ -123,6 +123,22 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
                   Report Security Issue
                 </a>
               </li>
+              <li>
+                <a
+                  href="/delete-account.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-gray-600 transition-colors hover:text-gray-900"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = primaryColor;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = '';
+                  }}
+                >
+                  Delete Account
+                </a>
+              </li>
             </ul>
           </div>
 
