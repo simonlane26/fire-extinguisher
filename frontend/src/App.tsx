@@ -237,14 +237,14 @@ const KpiCard: React.FC<KpiProps> = ({
   iconBg = 'bg-white/20',
 }) => (
   <div
-    className={`relative overflow-hidden rounded-2xl p-5 shadow ring-1 ring-black/5 ${bg} text-white`}
+    className={`relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 shadow ring-1 ring-black/5 ${bg} text-white`}
   >
     <div className="flex items-start justify-between">
       <div>
-        <p className="text-sm opacity-80">{label}</p>
-        <p className="mt-1 text-2xl font-semibold">{value}</p>
+        <p className="text-xs sm:text-sm opacity-80">{label}</p>
+        <p className="mt-0.5 sm:mt-1 text-lg sm:text-xl md:text-2xl font-semibold">{value}</p>
       </div>
-      <div className={`grid size-10 place-items-center rounded-xl ${iconBg}`}>
+      <div className={`hidden sm:grid size-8 md:size-10 place-items-center rounded-lg md:rounded-xl ${iconBg}`}>
         {icon}
       </div>
     </div>
@@ -823,24 +823,24 @@ useEffect(() => {
 
 
     {/* Right: Plan + Current User */}
-    <div className="flex items-center space-x-4">
-      <div className="flex items-center px-3 py-1 space-x-2 rounded-lg bg-white/20">
+    <div className="flex items-center space-x-2 md:space-x-4">
+      <div className="hidden lg:flex items-center px-3 py-1 space-x-2 rounded-lg bg-white/20">
         <Crown size={16} />
         <span className="text-sm font-medium">
           {SUBSCRIPTION_PLANS[tenant.subscriptionPlan]?.name}
         </span>
       </div>
-      <div className="flex items-center px-3 py-1 space-x-2 rounded-lg bg-white/20">
-        <Shield size={16} />
-        <span className="text-sm font-medium">
-          {currentUser.name} ({USER_ROLES[currentUser.role]?.name})
+      <div className="hidden md:flex items-center px-2 py-1 space-x-1 rounded-lg bg-white/20">
+        <Shield size={14} />
+        <span className="text-xs font-medium">
+          {currentUser.name}
         </span>
       </div>
       {/* Offline Status & Download Button */}
-      <div className="flex items-center gap-2">
-        <div className={`flex items-center px-3 py-1 space-x-2 rounded-lg ${isOnline ? 'bg-green-500/30' : 'bg-orange-500/30'}`}>
-          {isOnline ? <Cloud size={16} /> : <CloudOff size={16} />}
-          <span className="text-sm font-medium">{isOnline ? 'Online' : 'Offline'}</span>
+      <div className="flex items-center gap-1 sm:gap-2">
+        <div className={`flex items-center px-2 py-1 space-x-1 rounded-lg ${isOnline ? 'bg-green-500/30' : 'bg-orange-500/30'}`}>
+          {isOnline ? <Cloud size={14} /> : <CloudOff size={14} />}
+          <span className="hidden sm:inline text-xs font-medium">{isOnline ? 'Online' : 'Offline'}</span>
         </div>
         {isOnline && (
           <button
@@ -853,31 +853,31 @@ useEffect(() => {
                 alert(`Download failed: ${error.message}`);
               }
             }}
-            className="flex items-center px-3 py-1 space-x-2 text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30"
+            className="flex items-center px-2 py-1 space-x-1 text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30"
             title="Download data for offline use"
           >
-            <Download size={16} />
-            <span className="text-sm font-medium">Download</span>
+            <Download size={14} />
+            <span className="hidden sm:inline text-xs font-medium">Download</span>
           </button>
         )}
       </div>
       <button
         type="button"
         onClick={logout}
-        className="flex items-center px-3 py-1 space-x-2 text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30"
+        className="flex items-center px-2 py-1 space-x-1 text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30"
         title="Log out"
       >
-        <LogOut size={16} />
-        <span className="text-sm font-medium">Log Out</span>
+        <LogOut size={14} />
+        <span className="hidden sm:inline text-xs font-medium">Log Out</span>
       </button>
     </div>
   </div>
 </header>
 {/* Sync Status Badge - Fixed position in bottom-right */}
       <SyncStatusBadge />
-      <div className="p-6 mx-auto space-y-6 max-w-7xl">
+      <div className="p-3 sm:p-4 md:p-6 mx-auto space-y-4 sm:space-y-6 max-w-7xl">
         {/* KPI cards */}
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <section className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-4">
           <KpiCard
             label="Total Extinguishers"
             value={total}
@@ -1195,34 +1195,34 @@ useEffect(() => {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setShowQrScanner(true)}
-                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm hover:opacity-90"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium rounded-lg shadow-sm hover:opacity-90"
                 style={{
                   backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' ? tenant.primaryColor : '#7c3aed',
                   color: '#ffffff'
                 }}
               >
-                <QrCode size={18} /> Scan QR
+                <QrCode size={16} /> <span className="hidden sm:inline">Scan</span> QR
               </button>
 
               <button
                 onClick={handleExport}
                 disabled={exporting || extinguishers.length === 0}
-                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#16a34a', color: '#ffffff' }}
               >
-                <Download size={18} /> {exporting ? 'Exporting...' : 'Export CSV'}
+                <Download size={16} /> {exporting ? '...' : <><span className="hidden sm:inline">Export</span> CSV</>}
               </button>
 
               <button
                 onClick={handleImportClick}
                 disabled={importing}
-                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: '#9333ea', color: '#ffffff' }}
               >
-                <Upload size={18} /> {importing ? 'Importing...' : 'Import CSV'}
+                <Upload size={16} /> {importing ? '...' : <><span className="hidden sm:inline">Import</span> CSV</>}
               </button>
 
               <input
@@ -1235,32 +1235,32 @@ useEffect(() => {
 
               <button
                 onClick={() => setOpenAdd(true)}
-                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm hover:opacity-90"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium rounded-lg shadow-sm hover:opacity-90"
                 style={{
                   backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' ? tenant.primaryColor : '#7c3aed',
                   color: '#ffffff'
                 }}
               >
-                <Plus size={18} /> Add Extinguisher
+                <Plus size={16} /> <span className="hidden sm:inline">Add</span> <span className="sm:hidden">+</span><span className="hidden sm:inline"> Extinguisher</span><span className="sm:hidden">Ext</span>
               </button>
 
               <button
                 onClick={() => setShowSimpleForm(true)}
-                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm hover:opacity-90"
+                className="hidden md:flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm hover:opacity-90"
                 style={{
                   backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' ? tenant.primaryColor : '#7c3aed',
                   color: '#ffffff'
                 }}
               >
-                <FileText size={18} /> Simple Form
+                <FileText size={16} /> Simple Form
               </button>
 
               <button
                 onClick={() => setShowRoleSwitcher(true)}
-                className="flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm"
+                className="hidden lg:flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm"
                 style={{ backgroundColor: '#374151', color: '#ffffff' }}
               >
-                <Shield size={18} /> Switch Role
+                <Shield size={16} /> Switch Role
               </button>
             </div>
 
@@ -1271,26 +1271,26 @@ useEffect(() => {
               </div>
             )}
 
-            <div className="overflow-hidden bg-white shadow rounded-2xl">
+            <div className="overflow-x-auto bg-white shadow rounded-2xl">
               <table className="min-w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
                       ID
                     </th>
-                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
                       Location
                     </th>
-                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">
+                    <th className="hidden px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase sm:table-cell md:px-6">
                       Condition
                     </th>
-                    <th className="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
                       Actions
                     </th>
                   </tr>
@@ -1298,32 +1298,32 @@ useEffect(() => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredExtinguishers.map((ext) => (
                     <tr key={ext.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">{ext.id}</td>
-                      <td className="px-6 py-4">
-                        <div className="text-gray-900">{ext.location}</div>
-                        <div className="text-sm text-gray-500">
+                      <td className="px-3 py-3 text-sm md:px-6 md:py-4">{ext.id}</td>
+                      <td className="px-3 py-3 md:px-6 md:py-4">
+                        <div className="text-sm text-gray-900 md:text-base">{ext.location}</div>
+                        <div className="text-xs text-gray-500 md:text-sm">
                           {ext.building}
                           {ext.floor ? `, ${ext.floor}` : ''}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-gray-900">{ext.type}</div>
-                        <div className="text-sm text-gray-500">{ext.capacity}</div>
+                      <td className="px-3 py-3 md:px-6 md:py-4">
+                        <div className="text-sm text-gray-900 md:text-base">{ext.type}</div>
+                        <div className="text-xs text-gray-500 md:text-sm">{ext.capacity}</div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-3 md:px-6 md:py-4">
                         <span className={getStatusColor(ext.status)}>{ext.status}</span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="hidden px-3 py-3 sm:table-cell md:px-6 md:py-4">
                         <span className={getConditionColor(ext.condition)}>{ext.condition}</span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-3 md:px-6 md:py-4">
                         <button
                           onClick={() => openDetails(ext)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg"
                           title="View details"
                           aria-label={`View ${ext.id}`}
                         >
-                          <Eye size={16} />
+                          <Eye size={18} />
                         </button>
                       </td>
                     </tr>

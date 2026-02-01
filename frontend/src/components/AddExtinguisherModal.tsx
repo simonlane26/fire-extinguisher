@@ -256,18 +256,18 @@ const AddExtinguisherModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-      <div className="w-full max-w-3xl bg-white shadow-xl rounded-2xl">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-black/60 overflow-y-auto">
+      <div className="w-full max-w-3xl my-4 sm:my-0 bg-white shadow-xl rounded-2xl max-h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b">
-          <h3 className="text-lg font-semibold">Add New Extinguisher</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800" aria-label="Close">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4 border-b flex-shrink-0">
+          <h3 className="text-base sm:text-lg font-semibold">Add New Extinguisher</h3>
+          <button onClick={onClose} className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg" aria-label="Close">
             ✕
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-5 space-y-5 max-h-[70vh] overflow-y-auto">
+        <div className="p-4 sm:p-5 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
           {error && (
             <div className="p-2 text-sm text-red-700 border border-red-200 rounded bg-red-50">
               {error}
@@ -549,10 +549,10 @@ const AddExtinguisherModal: React.FC<Props> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t">
+        <div className="flex items-center justify-end gap-3 px-4 py-3 sm:px-5 sm:py-4 border-t flex-shrink-0 bg-white rounded-b-2xl">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+            className="px-3 py-2 sm:px-4 text-sm sm:text-base bg-gray-200 rounded-lg hover:bg-gray-300"
             disabled={submitting}
           >
             Cancel
@@ -560,7 +560,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
           <button
             onClick={handleSave}
             disabled={submitting}
-            className="px-4 py-2 text-white rounded-lg hover:opacity-90"
+            className="px-3 py-2 sm:px-4 text-sm sm:text-base text-white rounded-lg hover:opacity-90"
             style={{ backgroundColor: primaryColor }}
           >
             {submitting ? 'Saving…' : 'Add Extinguisher'}
