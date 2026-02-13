@@ -22,8 +22,54 @@ interface PlanInfo {
   };
 }
 
+// Default plan info shown even if API hasn't loaded
+const DEFAULT_PLANS: Record<string, PlanInfo> = {
+  starter: {
+    name: 'Starter',
+    monthlyPrice: '£29',
+    annualPrice: '£279',
+    limits: { extinguishers: 50, users: 3 },
+    features: [
+      'Up to 50 extinguishers',
+      'Up to 3 users',
+      'QR code scanning',
+      'Basic inspection tracking',
+      'Email support',
+    ],
+  },
+  professional: {
+    name: 'Professional',
+    monthlyPrice: '£59',
+    annualPrice: '£569',
+    limits: { extinguishers: 250, users: 10 },
+    features: [
+      'Up to 250 extinguishers',
+      'Up to 10 users',
+      'All Starter features',
+      'Multi-site management',
+      'Compliance dashboard',
+      'CSV import/export',
+      'Priority support',
+    ],
+  },
+  enterprise: {
+    name: 'Enterprise',
+    monthlyPrice: '£99',
+    annualPrice: '£949',
+    limits: { extinguishers: 1000, users: 'Unlimited' },
+    features: [
+      'Up to 1000 extinguishers',
+      'Unlimited users',
+      'All Professional features',
+      'Advanced reporting',
+      'API access',
+      'Dedicated support',
+    ],
+  },
+};
+
 const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
-  const [plans, setPlans] = useState<Record<string, PlanInfo>>({});
+  const [plans, setPlans] = useState<Record<string, PlanInfo>>(DEFAULT_PLANS);
   const [loading, setLoading] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -58,14 +104,13 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
       });
       const data = await response.json();
       if (data.plans && typeof data.plans === 'object') {
-        setPlans(data.plans);
-      } else {
-        console.warn('No plans data received:', data);
-        setPlans({});
+        // Merge API data with defaults (API data takes priority for prices/priceIds)
+        setPlans({ ...DEFAULT_PLANS, ...data.plans });
       }
+      // If API fails, DEFAULT_PLANS are already set as initial state
     } catch (error) {
       console.error('Failed to load plans:', error);
-      setPlans({});
+      // Keep DEFAULT_PLANS
     }
   };
 
