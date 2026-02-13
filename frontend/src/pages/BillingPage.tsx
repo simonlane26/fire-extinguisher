@@ -57,11 +57,15 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         },
       });
       const data = await response.json();
-      console.log('Loaded plans data:', data);
-      console.log('Plans object:', data.plans);
-      setPlans(data.plans);
+      if (data.plans && typeof data.plans === 'object') {
+        setPlans(data.plans);
+      } else {
+        console.warn('No plans data received:', data);
+        setPlans({});
+      }
     } catch (error) {
       console.error('Failed to load plans:', error);
+      setPlans({});
     }
   };
 
