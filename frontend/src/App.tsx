@@ -50,7 +50,7 @@ import QuoteDetailPage from './pages/QuoteDetailPage';
 import RoleSwitcherModal from './components/RoleSwitcher';
 import TabButton from './components/TabButton';
 import Footer from './components/Footer';
-import { addExtinguisher, updateExtinguisher, fetchExtinguishers, fetchExtinguisherById, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers, fetchSites } from './lib/api';
+import { addExtinguisher, updateExtinguisher, fetchExtinguishers, fetchExtinguisherById, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers, fetchSites, fetchMonthlyInspectionCount } from './lib/api';
 import { addExtinguisherOffline } from './lib/offline/offlineApi';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
@@ -203,22 +203,23 @@ const TenantProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
 };
 
 /* --------------------------------- Helpers ---------------------------------- */
-const PLAN_LIMITS: Record<Tenant['subscriptionPlan'], number | string> = {
+// Monthly inspection limits per plan
+const PLAN_INSPECTION_LIMITS: Record<Tenant['subscriptionPlan'], number> = {
   trial: 10,
   starter: 50,
   professional: 250,
-  enterprise: 'Unlimited',
+  enterprise: 1000,
 };
 
-function computeKpis(list: Extinguisher[], plan: Tenant['subscriptionPlan']) {
+function computeKpis(list: Extinguisher[], plan: Tenant['subscriptionPlan'], monthlyInspections: number) {
   const total = list.length;
   const active = list.filter((e) => e.status === 'Active').length;
   const needs =
     list.filter(
       (e) => e.condition === 'Needs Attention' || e.status !== 'Active',
     ).length;
-  const limit = PLAN_LIMITS[plan] || 10;
-  return { total, active, needs, planLimit: { used: total, limit } };
+  const limit = PLAN_INSPECTION_LIMITS[plan] || 10;
+  return { total, active, needs, planLimit: { used: monthlyInspections, limit } };
 }
 
 type KpiProps = {
@@ -316,6 +317,8 @@ const FireExtinguisherApp: React.FC = () => {
   const [offlineReady, setOfflineReady] = useState(false);
   // Track online/offline status for header display
   const [isOnline, setIsOnline] = useState(true);
+  // Monthly inspection count for plan limit tracking
+  const [monthlyInspections, setMonthlyInspections] = useState(0);
 
   // Load from API (replaces demo data if backend is up) with offline caching
   useEffect(() => {
@@ -420,6 +423,22 @@ const FireExtinguisherApp: React.FC = () => {
       }
     };
     loadUsers();
+  }, []);
+
+  // Fetch monthly inspection count
+  useEffect(() => {
+    const loadMonthlyCount = async () => {
+      try {
+        const data = await fetchMonthlyInspectionCount();
+        setMonthlyInspections(data.count);
+      } catch (err) {
+        console.error('Failed to fetch monthly inspection count:', err);
+      }
+    };
+    loadMonthlyCount();
+    // Refresh every 30 seconds
+    const interval = setInterval(loadMonthlyCount, 30000);
+    return () => clearInterval(interval);
   }, []);
 // Initialize offline database and sync on mount
 useEffect(() => {
@@ -655,7 +674,7 @@ useEffect(() => {
     return 'text-gray-900';
   };
 
-  const { total, active, needs, planLimit } = computeKpis(extinguishers, tenant.subscriptionPlan);
+  const { total, active, needs, planLimit } = computeKpis(extinguishers, tenant.subscriptionPlan, monthlyInspections);
 
   // Helper: next ID
   const getNextExtinguisherId = (list: Extinguisher[]) => {
@@ -897,14 +916,14 @@ useEffect(() => {
             bg="bg-gradient-to-br from-amber-600 to-amber-500"
           />
           <KpiCard
-            label="Plan Limit"
+            label="Monthly Inspections"
             value={
-              <span>
+              <span className={planLimit.used >= planLimit.limit * 0.9 ? 'text-yellow-200' : ''}>
                 {planLimit.used}/{planLimit.limit}
               </span>
             }
             icon={<Crown className="size-6" />}
-            bg="bg-gradient-to-br from-violet-600 to-violet-500"
+            bg={planLimit.used >= planLimit.limit ? 'bg-gradient-to-br from-red-600 to-red-500' : planLimit.used >= planLimit.limit * 0.8 ? 'bg-gradient-to-br from-amber-600 to-amber-500' : 'bg-gradient-to-br from-violet-600 to-violet-500'}
           />
         </section>
 

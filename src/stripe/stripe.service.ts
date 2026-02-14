@@ -6,29 +6,34 @@ import { PrismaService } from '../prisma/prisma.service';
 export type SubscriptionPlan = 'trial' | 'starter' | 'professional' | 'enterprise';
 
 export interface PlanLimits {
-  maxExtinguishers: number;
+  maxExtinguishers: number; // kept for backwards compat but no longer enforced
+  maxInspectionsPerMonth: number; // -1 = unlimited
   maxUsers: number;
   features: string[];
 }
 
 export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
   trial: {
-    maxExtinguishers: 10,
+    maxExtinguishers: -1,
+    maxInspectionsPerMonth: 10,
     maxUsers: 1,
     features: ['QR generation (limited)', 'Basic reports'],
   },
   starter: {
-    maxExtinguishers: 50,
+    maxExtinguishers: -1,
+    maxInspectionsPerMonth: 50,
     maxUsers: 3,
     features: ['Standard dashboard', 'Email reminders', 'QR generation', 'Basic reports'],
   },
   professional: {
-    maxExtinguishers: 250,
+    maxExtinguishers: -1,
+    maxInspectionsPerMonth: 250,
     maxUsers: 10,
     features: ['Advanced analytics', 'Custom branding', 'Export to PDF/CSV', 'Priority email support'],
   },
   enterprise: {
-    maxExtinguishers: 1000,
+    maxExtinguishers: -1,
+    maxInspectionsPerMonth: 1000,
     maxUsers: -1, // unlimited
     features: ['API access', 'Custom domain/subdomain', 'Priority support'],
   },

@@ -1,5 +1,5 @@
 // src/inspections/inspections.controller.ts
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Param, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
+import { Controller, Get, Post, UseInterceptors, UploadedFile, UseGuards, Param, BadRequestException, PayloadTooLargeException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../storage/s3.service';
@@ -25,6 +25,22 @@ export class InspectionsController {
     private s3: S3Service,
     private vision: VisionService,
   ) {}
+
+  @Get('monthly-count')
+  async getMonthlyInspectionCount(@CurrentUser() user: CurrentUserData) {
+    const tenantId = user.tenantId;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const count = await this.prisma.inspection.count({
+      where: {
+        tenantId,
+        createdAt: { gte: startOfMonth },
+      },
+    });
+
+    return { count, month: now.getMonth() + 1, year: now.getFullYear() };
+  }
 
   @Post('photos/:extinguisherId')
   @UseInterceptors(FileInterceptor('file', {

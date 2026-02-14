@@ -674,6 +674,22 @@ export async function createInspection(inspection: {
   return res.json() as Promise<Inspection>;
 }
 
+/** GET /inspections/monthly-count - Get inspection count for the current month */
+export async function fetchMonthlyInspectionCount(): Promise<{ count: number; month: number; year: number }> {
+  const res = await fetch(`${API_BASE}/inspections/monthly-count`, {
+    headers: {
+      'Accept': 'application/json',
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!res.ok) {
+    return { count: 0, month: new Date().getMonth() + 1, year: new Date().getFullYear() };
+  }
+
+  return res.json();
+}
+
 /** GET /inspections/extinguisher/:extinguisherId - Get inspections for an extinguisher */
 export async function fetchExtinguisherInspections(extinguisherId: string): Promise<Inspection[]> {
   const res = await fetch(`${API_BASE}/inspections/extinguisher/${extinguisherId}`, {

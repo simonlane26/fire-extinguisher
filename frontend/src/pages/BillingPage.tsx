@@ -30,10 +30,11 @@ const DEFAULT_PLANS: Record<string, PlanInfo> = {
     annualPrice: '£279',
     limits: { extinguishers: 50, users: 3 },
     features: [
-      'Up to 50 extinguishers',
+      'Up to 50 inspections per month',
+      'Unlimited stored extinguishers',
+      'Unlimited history & certificates',
       'Up to 3 users',
       'QR code scanning',
-      'Basic inspection tracking',
       'Email support',
     ],
   },
@@ -43,9 +44,10 @@ const DEFAULT_PLANS: Record<string, PlanInfo> = {
     annualPrice: '£569',
     limits: { extinguishers: 250, users: 10 },
     features: [
-      'Up to 250 extinguishers',
+      'Up to 250 inspections per month',
+      'Unlimited stored extinguishers',
+      'Unlimited history & certificates',
       'Up to 10 users',
-      'All Starter features',
       'Multi-site management',
       'Compliance dashboard',
       'CSV import/export',
@@ -58,7 +60,9 @@ const DEFAULT_PLANS: Record<string, PlanInfo> = {
     annualPrice: '£949',
     limits: { extinguishers: 1000, users: 'Unlimited' },
     features: [
-      'Up to 1000 extinguishers',
+      'Up to 1,000 inspections per month',
+      'Unlimited stored extinguishers',
+      'Unlimited history & certificates',
       'Unlimited users',
       'All Professional features',
       'Advanced reporting',
@@ -404,12 +408,20 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
           </div>
           <div className="mb-4">
             <div className="text-3xl font-bold">Contact Us</div>
-            <div className="text-sm text-gray-300">For 1000+ extinguishers</div>
+            <div className="text-sm text-gray-300">For 1,000+ inspections/month</div>
           </div>
           <ul className="mb-6 space-y-2">
             <li className="flex items-start gap-2 text-sm">
               <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
-              <span>Unlimited extinguishers</span>
+              <span>Unlimited inspections</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
+              <span>Unlimited stored extinguishers</span>
+            </li>
+            <li className="flex items-start gap-2 text-sm">
+              <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
+              <span>Unlimited history & certificates</span>
             </li>
             <li className="flex items-start gap-2 text-sm">
               <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
@@ -421,15 +433,11 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
             </li>
             <li className="flex items-start gap-2 text-sm">
               <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
-              <span>Custom SLA & support</span>
+              <span>Custom SLA, integrations & support</span>
             </li>
             <li className="flex items-start gap-2 text-sm">
               <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
               <span>Volume-based pricing</span>
-            </li>
-            <li className="flex items-start gap-2 text-sm">
-              <Check className="w-4 h-4 mt-0.5 text-green-400 flex-shrink-0" />
-              <span>Custom integrations</span>
             </li>
           </ul>
           <a
@@ -441,9 +449,38 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         </div>
       </div>
 
+      {/* Real-world explainer box */}
+      <div className="p-6 bg-blue-50 border border-blue-200 shadow rounded-2xl">
+        <h3 className="mb-3 text-lg font-bold text-blue-900">Which plan is right for you?</h3>
+        <div className="space-y-3 text-sm text-blue-800">
+          <p>
+            Plans are based on the number of <strong>inspections completed per month</strong>, not the number of extinguishers stored. You can store unlimited extinguisher records on any plan.
+          </p>
+          <div className="p-4 bg-white/70 border border-blue-100 rounded-xl">
+            <p className="font-semibold text-blue-900 mb-1">Example:</p>
+            <p>
+              A servicing company with <strong>3,000 extinguishers</strong> carrying out annual servicing typically completes <strong>~250 inspections per month</strong>.
+            </p>
+            <p className="mt-2 font-medium" style={{ color: safeColor }}>
+              This would comfortably fit within the <strong>Enterprise plan at £99/month</strong>.
+            </p>
+          </div>
+          <div className="p-4 bg-white/70 border border-blue-100 rounded-xl">
+            <p className="font-semibold text-blue-900 mb-1">Another example:</p>
+            <p>
+              A facilities manager responsible for <strong>200 extinguishers</strong> across 5 sites, doing <strong>monthly checks</strong>, would use ~200 inspections per month.
+            </p>
+            <p className="mt-2 font-medium" style={{ color: safeColor }}>
+              The <strong>Professional plan at £59/month</strong> would be ideal.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Need Help Contact Box */}
       <div className="p-6 text-center bg-white shadow rounded-2xl">
-        <h3 className="mb-2 text-xl font-bold">Need Help?</h3>
+        <h3 className="mb-2 text-xl font-bold">Need Help Choosing?</h3>
+        <p className="mb-4 text-sm text-gray-600">Not sure which plan fits your business? Get in touch and we'll help you find the right one.</p>
         <a
           href="mailto:notification.firexcheck@gmail.com"
           className="inline-block px-6 py-2 text-white rounded-lg hover:opacity-90"
