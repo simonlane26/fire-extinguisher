@@ -268,7 +268,7 @@ export default function HelpPage() {
           <h1 className="text-3xl font-bold text-gray-900">Help & Documentation</h1>
         </div>
         <p className="text-lg text-gray-600">
-          Learn how to use FireXCheck to manage your fire extinguisher inspections and maintenance.
+          Learn how to use FireXcheck to manage your fire extinguisher inspections and maintenance.
         </p>
       </div>
 
@@ -322,7 +322,7 @@ export default function HelpPage() {
           <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
             <h2 className="mb-4 text-2xl font-bold text-gray-900">Getting Started</h2>
             <p className="mb-6 text-gray-600">
-              Welcome to FireXCheck! Follow these steps to get started with managing your fire extinguishers.
+              Welcome to FireXcheck! Follow these steps to get started with managing your fire extinguishers.
             </p>
 
             <div className="space-y-6">
@@ -496,9 +496,9 @@ export default function HelpPage() {
                 </div>
               </div>
             </div>
-            <div className="p-3 mt-4 text-sm bg-teal-50 rounded-lg">
-              <p className="font-medium text-teal-900 mb-1">Pro Tips:</p>
-              <ul className="text-teal-800 space-y-1">
+            <div className="p-3 mt-4 text-sm rounded-lg bg-teal-50">
+              <p className="mb-1 font-medium text-teal-900">Pro Tips:</p>
+              <ul className="space-y-1 text-teal-800">
                 <li>• Set customer pricing in Stock tab before creating quotes</li>
                 <li>• Customer price should include your markup over cost price</li>
                 <li>• Use the notes field for internal information</li>
@@ -536,9 +536,9 @@ export default function HelpPage() {
                 Download Import Guide
               </a>
             </div>
-            <div className="p-3 mt-4 text-sm bg-gray-50 rounded-lg">
-              <p className="font-medium text-gray-900 mb-1">Template includes:</p>
-              <ul className="text-gray-600 space-y-1">
+            <div className="p-3 mt-4 text-sm rounded-lg bg-gray-50">
+              <p className="mb-1 font-medium text-gray-900">Template includes:</p>
+              <ul className="space-y-1 text-gray-600">
                 <li>• All required and optional fields with examples</li>
                 <li>• 4 sample extinguishers showing proper format</li>
                 <li>• Compatible with Excel, Google Sheets, and CSV editors</li>
@@ -580,7 +580,7 @@ export default function HelpPage() {
           <div className="p-6 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl">
             <h2 className="mb-2 text-2xl font-bold text-gray-900">Frequently Asked Questions</h2>
             <p className="text-gray-600">
-              Find answers to common questions about using FireXCheck.
+              Find answers to common questions about using FireXcheck.
             </p>
           </div>
 
