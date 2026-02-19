@@ -299,6 +299,7 @@ export class ReportsController {
   @Get('users/report')
   async generateUserReport(
     @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
     @Query('userId') userId?: string,
   ) {
     const tenantId = user.tenantId;
@@ -457,18 +458,22 @@ export class ReportsController {
       })
     );
 
-    const pdfUrl = await this.reports.buildUserReport({
+    const pdfBuffer = await this.reports.buildUserReport({
       tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
       users: usersWithActivity,
     });
 
-    return { pdfUrl };
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="users-report.pdf"');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
   }
 
   // Extinguishers by Type Report
   @Get('extinguishers/by-type')
   async generateExtinguishersByTypeReport(
     @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
     @Query('type') type?: string,
     @Query('building') building?: string,
     @Query('status') status?: string,
@@ -508,7 +513,7 @@ export class ReportsController {
       return acc;
     }, {} as Record<string, any[]>);
 
-    const pdfUrl = await this.reports.buildExtinguishersByTypeReport({
+    const pdfBuffer = await this.reports.buildExtinguishersByTypeReport({
       tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
       extinguishers,
       groupedByType,
@@ -517,7 +522,10 @@ export class ReportsController {
       filterStatus: status || 'all',
     });
 
-    return { pdfUrl };
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="extinguishers-by-type-report.pdf"');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
   }
 }
 

@@ -641,7 +641,7 @@ export class ReportsService {
   async buildUserReport(params: {
     tenant: { name: string; logoUrl?: string };
     users: any[];
-  }) {
+  }): Promise<Buffer> {
     const { tenant, users } = params;
 
     const html = `
@@ -788,7 +788,7 @@ export class ReportsService {
       });
 
       const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
-      return await this.saveReport(pdfBuffer, `reports/users-report-${Date.now()}.pdf`);
+      return pdfBuffer;
     } finally {
       if (browser) await browser.close();
     }
@@ -802,7 +802,7 @@ export class ReportsService {
     filterType: string;
     filterBuilding?: string;
     filterStatus?: string;
-  }) {
+  }): Promise<Buffer> {
     const { tenant, extinguishers, groupedByType, filterType, filterBuilding = 'all', filterStatus = 'all' } = params;
 
     const html = `
@@ -928,7 +928,7 @@ export class ReportsService {
       });
 
       const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true, landscape: true }));
-      return await this.saveReport(pdfBuffer, `reports/by-type-${filterType}-${Date.now()}.pdf`);
+      return pdfBuffer;
     } finally {
       if (browser) await browser.close();
     }

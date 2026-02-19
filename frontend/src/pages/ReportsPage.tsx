@@ -93,16 +93,9 @@ const ReportsPage: React.FC<Props> = ({
 
       if (!res.ok) throw new Error('Failed to generate user report');
 
-      const { pdfUrl } = await res.json();
-
-      // Open the PDF in a new tab
-      const hostname = window.location.hostname;
-      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-      const fullPdfUrl = isLocalhost
-        ? `${window.location.protocol}//${hostname}:3000${pdfUrl}`
-        : pdfUrl;
-
-      window.open(fullPdfUrl, '_blank', 'noopener,noreferrer');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
     } catch (error: any) {
       alert(error?.message || 'Failed to generate user report');
     } finally {
@@ -129,16 +122,9 @@ const ReportsPage: React.FC<Props> = ({
 
       if (!res.ok) throw new Error('Failed to generate extinguishers report');
 
-      const { pdfUrl } = await res.json();
-
-      // Open the PDF in a new tab
-      const hostname = window.location.hostname;
-      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-      const fullPdfUrl = isLocalhost
-        ? `${window.location.protocol}//${hostname}:3000${pdfUrl}`
-        : pdfUrl;
-
-      window.open(fullPdfUrl, '_blank', 'noopener,noreferrer');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
     } catch (error: any) {
       alert(error?.message || 'Failed to generate extinguishers report');
     } finally {
