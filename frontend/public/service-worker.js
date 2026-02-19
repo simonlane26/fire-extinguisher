@@ -137,8 +137,16 @@ async function syncInspections() {
 
 // Fetch event - optional caching strategy
 self.addEventListener('fetch', (event) => {
-  // You can implement caching strategies here if needed
-  // For now, we'll just let the browser handle fetches normally
+  const url = event.request.url;
+  const method = event.request.method;
+
+  // Never intercept API calls or non-GET requests.
+  // POST/PUT/PATCH/DELETE with form-data or JSON bodies must go directly to the
+  // network; running them through the cache layer can silently drop the body.
+  if (method !== 'GET' || url.includes('/api/')) {
+    return; // Let the browser handle it natively
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
