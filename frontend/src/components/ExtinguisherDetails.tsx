@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Extinguisher } from '../types';
 import { Pencil, FileText, Award, Download, Upload, Image as ImageIcon, Trash2, X } from 'lucide-react';
 import { generateExtinguisherHistoryPDF, generateComplianceCertificate, downloadExtinguisherExcel } from '../api/reports';
-import { uploadPhoto, fetchExtinguisherPhotos, deletePhoto, deleteExtinguisher, type InspectionPhoto } from '../lib/api';
+import { uploadPhoto, fetchExtinguisherPhotos, deletePhoto, deleteExtinguisher, clearToken, type InspectionPhoto } from '../lib/api';
 
 type Props = {
   open: boolean;
@@ -164,13 +164,26 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
 
   const effectiveColor = isWhitePrimary ? '#7c3aed' : primaryColor;
 
+  const handleAuthError = (error: any) => {
+    const msg = error?.message || '';
+    if (msg.includes(': 401 ') || msg.toLowerCase().includes('unauthorized')) {
+      clearToken();
+      alert('Your session has expired. Please log in again.');
+      window.location.reload();
+      return true;
+    }
+    return false;
+  };
+
   const handleGenerateHistory = async () => {
     try {
       setLoadingReport('history');
       const { pdfUrl } = await generateExtinguisherHistoryPDF(data.id);
       window.open(pdfUrl, '_blank');
     } catch (error: any) {
-      alert(error.message || 'Failed to generate history report');
+      if (!handleAuthError(error)) {
+        alert(error.message || 'Failed to generate history report');
+      }
     } finally {
       setLoadingReport(null);
     }
@@ -182,12 +195,13 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
       const { pdfUrl } = await generateComplianceCertificate(data.id);
       window.open(pdfUrl, '_blank');
     } catch (error: any) {
-      const errorMessage = error.message || 'Failed to generate certificate';
-      // Show user-friendly message
-      if (errorMessage.includes('No inspection')) {
-        alert('⚠️ No inspection records found.\n\nPlease complete at least one inspection for this extinguisher before generating a compliance certificate.');
-      } else {
-        alert(errorMessage);
+      if (!handleAuthError(error)) {
+        const errorMessage = error.message || 'Failed to generate certificate';
+        if (errorMessage.includes('No inspection')) {
+          alert('⚠️ No inspection records found.\n\nPlease complete at least one inspection for this extinguisher before generating a compliance certificate.');
+        } else {
+          alert(errorMessage);
+        }
       }
     } finally {
       setLoadingReport(null);
@@ -199,7 +213,9 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
       setLoadingReport('excel');
       await downloadExtinguisherExcel(data.id);
     } catch (error: any) {
-      alert(error.message || 'Failed to download Excel file');
+      if (!handleAuthError(error)) {
+        alert(error.message || 'Failed to download Excel file');
+      }
     } finally {
       setLoadingReport(null);
     }

@@ -19,7 +19,7 @@ import { StorageModule } from '../storage/storage.module';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-      signOptions: { expiresIn: '7d' },
+      signOptions: { expiresIn: '30d' },
     }),
   ],
   providers: [AuthService, JwtStrategy, JwtAuthGuard, TenantGuard],
