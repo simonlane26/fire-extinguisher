@@ -4,15 +4,29 @@ import puppeteer, { Browser } from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ExcelJS from 'exceljs';
+import { S3Service } from '../storage/s3.service';
 
 @Injectable()
 export class ReportsService {
   private readonly reportsDir = path.join(process.cwd(), 'uploads', 'reports');
 
-  constructor() {
-    // Ensure reports directory exists
+  constructor(private readonly s3: S3Service) {
+    // Ensure reports directory exists (used as fallback when S3 is not configured)
     if (!fs.existsSync(this.reportsDir)) {
       fs.mkdirSync(this.reportsDir, { recursive: true });
+    }
+  }
+
+  /** Upload PDF to S3; falls back to local filesystem if S3 is not configured */
+  private async saveReport(pdfBuffer: Buffer, s3Key: string): Promise<string> {
+    try {
+      return await this.s3.uploadBuffer(s3Key, pdfBuffer, 'application/pdf');
+    } catch {
+      // Fall back to local filesystem (development or if S3 not configured)
+      const filename = path.basename(s3Key);
+      const filepath = path.join(this.reportsDir, filename);
+      fs.writeFileSync(filepath, pdfBuffer);
+      return `/uploads/reports/${filename}`;
     }
   }
 
@@ -73,15 +87,8 @@ export class ReportsService {
         );
       });
 
-      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-
-      // Save locally instead of S3
-      const filename = `${Date.now()}-report.pdf`;
-      const filepath = path.join(this.reportsDir, filename);
-      fs.writeFileSync(filepath, pdfBuffer);
-
-      // Return a local URL path that can be served
-      return `/uploads/reports/${filename}`;
+      const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
+      return await this.saveReport(pdfBuffer, `reports/service-report-${Date.now()}.pdf`);
     } catch (error) {
       console.error('Error generating PDF report:', error);
       throw new Error(`Failed to generate PDF report: ${error.message}`);
@@ -343,9 +350,6 @@ export class ReportsService {
       </html>
     `;
 
-    const filename = `extinguisher-${extinguisher.id}-history-${Date.now()}.pdf`;
-    const filepath = path.join(this.reportsDir, filename);
-
     let browser: Browser | undefined;
     try {
       const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
@@ -371,9 +375,8 @@ export class ReportsService {
         );
       });
 
-      await page.pdf({ path: filepath, format: 'A4', printBackground: true });
-
-      return `/uploads/reports/${filename}`;
+      const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
+      return await this.saveReport(pdfBuffer, `reports/history-${extinguisher.id}-${Date.now()}.pdf`);
     } finally {
       if (browser) await browser.close();
     }
@@ -484,9 +487,6 @@ export class ReportsService {
       </html>
     `;
 
-    const filename = `certificate-${extinguisher.id}-${Date.now()}.pdf`;
-    const filepath = path.join(this.reportsDir, filename);
-
     let browser: Browser | undefined;
     try {
       const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
@@ -535,9 +535,8 @@ export class ReportsService {
 
       console.log('Image load results:', imageLoadResults);
 
-      await page.pdf({ path: filepath, format: 'A4', printBackground: true });
-
-      return `/uploads/reports/${filename}`;
+      const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
+      return await this.saveReport(pdfBuffer, `reports/certificate-${extinguisher.id}-${Date.now()}.pdf`);
     } finally {
       if (browser) await browser.close();
     }
@@ -765,9 +764,6 @@ export class ReportsService {
       </html>
     `;
 
-    const filename = `users-report-${Date.now()}.pdf`;
-    const filepath = path.join(this.reportsDir, filename);
-
     let browser: Browser | undefined;
     try {
       const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
@@ -793,9 +789,8 @@ export class ReportsService {
         );
       });
 
-      await page.pdf({ path: filepath, format: 'A4', printBackground: true });
-
-      return `/uploads/reports/${filename}`;
+      const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
+      return await this.saveReport(pdfBuffer, `reports/users-report-${Date.now()}.pdf`);
     } finally {
       if (browser) await browser.close();
     }
@@ -909,9 +904,6 @@ export class ReportsService {
       </html>
     `;
 
-    const filename = `extinguishers-by-type-${filterType}-${Date.now()}.pdf`;
-    const filepath = path.join(this.reportsDir, filename);
-
     let browser: Browser | undefined;
     try {
       const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
@@ -937,9 +929,8 @@ export class ReportsService {
         );
       });
 
-      await page.pdf({ path: filepath, format: 'A4', printBackground: true, landscape: true });
-
-      return `/uploads/reports/${filename}`;
+      const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true, landscape: true }));
+      return await this.saveReport(pdfBuffer, `reports/by-type-${filterType}-${Date.now()}.pdf`);
     } finally {
       if (browser) await browser.close();
     }
