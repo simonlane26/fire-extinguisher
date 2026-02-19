@@ -49,7 +49,12 @@ async function bootstrap() {
   console.log('SMTP_PORT:', process.env.SMTP_PORT || 'NOT SET');
   console.log('S3_REGION:', process.env.S3_REGION || 'NOT SET');
   console.log('S3_BUCKET:', process.env.S3_BUCKET ? `${process.env.S3_BUCKET.substring(0, 10)}...` : 'NOT SET');
-  console.log('All env keys:', Object.keys(process.env).filter(k => k.includes('SMTP') || k.includes('S3') || k.includes('VAPID')).join(', '));
+  console.log('S3_ACCESS_KEY:', process.env.S3_ACCESS_KEY ? 'SET' : 'NOT SET');
+  console.log('S3_SECRET_KEY:', process.env.S3_SECRET_KEY ? 'SET' : 'NOT SET');
+  console.log('AWS_REGION:', process.env.AWS_REGION || 'NOT SET');
+  console.log('AWS_ACCESS_KEY_ID:', process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET');
+  console.log('AWS_SECRET_ACCESS_KEY:', process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET');
+  console.log('All env keys:', Object.keys(process.env).filter(k => k.includes('SMTP') || k.includes('S3') || k.includes('AWS') || k.includes('VAPID')).join(', '));
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
