@@ -39,7 +39,8 @@ export async function generateExtinguisherHistoryPDF(extinguisherId: string) {
     const text = await res.text();
     throw new Error(`History report generation failed: ${res.status} ${text}`);
   }
-  return (await res.json()) as { pdfUrl: string };
+  const blob = await res.blob();
+  return { pdfUrl: URL.createObjectURL(blob) };
 }
 
 // Generate compliance certificate PDF
@@ -56,7 +57,8 @@ export async function generateComplianceCertificate(extinguisherId: string, insp
     const text = await res.text();
     throw new Error(`Certificate generation failed: ${res.status} ${text}`);
   }
-  return (await res.json()) as { pdfUrl: string };
+  const blob = await res.blob();
+  return { pdfUrl: URL.createObjectURL(blob) };
 }
 
 // Download Excel export

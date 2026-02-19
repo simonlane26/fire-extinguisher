@@ -148,6 +148,7 @@ export class ReportsController {
   async generateExtinguisherHistoryPDF(
     @CurrentUser() user: CurrentUserData,
     @Param('id') extinguisherId: string,
+    @Res() res: Response,
   ) {
     const tenantId = user.tenantId;
 
@@ -155,11 +156,9 @@ export class ReportsController {
       where: { id: tenantId },
     });
 
-    // Get full history
     const history = await this.getExtinguisherHistory(user, extinguisherId);
 
-    // Generate comprehensive PDF
-    const pdfUrl = await this.reports.buildExtinguisherHistoryReport({
+    const pdfBuffer = await this.reports.buildExtinguisherHistoryReport({
       tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
       extinguisher: history.extinguisher,
       inspections: history.inspections,
@@ -167,7 +166,10 @@ export class ReportsController {
       partsUsage: history.partsUsage,
     });
 
-    return { pdfUrl };
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="extinguisher-${extinguisherId}-history.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
   }
 
   @Post('extinguisher/:id/certificate')
@@ -175,6 +177,7 @@ export class ReportsController {
     @CurrentUser() user: CurrentUserData,
     @Param('id') extinguisherId: string,
     @Body() body: { inspectionId?: string },
+    @Res() res: Response,
   ) {
     const tenantId = user.tenantId;
 
@@ -239,14 +242,17 @@ export class ReportsController {
       select: { url: true },
     });
 
-    const pdfUrl = await this.reports.buildComplianceCertificate({
+    const pdfBuffer = await this.reports.buildComplianceCertificate({
       tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
       extinguisher,
       inspection,
       photoUrl: recentPhoto?.url,
     });
 
-    return { pdfUrl };
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="extinguisher-${extinguisherId}-certificate.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
   }
 
   @Get('extinguisher/:id/export-excel')

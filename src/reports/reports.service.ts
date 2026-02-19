@@ -204,14 +204,14 @@ export class ReportsService {
     `;
   }
 
-  // Generate comprehensive extinguisher history PDF
+  // Generate comprehensive extinguisher history PDF - returns raw buffer for direct streaming
   async buildExtinguisherHistoryReport(params: {
     tenant: { name: string; logoUrl?: string };
     extinguisher: any;
     inspections: any[];
     photos: any[];
     partsUsage: any[];
-  }) {
+  }): Promise<Buffer> {
     const { tenant, extinguisher, inspections, photos, partsUsage } = params;
 
     const html = `
@@ -375,20 +375,19 @@ export class ReportsService {
         );
       });
 
-      const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
-      return await this.saveReport(pdfBuffer, `reports/history-${extinguisher.id}-${Date.now()}.pdf`);
+      return Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
     } finally {
       if (browser) await browser.close();
     }
   }
 
-  // Generate compliance certificate PDF
+  // Generate compliance certificate PDF - returns raw buffer for direct streaming
   async buildComplianceCertificate(params: {
     tenant: { name: string; logoUrl?: string };
     extinguisher: any;
     inspection: any;
     photoUrl?: string;
-  }) {
+  }): Promise<Buffer> {
     const { tenant, extinguisher, inspection, photoUrl } = params;
 
     console.log('Building certificate with tenant:', tenant);
@@ -535,8 +534,7 @@ export class ReportsService {
 
       console.log('Image load results:', imageLoadResults);
 
-      const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
-      return await this.saveReport(pdfBuffer, `reports/certificate-${extinguisher.id}-${Date.now()}.pdf`);
+      return Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
     } finally {
       if (browser) await browser.close();
     }
