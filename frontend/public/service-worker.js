@@ -1,16 +1,17 @@
 // Service Worker for Push Notifications
 // This service worker handles push notifications and background sync
 
-const CACHE_NAME = 'fireexcheck-v1';
+const CACHE_NAME = 'fireexcheck-v2';
 
-// Install event - cache essential assets
+// Install event - cache only static assets that never change (not index.html)
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching app shell');
+      console.log('[Service Worker] Caching static assets');
+      // Do NOT cache '/' (index.html) - it must always be fetched fresh
+      // so updated JS bundles are picked up on new deployments
       return cache.addAll([
-        '/',
         '/icon-192x192.png',
         '/badge-72x72.png',
       ]);
