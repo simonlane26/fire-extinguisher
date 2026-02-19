@@ -1,9 +1,6 @@
 // src/lib/api.ts
 import type { Extinguisher, AuthedUser, Tenant, Site, InventoryItem, PartUsage, Quote, QuoteLine } from '../types';
 
-// Railway production backend URL
-const RAILWAY_API_URL = 'https://fire-extinguisher-production.up.railway.app/api/v1';
-
 // Determine API base URL based on environment
 const getApiBase = () => {
   // In production, always use the environment variable
@@ -13,19 +10,14 @@ const getApiBase = () => {
 
   const hostname = window.location.hostname;
 
-  // If we're on the Railway domain, use relative path
-  if (hostname === 'fire-extinguisher-production.up.railway.app') {
-    return '/api/v1';
-  }
-
   // For local development with backend running on port 3000
   if ((hostname === 'localhost' || hostname === '127.0.0.1') && window.location.port === '5173') {
     return 'http://localhost:3000/api/v1';
   }
 
-  // Everything else (including Android app, other environments) -> use Railway
-  console.log('Using Railway API for hostname:', hostname);
-  return RAILWAY_API_URL;
+  // All other environments (firexcheck.com, Railway URL, Capacitor) use relative path
+  // so requests go to the same server and avoid cross-origin issues
+  return '/api/v1';
 };
 
 export const API_BASE = getApiBase();
