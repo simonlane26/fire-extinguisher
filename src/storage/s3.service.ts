@@ -10,19 +10,21 @@ export class S3Service {
   private isConfigured = false;
 
   constructor() {
-    const hasS3Config = process.env.AWS_REGION && process.env.S3_BUCKET &&
-                        process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY;
+    // Support both AWS_* and S3_* naming conventions
+    const region = process.env.AWS_REGION || process.env.S3_REGION;
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY;
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.S3_SECRET_KEY;
+    const bucket = process.env.S3_BUCKET;
+
+    const hasS3Config = region && bucket && accessKeyId && secretAccessKey;
 
     if (hasS3Config) {
       try {
         this.s3 = new S3Client({
-          region: process.env.AWS_REGION!,
-          credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
-          }
+          region,
+          credentials: { accessKeyId, secretAccessKey }
         });
-        this.bucket = process.env.S3_BUCKET!;
+        this.bucket = bucket;
         this.isConfigured = true;
         this.logger.log('✅ S3 storage configured');
       } catch (error) {
@@ -77,7 +79,7 @@ export class S3Service {
       }
 
       // Return the public S3 URL
-      const region = process.env.AWS_REGION;
+      const region = process.env.AWS_REGION || process.env.S3_REGION;
       return `https://${this.bucket}.s3.${region}.amazonaws.com/${key}`;
     } catch (error) {
       this.logger.error(`Failed to upload to S3: ${error.message}`);
