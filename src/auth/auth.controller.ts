@@ -220,7 +220,7 @@ export class AuthController {
     try {
       // Upload to S3
       console.log('🚀 Attempting S3 upload...');
-      const key = `logos/${tenantId}/${Date.now()}-${file.originalname}`;
+      const key = `tenants/${tenantId}/logos/${Date.now()}-${file.originalname}`;
       const url = await this.s3.upload(key, file.buffer, file.mimetype);
       console.log('✅ S3 upload successful:', url);
 
