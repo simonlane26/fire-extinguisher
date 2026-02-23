@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertTriangle, XCircle, TrendingUp, Calendar, Flame, Building2 } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, TrendingUp, Calendar, Flame, Building2, Wrench, ArrowRight } from 'lucide-react';
+import HintTooltip from '../components/HintTooltip';
 import { fetchExtinguishers } from '../lib/api';
 import type { Extinguisher } from '../types';
 
 type Props = {
   primaryColor?: string;
+  onNavigate?: () => void;
 };
 
 type ComplianceStats = {
@@ -36,7 +38,7 @@ type BuildingBreakdown = {
   };
 };
 
-const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#7c3aed' }) => {
+const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#7c3aed', onNavigate }) => {
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<ComplianceStats>({
@@ -158,7 +160,13 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#7c3aed' }) => {
       {/* Overall Compliance Score */}
       <div className="relative overflow-hidden bg-white rounded-2xl shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Overall Compliance Rate</h2>
+          <h2 className="text-lg font-semibold text-gray-900 inline-flex items-center gap-1">
+            Overall Compliance Rate
+            <HintTooltip
+              storageKey="compliance_rate"
+              content="Based on inspection status across all active extinguishers."
+            />
+          </h2>
           <TrendingUp className="text-green-600" size={24} />
         </div>
         <div className="flex items-end gap-2">
@@ -389,29 +397,58 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#7c3aed' }) => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <div className="flex items-start gap-3">
-          <Calendar className="text-blue-600 mt-1" size={20} />
-          <div>
-            <h3 className="font-semibold text-blue-900 mb-1">Next Steps</h3>
+      {/* Next Actions */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-100 bg-gray-50">
+          <Wrench size={16} className="text-gray-500" />
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Next Actions</h3>
+        </div>
+
+        {stats.overdue === 0 && stats.dueWithin30Days === 0 ? (
+          <div className="flex items-center gap-2 px-5 py-4 text-sm text-green-700">
+            <CheckCircle size={16} className="text-green-500 shrink-0" />
+            All extinguishers are up to date — great work!
+          </div>
+        ) : (
+          <ul className="divide-y divide-gray-100">
             {stats.overdue > 0 && (
-              <p className="text-sm text-blue-800 mb-2">
-                • <strong>{stats.overdue}</strong> extinguisher{stats.overdue !== 1 ? 's are' : ' is'} overdue for inspection - schedule immediately
-              </p>
+              <li>
+                <button
+                  type="button"
+                  onClick={onNavigate}
+                  className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-red-50 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <XCircle size={16} className="text-red-500 shrink-0" />
+                    <span className="text-sm text-gray-800">
+                      <span className="font-semibold text-red-600">{stats.overdue}</span>
+                      {' '}overdue inspection{stats.overdue !== 1 ? 's' : ''} — action required
+                    </span>
+                  </div>
+                  <ArrowRight size={14} className="text-gray-400 group-hover:text-red-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+              </li>
             )}
             {stats.dueWithin30Days > 0 && (
-              <p className="text-sm text-blue-800 mb-2">
-                • <strong>{stats.dueWithin30Days}</strong> extinguisher{stats.dueWithin30Days !== 1 ? 's need' : ' needs'} inspection within 30 days - plan ahead
-              </p>
+              <li>
+                <button
+                  type="button"
+                  onClick={onNavigate}
+                  className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-orange-50 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle size={16} className="text-orange-500 shrink-0" />
+                    <span className="text-sm text-gray-800">
+                      <span className="font-semibold text-orange-600">{stats.dueWithin30Days}</span>
+                      {' '}inspection{stats.dueWithin30Days !== 1 ? 's' : ''} due within 30 days
+                    </span>
+                  </div>
+                  <ArrowRight size={14} className="text-gray-400 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                </button>
+              </li>
             )}
-            {stats.overdue === 0 && stats.dueWithin30Days === 0 && (
-              <p className="text-sm text-blue-800">
-                ✓ All extinguishers are up to date - great work!
-              </p>
-            )}
-          </div>
-        </div>
+          </ul>
+        )}
       </div>
     </div>
   );

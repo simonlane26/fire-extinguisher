@@ -4,6 +4,7 @@ import {
   Book,
   ChevronDown,
   ChevronUp,
+  Play,
   Flame,
   QrCode,
   FileText,
@@ -319,6 +320,22 @@ export default function HelpPage() {
       {/* Getting Started Section */}
       {activeSection === 'getting-started' && (
         <div className="space-y-6">
+          {/* Demo video card */}
+          <a
+            href="https://www.loom.com/share/b6979f84f968465c91c4e1d9fb4532d4"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 p-4 bg-blue-600 hover:bg-blue-700 transition-colors rounded-xl text-white group shadow-md"
+          >
+            <div className="flex items-center justify-center w-12 h-12 bg-white/20 rounded-full shrink-0 group-hover:bg-white/30 transition-colors">
+              <Play className="w-5 h-5 text-white fill-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-base leading-tight">Watch the demo video</p>
+              <p className="text-sm text-blue-200 mt-0.5">A quick walkthrough of FireXcheck — 5 minutes</p>
+            </div>
+          </a>
+
           <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
             <h2 className="mb-4 text-2xl font-bold text-gray-900">Getting Started</h2>
             <p className="mb-6 text-gray-600">

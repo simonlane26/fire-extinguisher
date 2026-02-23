@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, MapPin, Phone, Mail, Plus, Pencil, Trash2, Users, Eye } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, Plus, Pencil, Trash2, Users, Eye, Flame } from 'lucide-react';
 import { fetchSites, createSite, updateSite, deleteSite } from '../lib/api';
 import type { Site } from '../types';
 
@@ -117,7 +117,8 @@ export default function SitesPage({ onViewSite }: Props) {
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className={`flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors
+            ${sites.length === 0 ? 'shadow-lg ring-2 ring-blue-300 ring-offset-2 font-semibold' : ''}`}
         >
           <Plus size={20} />
           Add Site
@@ -151,10 +152,21 @@ export default function SitesPage({ onViewSite }: Props) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{site.name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                      <Users size={14} />
-                      <span>{site._count?.extinguishers || 0} extinguishers</span>
-                    </div>
+                    {(site._count?.extinguishers ?? 0) > 0 ? (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                        <Users size={14} />
+                        <span>{site._count!.extinguishers} extinguishers</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onViewSite?.(site.id, site.name)}
+                        className="flex items-center gap-1.5 mt-1 text-xs text-amber-600 hover:text-amber-700 transition-colors"
+                      >
+                        <Flame size={12} />
+                        No extinguishers yet — add your first unit
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">

@@ -28,11 +28,14 @@ import {
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
+import HintTooltip from './components/HintTooltip';
+import GettingStartedPanel from './components/GettingStartedPanel';
 import AddExtinguisherModal from './components/AddExtinguisherModal';
 import EditExtinguisherModal from './components/EditExtinguisherModal';
 import ExtinguisherDetails from './components/ExtinguisherDetails';
 import SimpleInspectionForm from './components/SimpleInspectionForm';
 import { SyncStatusBadge } from './components/SyncStatusBadge';
+import FeedbackButton from './components/FeedbackButton';
 import { offlineDB } from './lib/offline/database';
 import { syncManager } from './lib/offline/syncManager';
 import SettingsPage from './pages/SettingsPage';
@@ -228,6 +231,7 @@ type KpiProps = {
   icon: React.ReactNode;
   bg: string;
   iconBg?: string;
+  hint?: React.ReactNode;
 };
 
 const KpiCard: React.FC<KpiProps> = ({
@@ -236,13 +240,16 @@ const KpiCard: React.FC<KpiProps> = ({
   icon,
   bg,
   iconBg = 'bg-white/20',
+  hint,
 }) => (
   <div
     className={`relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 shadow ring-1 ring-black/5 ${bg} text-white`}
   >
     <div className="flex items-start justify-between">
       <div>
-        <p className="text-xs sm:text-sm opacity-80">{label}</p>
+        <p className="text-xs sm:text-sm opacity-80 inline-flex items-center">
+          {label}{hint}
+        </p>
         <p className="mt-0.5 sm:mt-1 text-lg sm:text-xl md:text-2xl font-semibold">{value}</p>
       </div>
       <div className={`hidden sm:grid size-8 md:size-10 place-items-center rounded-lg md:rounded-xl ${iconBg}`}>
@@ -894,6 +901,7 @@ useEffect(() => {
 </header>
 {/* Sync Status Badge - Fixed position in bottom-right */}
       <SyncStatusBadge />
+      <FeedbackButton currentTab={activeTab} />
       <div className="p-3 sm:p-4 md:p-6 mx-auto space-y-4 sm:space-y-6 max-w-7xl">
         {/* KPI cards */}
         <section className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-4">
@@ -914,6 +922,12 @@ useEffect(() => {
             value={needs}
             icon={<AlertTriangle className="size-6" />}
             bg="bg-gradient-to-br from-amber-600 to-amber-500"
+            hint={
+              <HintTooltip
+                storageKey="kpi_needs_attention"
+                content="Extinguishers flagged as 'Needs Attention' or with a non-Active status. Address these first to stay compliant."
+              />
+            }
           />
           <KpiCard
             label="Monthly Inspections"
@@ -924,6 +938,12 @@ useEffect(() => {
             }
             icon={<Crown className="size-6" />}
             bg={planLimit.used >= planLimit.limit ? 'bg-gradient-to-br from-red-600 to-red-500' : planLimit.used >= planLimit.limit * 0.8 ? 'bg-gradient-to-br from-amber-600 to-amber-500' : 'bg-gradient-to-br from-violet-600 to-violet-500'}
+            hint={
+              <HintTooltip
+                storageKey="kpi_monthly_inspections"
+                content="Inspections logged this calendar month vs. your plan's monthly limit. The limit resets on the 1st of each month."
+              />
+            }
           />
         </section>
 
@@ -1068,6 +1088,17 @@ useEffect(() => {
         {/* Overview tab: actions + table */}
         {activeTab === 'overview' && (
           <>
+            {/* Getting Started panel */}
+            <GettingStartedPanel
+              extinguisherCount={extinguishers.length}
+              siteCount={sites.length}
+              tenantCreatedAt={tenant.createdAt}
+              monthlyInspections={monthlyInspections}
+              primaryColor={tenant.primaryColor}
+              onNavigate={(tab) => setActiveTab(tab)}
+              onAddExtinguisher={() => setOpenAdd(true)}
+            />
+
             {/* Site Filter Indicator */}
             {selectedSiteFilter && (
               <div className="flex items-center justify-between p-3 border border-blue-200 rounded-lg bg-blue-50">
@@ -1385,7 +1416,10 @@ useEffect(() => {
 
         {/* Compliance Dashboard tab */}
         {activeTab === 'compliance' && (
-          <ComplianceDashboard primaryColor={tenant.primaryColor} />
+          <ComplianceDashboard
+            primaryColor={tenant.primaryColor}
+            onNavigate={() => setActiveTab('overview')}
+          />
         )}
 
         {/* Reports tab */}

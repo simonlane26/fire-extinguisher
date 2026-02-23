@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, AlertTriangle, TrendingDown, CloudOff } from 'lucide-react';
+import { Package, Plus, Edit2, Trash2, AlertTriangle, TrendingDown, CloudOff, Bell } from 'lucide-react';
 import type { InventoryItem } from '../types';
 import {
   fetchInventoryItems,
@@ -146,7 +146,10 @@ const InventoryPage: React.FC = () => {
         <div className="p-4 border-l-4 border-orange-500 rounded-lg bg-orange-50">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={20} className="text-orange-600" />
-            <h3 className="font-semibold text-orange-900">Low Stock Alert</h3>
+            <h3 className="font-semibold text-orange-900 flex items-center gap-1.5">
+              Low Stock Alert
+              <Bell size={15} className="text-orange-500" />
+            </h3>
           </div>
           <p className="text-sm text-orange-800">
             {lowStockItems.length} item{lowStockItems.length !== 1 ? 's' : ''} below minimum stock level

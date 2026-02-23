@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Eye, Trash2, Send, CheckCircle, XCircle, Clock, FileText, Layers } from 'lucide-react';
+import HintTooltip from '../components/HintTooltip';
 import { fetchQuotes, deleteQuote, updateQuote, fetchQuoteStats } from '../lib/api';
 import { BulkQuoteDialog } from '../components/BulkQuoteDialog';
 import type { Quote, Extinguisher } from '../types';
@@ -152,14 +153,20 @@ const QuotesListPage: React.FC = () => {
             <option value="expired">Expired</option>
           </select>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowBulkQuoteDialog(true)}
-          className="flex items-center gap-2 px-4 py-2 text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors"
-        >
-          <Layers size={18} />
-          Generate Bulk Quote
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setShowBulkQuoteDialog(true)}
+            className="flex items-center gap-2 px-4 py-2 text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors"
+          >
+            <Layers size={18} />
+            Generate Bulk Quote
+          </button>
+          <HintTooltip
+            storageKey="bulk_quote"
+            content="Filter extinguishers by site, building, or condition to generate one quote covering multiple units at once."
+          />
+        </div>
       </div>
 
       {/* Bulk Quote Dialog */}

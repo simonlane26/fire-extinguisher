@@ -196,7 +196,15 @@ const ReportsPage: React.FC<Props> = ({
             >
               <Filter size={24} style={{ color: primaryColor }} />
             </div>
-            <h2 className="text-xl font-semibold">Extinguishers by Type</h2>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold">Extinguishers by Type</h2>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                  Most commonly used
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">Perfect for audits &amp; client handover</p>
+            </div>
           </div>
 
           <p className="text-gray-600 mb-4 text-sm">
