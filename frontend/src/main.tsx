@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppWithAuth from './AppWithAuth';
 import LandingPage from './pages/LandingPage';
 import PublicVerificationPage from './pages/PublicVerificationPage';
@@ -27,6 +27,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        {/* /login redirects to /app which shows LoginForm when not authenticated */}
+        <Route path="/login" element={<Navigate to="/app" replace />} />
 
         {/* Authenticated routes */}
         <Route path="/app/*" element={<AppWithAuth />} />
