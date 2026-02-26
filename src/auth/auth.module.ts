@@ -18,8 +18,8 @@ import { StorageModule } from '../storage/storage.module';
     StorageModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-      signOptions: { expiresIn: '30d' },
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '7d' },
     }),
   ],
   providers: [AuthService, JwtStrategy, JwtAuthGuard, TenantGuard],

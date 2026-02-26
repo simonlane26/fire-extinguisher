@@ -1,23 +1,23 @@
-import { IsOptional, IsString, IsDateString } from 'class-validator';
+import { IsOptional, IsString, IsDateString, MaxLength } from 'class-validator';
 
 export class CreateExtinguisherDto {
-  @IsString() location: string;
-  @IsString() building: string;
-  @IsString() type: string;
+  @IsString() @MaxLength(255) location: string;
+  @IsString() @MaxLength(255) building: string;
+  @IsString() @MaxLength(100) type: string;
 
-  @IsOptional() @IsString() externalId?: string;
-  @IsOptional() @IsString() siteId?: string;
-  @IsOptional() @IsString() floor?: string;
-  @IsOptional() @IsString() capacity?: string;
-  @IsOptional() @IsString() weight?: string;
-  @IsOptional() @IsString() manufacturer?: string;
-  @IsOptional() @IsString() model?: string;
-  @IsOptional() @IsString() serialNumber?: string;
-  @IsOptional() @IsString() status?: string;
-  @IsOptional() @IsString() condition?: string;
-  @IsOptional() @IsString() serviceType?: string;
-  @IsOptional() @IsString() inspector?: string;
-  @IsOptional() @IsString() notes?: string;
+  @IsOptional() @IsString() @MaxLength(100) externalId?: string;
+  @IsOptional() @IsString() @MaxLength(100) siteId?: string;
+  @IsOptional() @IsString() @MaxLength(50) floor?: string;
+  @IsOptional() @IsString() @MaxLength(50) capacity?: string;
+  @IsOptional() @IsString() @MaxLength(50) weight?: string;
+  @IsOptional() @IsString() @MaxLength(100) manufacturer?: string;
+  @IsOptional() @IsString() @MaxLength(100) model?: string;
+  @IsOptional() @IsString() @MaxLength(100) serialNumber?: string;
+  @IsOptional() @IsString() @MaxLength(50) status?: string;
+  @IsOptional() @IsString() @MaxLength(50) condition?: string;
+  @IsOptional() @IsString() @MaxLength(100) serviceType?: string;
+  @IsOptional() @IsString() @MaxLength(100) inspector?: string;
+  @IsOptional() @IsString() @MaxLength(2000) notes?: string;
   @IsOptional() @IsDateString() installDate?: string;
   @IsOptional() @IsDateString() expiryDate?: string;
   @IsOptional() @IsDateString() lastInspection?: string;

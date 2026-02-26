@@ -6,6 +6,17 @@ import * as path from 'path';
 import * as ExcelJS from 'exceljs';
 import { S3Service } from '../storage/s3.service';
 
+/** Escape user-controlled strings before inserting into HTML to prevent XSS */
+function escapeHtml(value: any): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 @Injectable()
 export class ReportsService {
   private readonly reportsDir = path.join(process.cwd(), 'uploads', 'reports');
@@ -159,10 +170,10 @@ export class ReportsService {
 
       return `
       <tr>
-        <td>${location} ${building ? '(' + building + ')' : ''}</td>
-        <td>${serviceType}</td>
-        <td>${findings}</td>
-        <td>${recommendations}</td>
+        <td>${escapeHtml(location)} ${building ? '(' + escapeHtml(building) + ')' : ''}</td>
+        <td>${escapeHtml(serviceType)}</td>
+        <td>${escapeHtml(findings)}</td>
+        <td>${escapeHtml(recommendations)}</td>
         <td>${serviceDates.annual}</td>
         <td>${serviceDates.extended}</td>
       </tr>`;
@@ -170,8 +181,8 @@ export class ReportsService {
 
     const photoCards = photos.map(p => `
       <div style="margin:8px; display:inline-block">
-        <img src="${p.url}" style="width:180px; height:auto; border:1px solid #ddd"/>
-        <div style="font-size:12px">${p.findings ? JSON.stringify(p.findings) : ''}</div>
+        <img src="${escapeHtml(p.url)}" style="width:180px; height:auto; border:1px solid #ddd"/>
+        <div style="font-size:12px">${p.findings ? escapeHtml(JSON.stringify(p.findings)) : ''}</div>
       </div>
     `).join('');
 
@@ -180,12 +191,12 @@ export class ReportsService {
       <body style="font-family: Arial, sans-serif; padding:24px">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
           <div>
-            <h1 style="margin:0">${tenant.name} – Service Report</h1>
+            <h1 style="margin:0">${escapeHtml(tenant.name)} – Service Report</h1>
             <p style="margin:4px 0 0 0; font-size:12px; color:#7c3aed">Powered by Firexcheck.com</p>
           </div>
-          ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height:48px"/>` : ''}
+          ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height:48px"/>` : ''}
         </div>
-        <p><strong>Date:</strong> ${visitDate} &nbsp; <strong>Technician:</strong> ${technician ?? ''}</p>
+        <p><strong>Date:</strong> ${escapeHtml(visitDate)} &nbsp; <strong>Technician:</strong> ${escapeHtml(technician ?? '')}</p>
 
         <h2>Summary</h2>
         <table border="1" cellspacing="0" cellpadding="6" width="100%" style="border-collapse:collapse">
@@ -238,11 +249,11 @@ export class ReportsService {
       <body>
         <div class="header">
           <div>
-            <h1 style="margin: 0;">${tenant.name}</h1>
+            <h1 style="margin: 0;">${escapeHtml(tenant.name)}</h1>
             <h2 style="margin: 8px 0; color: #7c3aed;">Fire Extinguisher Lifecycle Report</h2>
             <p style="margin: 0; color: #666; font-size: 12px;">Generated: ${new Date().toLocaleDateString()}</p>
           </div>
-          ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height: 60px;"/>` : ''}
+          ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height: 60px;"/>` : ''}
         </div>
 
         <div class="section">
@@ -316,10 +327,10 @@ export class ReportsService {
                 ${partsUsage.map(p => `
                   <tr>
                     <td>${new Date(p.usedAt).toLocaleDateString()}</td>
-                    <td>${p.inventoryItem.partNumber}</td>
-                    <td>${p.inventoryItem.partName}</td>
+                    <td>${escapeHtml(p.inventoryItem.partNumber)}</td>
+                    <td>${escapeHtml(p.inventoryItem.partName)}</td>
                     <td>${p.quantity}</td>
-                    <td>${p.reason || 'Routine maintenance'}</td>
+                    <td>${escapeHtml(p.reason || 'Routine maintenance')}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -333,9 +344,9 @@ export class ReportsService {
             <div class="photo-grid">
               ${photos.slice(0, 9).map(p => `
                 <div class="photo">
-                  <img src="${p.url}" />
+                  <img src="${escapeHtml(p.url)}" />
                   <p style="font-size: 12px; margin: 4px 0;">${new Date(p.createdAt).toLocaleDateString()}</p>
-                  ${p.caption ? `<p style="font-size: 11px; color: #666;">${p.caption}</p>` : ''}
+                  ${p.caption ? `<p style="font-size: 11px; color: #666;">${escapeHtml(p.caption)}</p>` : ''}
                 </div>
               `).join('')}
             </div>
@@ -414,9 +425,9 @@ export class ReportsService {
       <body>
         <div class="certificate">
           <div class="header">
-            ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height: 80px; margin-bottom: 16px;"/>` : ''}
+            ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height: 80px; margin-bottom: 16px;"/>` : ''}
             <div class="title">INSPECTION CERTIFICATE</div>
-            <div class="subtitle">${tenant.name}</div>
+            <div class="subtitle">${escapeHtml(tenant.name)}</div>
           </div>
 
           <p style="font-size: 16px; margin: 24px 0;">This certifies that the fire extinguisher described below has been inspected and tested in accordance with applicable regulations.</p>
@@ -424,19 +435,19 @@ export class ReportsService {
           <div class="content">
             <div class="info-row">
               <div class="info-label">Serial Number:</div>
-              <div>${extinguisher.serialNumber || 'N/A'}</div>
+              <div>${escapeHtml(extinguisher.serialNumber || 'N/A')}</div>
             </div>
             <div class="info-row">
               <div class="info-label">Type:</div>
-              <div>${extinguisher.type}</div>
+              <div>${escapeHtml(extinguisher.type)}</div>
             </div>
             <div class="info-row">
               <div class="info-label">Capacity:</div>
-              <div>${extinguisher.capacity || 'N/A'}</div>
+              <div>${escapeHtml(extinguisher.capacity || 'N/A')}</div>
             </div>
             <div class="info-row">
               <div class="info-label">Location:</div>
-              <div>${extinguisher.building} - ${extinguisher.location}</div>
+              <div>${escapeHtml(extinguisher.building)} - ${escapeHtml(extinguisher.location)}</div>
             </div>
             <div class="info-row">
               <div class="info-label">Inspection Date:</div>
@@ -444,15 +455,15 @@ export class ReportsService {
             </div>
             <div class="info-row">
               <div class="info-label">Service Type:</div>
-              <div>${inspection.serviceType}</div>
+              <div>${escapeHtml(inspection.serviceType)}</div>
             </div>
             <div class="info-row">
               <div class="info-label">Technician:</div>
-              <div>${inspection.technician || 'Certified Technician'}</div>
+              <div>${escapeHtml(inspection.technician || 'Certified Technician')}</div>
             </div>
             <div class="info-row">
               <div class="info-label">Condition:</div>
-              <div style="font-weight: bold; color: ${inspection.condition === 'Good' ? '#10b981' : '#ef4444'};">${inspection.condition}</div>
+              <div style="font-weight: bold; color: ${inspection.condition === 'Good' ? '#10b981' : '#ef4444'};">${escapeHtml(inspection.condition)}</div>
             </div>
             <div class="info-row">
               <div class="info-label">Next Service Due:</div>
@@ -461,14 +472,14 @@ export class ReportsService {
             ${inspection.notes ? `
               <div class="info-row">
                 <div class="info-label">Notes:</div>
-                <div>${inspection.notes}</div>
+                <div>${escapeHtml(inspection.notes)}</div>
               </div>
             ` : ''}
           </div>
 
           <div style="margin-top: 48px;">
             <div class="signature">
-              <div style="font-weight: bold;">${inspection.technician || 'Certified Technician'}</div>
+              <div style="font-weight: bold;">${escapeHtml(inspection.technician || 'Certified Technician')}</div>
               <div style="font-size: 12px; color: #666;">Authorized Inspector</div>
             </div>
           </div>
@@ -673,10 +684,10 @@ export class ReportsService {
         <div class="header">
           <div>
             <h1>User Management Report</h1>
-            <p style="margin: 8px 0 0 0; color: #666;">${tenant.name}</p>
+            <p style="margin: 8px 0 0 0; color: #666;">${escapeHtml(tenant.name)}</p>
             <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">Generated: ${new Date().toLocaleDateString()}</p>
           </div>
-          ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height: 60px;"/>` : ''}
+          ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height: 60px;"/>` : ''}
         </div>
 
         <div class="summary">
@@ -714,11 +725,11 @@ export class ReportsService {
             ${users.map(u => `
               <tr>
                 <td>
-                  <strong>${u.name}</strong><br/>
-                  <span style="font-size: 11px; color: #666;">${u.email}</span>
+                  <strong>${escapeHtml(u.name)}</strong><br/>
+                  <span style="font-size: 11px; color: #666;">${escapeHtml(u.email)}</span>
                 </td>
-                <td><span class="badge badge-${u.role.toLowerCase()}">${u.role}</span></td>
-                <td><span class="badge ${u.status === 'active' ? 'badge-active' : 'badge-inactive'}">${u.status}</span></td>
+                <td><span class="badge badge-${escapeHtml(u.role.toLowerCase())}">${escapeHtml(u.role)}</span></td>
+                <td><span class="badge ${u.status === 'active' ? 'badge-active' : 'badge-inactive'}">${escapeHtml(u.status)}</span></td>
                 <td style="text-align: center;">${u.activity?.totalInspections || 0}</td>
                 <td style="text-align: center;">${u.activity?.totalRepairs || 0}</td>
                 <td style="text-align: center;">${u.activity?.recentInspections || 0}</td>
@@ -743,7 +754,7 @@ export class ReportsService {
           <tbody>
             ${users.map(u => `
               <tr>
-                <td>${u.name}</td>
+                <td>${escapeHtml(u.name)}</td>
                 <td style="text-align: center;">${u.activity?.totalInspections || 0}</td>
                 <td style="text-align: center;">${u.activity?.totalServiceJobs || 0}</td>
                 <td style="text-align: center;">${u.activity?.totalRepairs || 0}</td>
@@ -835,16 +846,16 @@ export class ReportsService {
         <div class="header">
           <div>
             <h1>Extinguishers by Type Report</h1>
-            <p style="margin: 8px 0 0 0; color: #666;">${tenant.name}</p>
+            <p style="margin: 8px 0 0 0; color: #666;">${escapeHtml(tenant.name)}</p>
             <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">
               ${[
-                filterType !== 'all' ? `Type: ${filterType}` : null,
-                filterBuilding !== 'all' ? `Building: ${filterBuilding}` : null,
-                filterStatus !== 'all' ? `Status: ${filterStatus}` : null,
+                filterType !== 'all' ? `Type: ${escapeHtml(filterType)}` : null,
+                filterBuilding !== 'all' ? `Building: ${escapeHtml(filterBuilding)}` : null,
+                filterStatus !== 'all' ? `Status: ${escapeHtml(filterStatus)}` : null,
               ].filter(Boolean).join(' | ') || 'All Extinguishers'} | Generated: ${new Date().toLocaleDateString()}
             </p>
           </div>
-          ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height: 60px;"/>` : ''}
+          ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height: 60px;"/>` : ''}
         </div>
 
         <div class="summary">
@@ -879,12 +890,12 @@ export class ReportsService {
               <tbody>
                 ${groupedByType[type].map(ext => `
                   <tr>
-                    <td>${ext.serialNumber || 'N/A'}</td>
-                    <td>${ext.location}</td>
-                    <td>${ext.building}</td>
-                    <td>${ext.capacity || 'N/A'}</td>
-                    <td><span class="badge ${ext.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${ext.status}</span></td>
-                    <td><span class="badge badge-${ext.condition?.toLowerCase() || 'good'}">${ext.condition || 'Good'}</span></td>
+                    <td>${escapeHtml(ext.serialNumber || 'N/A')}</td>
+                    <td>${escapeHtml(ext.location)}</td>
+                    <td>${escapeHtml(ext.building)}</td>
+                    <td>${escapeHtml(ext.capacity || 'N/A')}</td>
+                    <td><span class="badge ${ext.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${escapeHtml(ext.status)}</span></td>
+                    <td><span class="badge badge-${escapeHtml(ext.condition?.toLowerCase() || 'good')}">${escapeHtml(ext.condition || 'Good')}</span></td>
                     <td>${ext.lastMaintenance ? new Date(ext.lastMaintenance).toLocaleDateString() : ext.lastInspection ? new Date(ext.lastInspection).toLocaleDateString() : 'N/A'}</td>
                     <td>${ext.nextMaintenance ? new Date(ext.nextMaintenance).toLocaleDateString() : ext.nextInspection ? new Date(ext.nextInspection).toLocaleDateString() : 'N/A'}</td>
                   </tr>
@@ -973,12 +984,12 @@ export class ReportsService {
         <div class="header">
           <div>
             <h1>Extinguishers by Site Report</h1>
-            <p style="margin: 8px 0 0 0; color: #666;">${tenant.name}</p>
+            <p style="margin: 8px 0 0 0; color: #666;">${escapeHtml(tenant.name)}</p>
             <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">
-              ${filterStatus !== 'all' ? `Status: ${filterStatus} | ` : ''}Generated: ${new Date().toLocaleDateString()}
+              ${filterStatus !== 'all' ? `Status: ${escapeHtml(filterStatus)} | ` : ''}Generated: ${new Date().toLocaleDateString()}
             </p>
           </div>
-          ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height: 60px;"/>` : ''}
+          ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height: 60px;"/>` : ''}
         </div>
 
         <div class="summary">
@@ -998,7 +1009,7 @@ export class ReportsService {
 
         ${Object.keys(groupedBySite).sort().map(siteName => `
           <div class="site-section">
-            <h2>${siteName} (${groupedBySite[siteName].length} unit${groupedBySite[siteName].length !== 1 ? 's' : ''})</h2>
+            <h2>${escapeHtml(siteName)} (${groupedBySite[siteName].length} unit${groupedBySite[siteName].length !== 1 ? 's' : ''})</h2>
             <table>
               <thead>
                 <tr>
@@ -1016,13 +1027,13 @@ export class ReportsService {
               <tbody>
                 ${groupedBySite[siteName].map((ext: any) => `
                   <tr>
-                    <td>${ext.type}</td>
-                    <td>${ext.location}</td>
-                    <td>${ext.building}</td>
-                    <td>${ext.capacity || 'N/A'}</td>
-                    <td>${ext.serialNumber || 'N/A'}</td>
-                    <td><span class="badge ${ext.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${ext.status}</span></td>
-                    <td><span class="badge badge-${ext.condition?.toLowerCase() || 'good'}">${ext.condition || 'Good'}</span></td>
+                    <td>${escapeHtml(ext.type)}</td>
+                    <td>${escapeHtml(ext.location)}</td>
+                    <td>${escapeHtml(ext.building)}</td>
+                    <td>${escapeHtml(ext.capacity || 'N/A')}</td>
+                    <td>${escapeHtml(ext.serialNumber || 'N/A')}</td>
+                    <td><span class="badge ${ext.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${escapeHtml(ext.status)}</span></td>
+                    <td><span class="badge badge-${escapeHtml(ext.condition?.toLowerCase() || 'good')}">${escapeHtml(ext.condition || 'Good')}</span></td>
                     <td>${ext.lastMaintenance ? new Date(ext.lastMaintenance).toLocaleDateString() : ext.lastInspection ? new Date(ext.lastInspection).toLocaleDateString() : 'N/A'}</td>
                     <td>${ext.nextMaintenance ? new Date(ext.nextMaintenance).toLocaleDateString() : ext.nextInspection ? new Date(ext.nextInspection).toLocaleDateString() : 'N/A'}</td>
                   </tr>

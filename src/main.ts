@@ -7,9 +7,16 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as bodyParser from 'body-parser';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+
+  // Fail fast if required secrets are missing
+  if (!process.env.JWT_SECRET) {
+    console.error('❌ JWT_SECRET environment variable is required but not set. Exiting.');
+    process.exit(1);
+  }
 
   // Ensure database schema is up to date
   try {
@@ -39,22 +46,12 @@ async function bootstrap() {
     logger.warn('⚠️  Database schema check failed:', error.message);
   }
 
-  // Debug: Log environment variables (excluding sensitive ones)
-  console.log('🔍 Environment check:');
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
-  console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
-  console.log('ALLOWED_ORIGINS:', process.env.ALLOWED_ORIGINS || 'NOT SET');
-  console.log('SMTP_HOST:', process.env.SMTP_HOST ? `${process.env.SMTP_HOST.substring(0, 10)}...` : 'NOT SET');
-  console.log('SMTP_PORT:', process.env.SMTP_PORT || 'NOT SET');
-  console.log('S3_REGION:', process.env.S3_REGION || 'NOT SET');
-  console.log('S3_BUCKET:', process.env.S3_BUCKET ? `${process.env.S3_BUCKET.substring(0, 10)}...` : 'NOT SET');
-  console.log('S3_ACCESS_KEY:', process.env.S3_ACCESS_KEY ? 'SET' : 'NOT SET');
-  console.log('S3_SECRET_KEY:', process.env.S3_SECRET_KEY ? 'SET' : 'NOT SET');
-  console.log('AWS_REGION:', process.env.AWS_REGION || 'NOT SET');
-  console.log('AWS_ACCESS_KEY_ID:', process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET');
-  console.log('AWS_SECRET_ACCESS_KEY:', process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET');
-  console.log('All env keys:', Object.keys(process.env).filter(k => k.includes('SMTP') || k.includes('S3') || k.includes('AWS') || k.includes('VAPID')).join(', '));
+  // Log environment status (values only indicate SET/NOT SET, never log actual secrets)
+  logger.log(`🔍 Environment: NODE_ENV=${process.env.NODE_ENV || 'development'}`);
+  logger.log(`DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
+  logger.log(`JWT_SECRET: SET`); // already checked above
+  logger.log(`SMTP_HOST: ${process.env.SMTP_HOST ? 'SET' : 'NOT SET'}`);
+  logger.log(`S3_BUCKET: ${process.env.S3_BUCKET ? 'SET' : 'NOT SET'}`);
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
@@ -111,6 +108,12 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
   });
+
+  // Security headers (helmet) — disable CSP since frontend is served separately via nginx
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }));
 
   // Global Exception Filter for error handling
   app.useGlobalFilters(new AllExceptionsFilter());

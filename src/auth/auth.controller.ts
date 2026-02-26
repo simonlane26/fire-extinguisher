@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Body, UseGuards, Patch, Param, UseInterceptors, UploadedFile, BadRequestException, PayloadTooLargeException, ForbiddenException, Res, StreamableFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -11,6 +12,22 @@ import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../storage/s3.service';
 import * as fs from 'fs';
 import * as path from 'path';
+import { randomBytes } from 'crypto';
+
+// SSRF protection: only allow HTTPS URLs or relative paths for logo
+const ALLOWED_LOGO_PROTOCOLS = ['https:'];
+const PRIVATE_IP_PATTERN = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1)/i;
+function isAllowedLogoUrl(url: string): boolean {
+  if (url.startsWith('/')) return true; // relative path is fine
+  try {
+    const parsed = new URL(url);
+    if (!ALLOWED_LOGO_PROTOCOLS.includes(parsed.protocol)) return false;
+    if (PRIVATE_IP_PATTERN.test(parsed.hostname)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const MAX_LOGO_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -31,6 +48,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -54,6 +72,7 @@ export class AuthController {
   // ==================== PUBLIC SIGNUP ====================
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 signups per minute
   @Post('signup')
   async signup(@Body() body: {
     companyName: string;
@@ -74,6 +93,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 resends per minute
   @Post('resend-verification')
   async resendVerification(@Body('email') email: string) {
     return this.authService.resendVerificationEmail(email);
@@ -82,6 +102,7 @@ export class AuthController {
   // ==================== PASSWORD RESET ====================
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 resets per minute
   @Post('forgot-password')
   async forgotPassword(@Body('email') email: string) {
     return this.authService.requestPasswordReset(email);
@@ -101,6 +122,19 @@ export class AuthController {
     @CurrentUser() user: CurrentUserData,
     @Body('role') role: string,
   ) {
+    // Only admins and super_admins can change roles
+    if (!['admin', 'super_admin'].includes(user.role)) {
+      throw new ForbiddenException('Insufficient permissions to change roles');
+    }
+    // Validate target role
+    const validRoles = ['super_admin', 'admin', 'manager', 'inspector', 'viewer'];
+    if (!validRoles.includes(role)) {
+      throw new BadRequestException('Invalid role');
+    }
+    // Admins cannot promote to super_admin
+    if (user.role === 'admin' && role === 'super_admin') {
+      throw new ForbiddenException('Admins cannot assign the super_admin role');
+    }
     // Update user's role in the database
     const updatedUser = await this.prisma.user.update({
       where: { id: user.id },
@@ -296,8 +330,8 @@ export class AuthController {
       throw new BadRequestException('Email already in use');
     }
 
-    // Create a temporary password (user should reset it via email)
-    const tempPassword = Math.random().toString(36).slice(-12);
+    // Create a cryptographically secure temporary password
+    const tempPassword = randomBytes(16).toString('hex');
     const bcrypt = require('bcrypt');
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
@@ -443,6 +477,11 @@ export class AuthController {
 
     if (!tenant?.logoUrl) {
       throw new BadRequestException('Logo not found');
+    }
+
+    // SSRF protection: validate URL before fetching
+    if (!isAllowedLogoUrl(tenant.logoUrl)) {
+      throw new BadRequestException('Invalid logo URL');
     }
 
     try {
