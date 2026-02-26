@@ -469,6 +469,55 @@ export class ReportsController {
     res.send(pdfBuffer);
   }
 
+  // Extinguishers by Site Report
+  @Get('extinguishers/by-site')
+  async generateExtinguishersBySiteReport(
+    @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
+    @Query('siteId') siteId?: string,
+    @Query('status') status?: string,
+  ) {
+    const tenantId = user.tenantId;
+
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+    });
+
+    const whereClause: any = { tenantId };
+    if (siteId && siteId !== 'all') {
+      whereClause.siteId = siteId;
+    }
+    if (status && status !== 'all') {
+      whereClause.status = status;
+    }
+
+    const extinguishers = await this.prisma.extinguisher.findMany({
+      where: whereClause,
+      include: { site: true },
+      orderBy: [{ site: { name: 'asc' } }, { location: 'asc' }],
+    });
+
+    const groupedBySite = extinguishers.reduce((acc, ext) => {
+      const key = ext.site?.name || 'No Site Assigned';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(ext);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const pdfBuffer = await this.reports.buildExtinguishersBySiteReport({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      extinguishers,
+      groupedBySite,
+      filterSiteId: siteId || 'all',
+      filterStatus: status || 'all',
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="extinguishers-by-site-report.pdf"');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  }
+
   // Extinguishers by Type Report
   @Get('extinguishers/by-type')
   async generateExtinguishersByTypeReport(

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Filter } from 'lucide-react';
-import { getAuthHeaders, fetchExtinguishers } from '../lib/api';
+import { FileText, Users, Filter, MapPin } from 'lucide-react';
+import { getAuthHeaders, fetchExtinguishers, fetchSites } from '../lib/api';
+import type { Site } from '../types';
 
 // Determine API base URL based on environment
 const getApiBase = () => {
@@ -40,15 +41,18 @@ const ReportsPage: React.FC<Props> = ({
 }) => {
   const [generatingUsers, setGeneratingUsers] = useState(false);
   const [generatingByType, setGeneratingByType] = useState(false);
+  const [generatingBySite, setGeneratingBySite] = useState(false);
   const [selectedType, setSelectedType] = useState<string>(typeFilter);
   const [selectedUser, setSelectedUser] = useState<string>('all');
+  const [selectedSite, setSelectedSite] = useState<string>('all');
   const [extinguisherTypes, setExtinguisherTypes] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
 
   useEffect(() => {
-    // Fetch available extinguisher types and users
     fetchExtinguisherTypes();
     fetchUsers();
+    fetchSites().then(setSites).catch(() => {});
   }, []);
 
   const fetchExtinguisherTypes = async () => {
@@ -129,6 +133,25 @@ const ReportsPage: React.FC<Props> = ({
       alert(error?.message || 'Failed to generate extinguishers report');
     } finally {
       setGeneratingByType(false);
+    }
+  };
+
+  const generateExtinguishersBySiteReport = async () => {
+    try {
+      setGeneratingBySite(true);
+      const params = new URLSearchParams();
+      if (selectedSite !== 'all') params.append('siteId', selectedSite);
+      const queryString = params.toString();
+      const url = `${API_BASE}/reports/extinguishers/by-site${queryString ? `?${queryString}` : ''}`;
+      const res = await fetch(url, { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Failed to generate site report');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+    } catch (error: any) {
+      alert(error?.message || 'Failed to generate site report');
+    } finally {
+      setGeneratingBySite(false);
     }
   };
 
@@ -260,6 +283,51 @@ const ReportsPage: React.FC<Props> = ({
           >
             <FileText size={16} />
             {generatingByType ? 'Generating...' : 'Generate Type Report'}
+          </button>
+        </div>
+
+        {/* Extinguishers by Site Report */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 rounded-lg" style={{ backgroundColor: `${primaryColor}20` }}>
+              <MapPin size={24} style={{ color: primaryColor }} />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">Extinguishers by Site</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Full breakdown per location</p>
+            </div>
+          </div>
+
+          <p className="text-gray-600 mb-4 text-sm">
+            Generate a report grouped by site, showing all extinguishers at each location with service status.
+          </p>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filter by Site
+            </label>
+            <select
+              value={selectedSite}
+              onChange={(e) => setSelectedSite(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2"
+              aria-label="Filter by site"
+            >
+              <option value="all">All Sites</option>
+              {sites.map(site => (
+                <option key={site.id} value={site.id}>{site.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="button"
+            onClick={generateExtinguishersBySiteReport}
+            disabled={generatingBySite}
+            className="w-full px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-60 transition-opacity flex items-center justify-center gap-2"
+            style={{ backgroundColor: primaryColor }}
+          >
+            <FileText size={16} />
+            {generatingBySite ? 'Generating...' : 'Generate Site Report'}
           </button>
         </div>
       </div>

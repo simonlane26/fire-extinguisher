@@ -933,4 +933,141 @@ export class ReportsService {
       if (browser) await browser.close();
     }
   }
+
+  async buildExtinguishersBySiteReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    extinguishers: any[];
+    groupedBySite: Record<string, any[]>;
+    filterSiteId?: string;
+    filterStatus?: string;
+  }): Promise<Buffer> {
+    const { tenant, extinguishers, groupedBySite, filterStatus = 'all' } = params;
+
+    const html = `
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 24px; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #dc2626; padding-bottom: 16px; }
+          h1 { margin: 0; color: #dc2626; }
+          .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 24px 0; }
+          .summary-card { background: #f3f4f6; padding: 16px; border-radius: 8px; text-align: center; }
+          .summary-card .number { font-size: 28px; font-weight: bold; color: #dc2626; }
+          .summary-card .label { font-size: 12px; color: #666; margin-top: 4px; }
+          .site-section { margin: 32px 0; page-break-inside: avoid; }
+          .site-section h2 { color: #dc2626; border-bottom: 2px solid #dc2626; padding-bottom: 8px; }
+          table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+          th { background: #dc2626; color: white; padding: 10px; text-align: left; font-size: 13px; }
+          td { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+          .badge-active { background: #10b981; color: white; }
+          .badge-inactive { background: #ef4444; color: white; }
+          .badge-good { background: #10b981; color: white; }
+          .badge-fair { background: #f59e0b; color: white; }
+          .badge-poor { background: #ef4444; color: white; }
+          .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 12px; color: #777; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1>Extinguishers by Site Report</h1>
+            <p style="margin: 8px 0 0 0; color: #666;">${tenant.name}</p>
+            <p style="margin: 4px 0 0 0; color: #999; font-size: 12px;">
+              ${filterStatus !== 'all' ? `Status: ${filterStatus} | ` : ''}Generated: ${new Date().toLocaleDateString()}
+            </p>
+          </div>
+          ${tenant.logoUrl ? `<img src="${tenant.logoUrl}" style="height: 60px;"/>` : ''}
+        </div>
+
+        <div class="summary">
+          <div class="summary-card">
+            <div class="number">${extinguishers.length}</div>
+            <div class="label">Total Units</div>
+          </div>
+          <div class="summary-card">
+            <div class="number">${Object.keys(groupedBySite).length}</div>
+            <div class="label">Sites</div>
+          </div>
+          <div class="summary-card">
+            <div class="number">${extinguishers.filter((e: any) => e.status === 'Active').length}</div>
+            <div class="label">Active</div>
+          </div>
+        </div>
+
+        ${Object.keys(groupedBySite).sort().map(siteName => `
+          <div class="site-section">
+            <h2>${siteName} (${groupedBySite[siteName].length} unit${groupedBySite[siteName].length !== 1 ? 's' : ''})</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Location</th>
+                  <th>Building</th>
+                  <th>Capacity</th>
+                  <th>Serial #</th>
+                  <th>Status</th>
+                  <th>Condition</th>
+                  <th>Last Service</th>
+                  <th>Next Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${groupedBySite[siteName].map((ext: any) => `
+                  <tr>
+                    <td>${ext.type}</td>
+                    <td>${ext.location}</td>
+                    <td>${ext.building}</td>
+                    <td>${ext.capacity || 'N/A'}</td>
+                    <td>${ext.serialNumber || 'N/A'}</td>
+                    <td><span class="badge ${ext.status === 'Active' ? 'badge-active' : 'badge-inactive'}">${ext.status}</span></td>
+                    <td><span class="badge badge-${ext.condition?.toLowerCase() || 'good'}">${ext.condition || 'Good'}</span></td>
+                    <td>${ext.lastMaintenance ? new Date(ext.lastMaintenance).toLocaleDateString() : ext.lastInspection ? new Date(ext.lastInspection).toLocaleDateString() : 'N/A'}</td>
+                    <td>${ext.nextMaintenance ? new Date(ext.nextMaintenance).toLocaleDateString() : ext.nextInspection ? new Date(ext.nextInspection).toLocaleDateString() : 'N/A'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `).join('')}
+
+        <div class="footer">
+          <p>Generated with Firexcheck.com - Professional Fire Safety Management</p>
+          <p>Report ID: ${Date.now()} | Generated: ${new Date().toISOString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    let browser: Browser | undefined;
+    try {
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+
+      await page.evaluate(() => {
+        return Promise.all(
+          Array.from(document.images)
+            .filter(img => !img.complete)
+            .map(img => new Promise(resolve => {
+              img.addEventListener('load', resolve);
+              img.addEventListener('error', resolve);
+              setTimeout(resolve, 5000);
+            }))
+        );
+      });
+
+      const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true, landscape: true }));
+      return pdfBuffer;
+    } finally {
+      if (browser) await browser.close();
+    }
+  }
 }

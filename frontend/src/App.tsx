@@ -1536,6 +1536,10 @@ useEffect(() => {
       {showSimpleForm && (
         <SimpleInspectionForm
           onClose={() => setShowSimpleForm(false)}
+          onSave={async () => {
+            const refreshed = await fetchExtinguishers();
+            setExtinguishers(refreshed);
+          }}
           primaryColor={tenant.primaryColor}
           siteId={siteFilter !== 'all' ? siteFilter : undefined}
           siteName={selectedSiteFilter?.name}

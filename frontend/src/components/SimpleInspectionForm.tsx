@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Save, X } from 'lucide-react';
 import type { Extinguisher } from '../types';
+import { addExtinguisher } from '../lib/api';
 
 type SimpleExtinguisherRow = {
   number: number;
@@ -17,6 +18,7 @@ type SimpleExtinguisherRow = {
 
 type Props = {
   onClose: () => void;
+  onSave?: () => void;
   primaryColor?: string;
   siteId?: string;
   siteName?: string;
@@ -67,6 +69,7 @@ const SERVICE_TYPES = [
 
 const SimpleInspectionForm: React.FC<Props> = ({
   onClose,
+  onSave,
   primaryColor = '#7c3aed',
   siteId,
   siteName,
@@ -147,18 +150,26 @@ const SimpleInspectionForm: React.FC<Props> = ({
 
     try {
       setSaving(true);
+      const today = new Date().toISOString().split('T')[0];
 
-      // For now, we'll just log the data
-      // In a real implementation, you'd create/update extinguishers via API
-      console.log('Simple inspection data:', {
-        siteId,
-        siteName,
-        rows,
-      });
+      for (const row of rows) {
+        const payload: Partial<Extinguisher> = {
+          type: row.type,
+          capacity: row.size,
+          location: row.location,
+          building: siteName || row.location,
+          serviceType: row.serviceType,
+          status: 'Active',
+          condition: row.checked ? 'Good' : 'Fair',
+          lastInspection: today,
+          expiryDate: `${row.endOfLife}-12-31`,
+          ...(row.nextDischargeTest ? { nextMaintenance: row.nextDischargeTest } : {}),
+          ...(siteId ? { siteId } : {}),
+        };
+        await addExtinguisher(payload);
+      }
 
-      // Show success message
-      alert(`Inspection form saved successfully!\n\n${rows.length} extinguisher${rows.length !== 1 ? 's' : ''} recorded.`);
-
+      onSave?.();
       onClose();
     } catch (err: any) {
       setError(err?.message ?? 'Failed to save inspection');
