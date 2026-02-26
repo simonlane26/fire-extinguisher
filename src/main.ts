@@ -12,8 +12,14 @@ import helmet from 'helmet';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
+  // Diagnostic: show which env vars are present (names only, no values)
+  const jwtSecret = process.env.JWT_SECRET?.trim();
+  console.log(`[Diagnostic] JWT_SECRET defined: ${process.env.JWT_SECRET !== undefined}, length after trim: ${jwtSecret?.length ?? 0}`);
+  console.log(`[Diagnostic] DATABASE_URL defined: ${process.env.DATABASE_URL !== undefined}`);
+  console.log(`[Diagnostic] NODE_ENV: ${process.env.NODE_ENV}`);
+
   // Fail fast if required secrets are missing
-  if (!process.env.JWT_SECRET) {
+  if (!jwtSecret) {
     console.error('❌ JWT_SECRET environment variable is required but not set. Exiting.');
     process.exit(1);
   }
