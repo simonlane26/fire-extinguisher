@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Cloud,
   CloudOff,
+  CalendarDays,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
@@ -47,6 +48,7 @@ import InventoryPage from './pages/InventoryPage';
 import HelpPage from './pages/HelpPage';
 import ReportsPage from './pages/ReportsPage';
 import ComplianceDashboard from './pages/ComplianceDashboard';
+import CalendarPage from './pages/CalendarPage';
 import QuotesListPage from './pages/QuotesListPage';
 import QuoteCreatePage from './pages/QuoteCreatePage';
 import QuoteDetailPage from './pages/QuoteDetailPage';
@@ -269,7 +271,7 @@ const FireExtinguisherApp: React.FC = () => {
   const { currentUser, setCurrentUser, hasPermission, logout } = actx;
 
   const [activeTab, setActiveTab] =
-    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'reports' | 'help' | 'quotes'>('overview');
+    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'calendar' | 'reports' | 'help' | 'quotes'>('overview');
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<{ id: string; name: string } | null>(null);
 
   // Extinguishers state (seed with demo; will be replaced by API load)
@@ -1039,6 +1041,15 @@ useEffect(() => {
             </TabButton>
 
             <TabButton
+              active={activeTab === 'calendar'}
+              onClick={() => setActiveTab('calendar')}
+              primaryColor={tenant.primaryColor}
+            >
+              <CalendarDays size={16} />
+              <span>Calendar</span>
+            </TabButton>
+
+            <TabButton
               active={activeTab === 'reports'}
               onClick={() => setActiveTab('reports')}
               primaryColor={tenant.primaryColor}
@@ -1423,6 +1434,9 @@ useEffect(() => {
             onNavigate={() => setActiveTab('overview')}
           />
         )}
+
+        {/* Calendar tab */}
+        {activeTab === 'calendar' && <CalendarPage />}
 
         {/* Reports tab */}
         {activeTab === 'reports' && (
