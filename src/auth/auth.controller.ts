@@ -166,8 +166,11 @@ export class AuthController {
       primaryColor?: string;
       secondaryColor?: string;
       logoUrl?: string;
+      stockManagementEnabled?: boolean;
     },
   ) {
+    const isAdmin = ['admin', 'super_admin'].includes(user.role);
+
     // Update tenant in the database
     const updatedTenant = await this.prisma.tenant.update({
       where: { id: user.tenantId },
@@ -178,6 +181,8 @@ export class AuthController {
         ...(body.primaryColor !== undefined && { primaryColor: body.primaryColor }),
         ...(body.secondaryColor !== undefined && { secondaryColor: body.secondaryColor }),
         ...(body.logoUrl !== undefined && { logoUrl: body.logoUrl }),
+        // Only admins can change feature flags
+        ...(isAdmin && body.stockManagementEnabled !== undefined && { stockManagementEnabled: body.stockManagementEnabled }),
       },
     });
 

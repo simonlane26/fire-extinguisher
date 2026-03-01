@@ -26,18 +26,15 @@ export class ExtinguishersService {
 
     const extinguisher = await this.prisma.extinguisher.create({ data });
 
-    // If this is a commission service, reduce extinguisher stock
-    console.log(`\nExtinguisher created with serviceType: "${data.serviceType}", type: "${data.type}"`);
+    // If this is a commission service, reduce extinguisher stock (only if tenant has stock management enabled)
     if (data.serviceType === 'Commission Service' && data.type) {
-      console.log('✓ Conditions met for stock reduction - calling reduceExtinguisherStock()');
-      await this.reduceExtinguisherStock(tenantId, data.type, data.inspector);
-    } else {
-      console.log('✗ Stock reduction skipped:', {
-        isCommissionService: data.serviceType === 'Commission Service',
-        hasType: !!data.type,
-        serviceType: data.serviceType,
-        type: data.type,
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { stockManagementEnabled: true },
       });
+      if (tenant?.stockManagementEnabled !== false) {
+        await this.reduceExtinguisherStock(tenantId, data.type, data.inspector);
+      }
     }
 
     return extinguisher;

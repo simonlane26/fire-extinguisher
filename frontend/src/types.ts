@@ -16,6 +16,7 @@ export type Tenant = {
   primaryColor: string; secondaryColor: string; contactEmail?: string|null;
   subscriptionPlan: 'trial'|'starter'|'professional'|'enterprise';
   subscriptionStatus: string; createdAt: string;
+  stockManagementEnabled: boolean;
 };
 
 export type Site = {

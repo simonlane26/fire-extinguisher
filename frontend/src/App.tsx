@@ -967,14 +967,16 @@ useEffect(() => {
               <span>Sites</span>
             </TabButton>
 
-            <TabButton
-              active={activeTab === 'stock'}
-              onClick={() => setActiveTab('stock')}
-              primaryColor={tenant.primaryColor}
-            >
-              <Package size={16} />
-              <span>Stock</span>
-            </TabButton>
+            {tenant.stockManagementEnabled !== false && (
+              <TabButton
+                active={activeTab === 'stock'}
+                onClick={() => setActiveTab('stock')}
+                primaryColor={tenant.primaryColor}
+              >
+                <Package size={16} />
+                <span>Stock</span>
+              </TabButton>
+            )}
 
             <TabButton
               active={activeTab === 'quotes'}
@@ -1067,7 +1069,7 @@ useEffect(() => {
         )}
 
         {/* Stock tab */}
-        {activeTab === 'stock' && <InventoryPage />}
+        {activeTab === 'stock' && tenant.stockManagementEnabled !== false && <InventoryPage />}
 
         {/* Quotes tab */}
         {activeTab === 'quotes' && <QuotesListPage />}
@@ -1411,7 +1413,7 @@ useEffect(() => {
 
         {/* Settings tab */}
         {activeTab === 'settings' && hasPermission('MANAGE_SETTINGS') && (
-          <SettingsPage tenant={tenant} updateTenant={updateTenant} />
+          <SettingsPage tenant={tenant} updateTenant={updateTenant} userRole={currentUser.role} />
         )}
 
         {/* Compliance Dashboard tab */}

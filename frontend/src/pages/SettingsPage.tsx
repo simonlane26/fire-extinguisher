@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { Tenant } from '../types';
+import type { RoleKey, Tenant } from '../types';
 import { extractAverageColor } from '../utils/extractAccent';
 import { Upload, X, Image as ImageIcon, Palette } from 'lucide-react';
 import NotificationSettings from '../components/NotificationSettings';
@@ -8,6 +8,7 @@ import { uploadLogo } from '../lib/api';
 type Props = {
   tenant: Tenant;
   updateTenant: (u: Partial<Tenant>) => void;
+  userRole: RoleKey;
 };
 
 const MAX_MB = 2;
@@ -35,7 +36,8 @@ const looksLikeDemo = (name?: string | null) =>
   name.trim().length === 0 ||
   ['demo', 'demo company', 'company name'].includes(name.trim().toLowerCase());
 
-const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
+const SettingsPage: React.FC<Props> = ({ tenant, updateTenant, userRole }) => {
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
   const [companyName, setCompanyName] = useState(tenant.companyName);
   const [subdomain, setSubdomain] = useState(tenant.subdomain);
   const [contactEmail, setContactEmail] = useState(tenant.contactEmail ?? '');
@@ -381,6 +383,40 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant }) => {
           </p>
           <NotificationSettings />
         </section>
+
+        {/* Feature Toggles — admin/super_admin only */}
+        {isAdmin && (
+          <section className="p-4 bg-white border rounded-xl">
+            <h2 className="mb-2 text-lg font-semibold">Features</h2>
+            <p className="mb-4 text-sm text-gray-500">
+              Enable or disable optional modules for your organisation.
+            </p>
+            <div className="flex items-center justify-between py-3 border-b last:border-b-0">
+              <div>
+                <div className="text-sm font-medium text-gray-900">Stock Management</div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  Track parts inventory and auto-deduct stock on commission. QR scanning is unaffected when off.
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={tenant.stockManagementEnabled ? 'true' : 'false'}
+                aria-label="Toggle stock management"
+                onClick={() => updateTenant({ stockManagementEnabled: !tenant.stockManagementEnabled })}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                  tenant.stockManagementEnabled ? 'bg-indigo-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    tenant.stockManagementEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </section>
+        )}
       </form>
     </div>
   );

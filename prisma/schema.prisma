@@ -20,10 +20,11 @@ model Tenant {
   contactEmail         String?
   stripeCustomerId     String?           @unique
   stripeSubscriptionId String?           @unique
-  subscriptionPlan     String            @default("trial")
-  subscriptionStatus   String            @default("trial")
-  trialEndsAt          DateTime?
-  createdAt            DateTime          @default(now())
+  subscriptionPlan        String            @default("trial")
+  subscriptionStatus      String            @default("trial")
+  trialEndsAt             DateTime?
+  stockManagementEnabled  Boolean           @default(true)
+  createdAt               DateTime          @default(now())
   users                User[]
   sites                Site[]
   extinguishers        Extinguisher[]
