@@ -11,8 +11,11 @@ const getApiBase = () => {
   const hostname = window.location.hostname;
 
   // For local development with backend running on port 3000
-  if ((hostname === 'localhost' || hostname === '127.0.0.1') && window.location.port === '5173') {
-    return 'http://localhost:3000/api/v1';
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    const port = window.location.port;
+    if (port === '5173' || port === '5174' || port === '5175' || port === '5176') {
+      return 'http://localhost:3000/api/v1';
+    }
   }
 
   // All other environments (firexcheck.com, Railway URL, Capacitor) use relative path
@@ -1228,4 +1231,332 @@ export async function createBulkQuote(data: {
   }
 
   return res.json() as Promise<Quote>;
+}
+
+/* ─── Platform Admin ─────────────────────────────────────────────────────── */
+
+export async function platformGetTenants() {
+  const res = await fetch(`${API_BASE}/platform-admin/tenants`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch tenants');
+  return res.json();
+}
+
+export async function platformUpdateFeatures(tenantId: string, features: {
+  stockManagementEnabled?: boolean;
+  fireAlarmEnabled?: boolean;
+  patTestingEnabled?: boolean;
+  emergencyLightingEnabled?: boolean;
+}) {
+  const res = await fetch(`${API_BASE}/platform-admin/tenants/${tenantId}/features`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(features),
+  });
+  if (!res.ok) throw new Error('Failed to update features');
+  return res.json();
+}
+
+/* ─── Fire Alarm ─────────────────────────────────────────────────────────── */
+
+export async function faGetSystems(siteId?: string) {
+  const q = siteId ? `?siteId=${siteId}` : '';
+  const res = await fetch(`${API_BASE}/fire-alarm/systems${q}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch fire alarm systems');
+  return res.json();
+}
+
+export async function faCreateSystem(data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/fire-alarm/systems`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create system');
+  return res.json();
+}
+
+export async function faUpdateSystem(id: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/fire-alarm/systems/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update system');
+  return res.json();
+}
+
+export async function faDeleteSystem(id: string) {
+  const res = await fetch(`${API_BASE}/fire-alarm/systems/${id}`, {
+    method: 'DELETE', headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete system');
+}
+
+export async function faGetCallPoints(systemId: string) {
+  const res = await fetch(`${API_BASE}/fire-alarm/systems/${systemId}/call-points`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch call points');
+  return res.json();
+}
+
+export async function faGetNextDueCallPoint(systemId: string) {
+  const res = await fetch(`${API_BASE}/fire-alarm/systems/${systemId}/call-points/next-due`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch next due call point');
+  return res.json();
+}
+
+export async function faAddCallPoint(systemId: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/fire-alarm/systems/${systemId}/call-points`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to add call point');
+  return res.json();
+}
+
+export async function faImportCallPoints(systemId: string, rows: Record<string, unknown>[]) {
+  const res = await fetch(`${API_BASE}/fire-alarm/systems/${systemId}/call-points/import`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ rows }),
+  });
+  if (!res.ok) throw new Error('Failed to import call points');
+  return res.json();
+}
+
+export async function faDeleteCallPoint(id: string) {
+  const res = await fetch(`${API_BASE}/fire-alarm/call-points/${id}`, {
+    method: 'DELETE', headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete call point');
+}
+
+export async function faGetLogEntries(systemId: string, entryType?: string) {
+  const q = entryType ? `?entryType=${entryType}` : '';
+  const res = await fetch(`${API_BASE}/fire-alarm/systems/${systemId}/log-entries${q}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch log entries');
+  return res.json();
+}
+
+export async function faCreateLogEntry(systemId: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/fire-alarm/systems/${systemId}/log-entries`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create log entry');
+  return res.json();
+}
+
+export async function faDeleteLogEntry(id: string) {
+  const res = await fetch(`${API_BASE}/fire-alarm/log-entries/${id}`, {
+    method: 'DELETE', headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete log entry');
+}
+
+export async function faDownloadCertificate(entryId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/fire-alarm/log-entries/${entryId}/certificate`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to download certificate');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fire-alarm-certificate-${entryId}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ─── PAT Testing ────────────────────────────────────────────────────────── */
+
+export async function patGetAppliances(siteId?: string) {
+  const q = siteId ? `?siteId=${siteId}` : '';
+  const res = await fetch(`${API_BASE}/pat-testing/appliances${q}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch PAT appliances');
+  return res.json();
+}
+
+export async function patCreateAppliance(data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/pat-testing/appliances`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create appliance');
+  return res.json();
+}
+
+export async function patUpdateAppliance(id: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/pat-testing/appliances/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update appliance');
+  return res.json();
+}
+
+export async function patDeleteAppliance(id: string) {
+  const res = await fetch(`${API_BASE}/pat-testing/appliances/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete appliance');
+  return res.json();
+}
+
+export async function patGetTests(applianceId: string) {
+  const res = await fetch(`${API_BASE}/pat-testing/appliances/${applianceId}/tests`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch PAT tests');
+  return res.json();
+}
+
+export async function patCreateTest(applianceId: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/pat-testing/appliances/${applianceId}/tests`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create PAT test');
+  return res.json();
+}
+
+export async function patDeleteTest(id: string) {
+  const res = await fetch(`${API_BASE}/pat-testing/tests/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete PAT test');
+  return res.json();
+}
+
+export async function downloadPATTestReport(siteId?: string, days = 365): Promise<void> {
+  const params = new URLSearchParams();
+  if (siteId && siteId !== 'all') params.set('siteId', siteId);
+  params.set('days', String(days));
+  const res = await fetch(`${API_BASE}/reports/pat-testing?${params}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to generate PAT report');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pat-testing-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function importPATCsv(file: File): Promise<{ success: boolean; imported: number; errors: number; details?: any[] }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE}/pat-testing/appliances/import/csv`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: formData,
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'Import failed'); }
+  return res.json();
+}
+
+/* ─── Emergency Lighting ─────────────────────────────────────────────────── */
+
+export async function elGetLuminaires(siteId?: string) {
+  const q = siteId && siteId !== 'all' ? `?siteId=${siteId}` : '';
+  const res = await fetch(`${API_BASE}/emergency-lighting/luminaires${q}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch luminaires');
+  return res.json();
+}
+
+export async function elCreateLuminaire(data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/emergency-lighting/luminaires`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create luminaire');
+  return res.json();
+}
+
+export async function elUpdateLuminaire(id: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/emergency-lighting/luminaires/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update luminaire');
+  return res.json();
+}
+
+export async function elDeleteLuminaire(id: string) {
+  const res = await fetch(`${API_BASE}/emergency-lighting/luminaires/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete luminaire');
+  return res.json();
+}
+
+export async function elGetTests(luminaireId: string) {
+  const res = await fetch(`${API_BASE}/emergency-lighting/luminaires/${luminaireId}/tests`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch tests');
+  return res.json();
+}
+
+export async function elCreateTest(luminaireId: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/emergency-lighting/luminaires/${luminaireId}/tests`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create test');
+  return res.json();
+}
+
+export async function elDeleteTest(id: string) {
+  const res = await fetch(`${API_BASE}/emergency-lighting/tests/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete test');
+  return res.json();
+}
+
+export async function downloadEmergencyLightingReport(siteId?: string, days = 365): Promise<void> {
+  const params = new URLSearchParams();
+  if (siteId && siteId !== 'all') params.set('siteId', siteId);
+  params.set('days', String(days));
+  const res = await fetch(`${API_BASE}/reports/emergency-lighting?${params}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to generate emergency lighting report');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `emergency-lighting-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function importELCsv(file: File): Promise<{ success: boolean; imported: number; errors: number; details?: any[] }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE}/emergency-lighting/luminaires/import/csv`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: formData,
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'Import failed'); }
+  return res.json();
+}
+
+export async function importFireAlarmCsv(file: File): Promise<{ success: boolean; imported: number; errors: number; details?: any[] }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE}/fire-alarm/systems/import/csv`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: formData,
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'Import failed'); }
+  return res.json();
 }

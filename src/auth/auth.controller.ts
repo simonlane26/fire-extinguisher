@@ -57,6 +57,9 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: CurrentUserData) {
+    const adminEmails = (process.env.PLATFORM_ADMIN_EMAILS || '')
+      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    const isPlatformAdmin = adminEmails.includes(user.email.toLowerCase());
     return {
       user: {
         id: user.id,
@@ -65,6 +68,7 @@ export class AuthController {
         role: user.role,
         tenantId: user.tenantId,
         tenant: user.tenant,
+        isPlatformAdmin,
       },
     };
   }

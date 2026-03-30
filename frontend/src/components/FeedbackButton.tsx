@@ -4,7 +4,7 @@ import { MessageSquare, X, Send } from 'lucide-react';
 const FEEDBACK_EMAIL = 'simon@firexcheck.com';
 
 const PAGE_LABELS: Record<string, string> = {
-  overview: 'Overview',
+  overview: 'Extinguishers',
   sites: 'Sites',
   stock: 'Stock Management',
   users: 'Users',

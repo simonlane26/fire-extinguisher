@@ -21,6 +21,9 @@ import {
   Calendar,
   Shield,
   Mail,
+  BellRing,
+  Plug,
+  Lightbulb,
 } from 'lucide-react';
 
 interface FAQItem {
@@ -163,6 +166,57 @@ export default function HelpPage() {
         'View usage against plan limits',
       ],
     },
+    {
+      title: 'Fire Alarm Logbook',
+      icon: <BellRing className="w-6 h-6 text-red-500" />,
+      description: 'Digital fire alarm inspection and service logbook compliant with BS 5839-1:2025.',
+      features: [
+        'Register fire alarm systems per site with panel type and ARC details',
+        'Log weekly, monthly, quarterly, six-monthly, and annual inspections',
+        'Track compliance status per inspection frequency with colour-coded badges',
+        'Record fault entries and link them to remedial actions',
+        'Log engineer visits with engineer name, company, and work carried out',
+        'Manage call points with location and zone details',
+        'View next test due date and overdue alerts directly in the logbook',
+        'See open fault counter at a glance in the inspection panel',
+        'Generate Weekly Test Log, Fault History, and Engineer Maintenance PDF reports',
+        'Calendar integration shows upcoming test due dates',
+      ],
+    },
+    {
+      title: 'PAT Testing',
+      icon: <Plug className="w-6 h-6 text-blue-500" />,
+      description: 'Portable appliance testing records and compliance tracking per site.',
+      features: [
+        'Register electrical appliances with type, location, and asset reference',
+        'Log PAT test results including pass/fail, test date, and next due date',
+        'Compliance summary card showing total, compliant, due soon, overdue, and failed counts',
+        'Asset type icons auto-matched from appliance description',
+        'Colour-coded status badges: Compliant, Due Soon, Overdue, Non Compliant',
+        '"Non Compliant" status for failed tests, distinct from "Overdue" for missed schedules',
+        'Test history per appliance sorted newest first',
+        'Generate PAT Testing PDF reports per site',
+        'Calendar integration shows upcoming test due dates with plug icon',
+        'Navigate directly to an appliance from the calendar popover',
+      ],
+    },
+    {
+      title: 'Emergency Lighting',
+      icon: <Lightbulb className="w-6 h-6 text-amber-500" />,
+      description: 'Emergency luminaire registration and test log compliant with BS 5266-1:2016.',
+      features: [
+        'Register individual luminaires with reference (e.g. EL-001), location, and type',
+        'Four test frequencies: daily visual, monthly functional (30s), annual duration, and 3-yearly assessment',
+        'Log test results with duration, lux reading, outcome, and defects found',
+        'Compliance card showing total fittings, compliant, due soon, overdue, and failed counts',
+        'Per-luminaire monthly and annual status rows in the list view',
+        'Next Monthly Test and Next Annual Discharge Test cards with dates',
+        '"Non Compliant" status for failed tests, distinct from "Overdue" for missed schedules',
+        'Automatic next-due calculation per test type on pass; immediately overdue on fail',
+        'Generate Emergency Lighting PDF report referencing BS 5266-1:2016',
+        'Calendar integration shows upcoming test due dates with lightbulb icon (amber)',
+      ],
+    },
   ];
 
   const faqItems: FAQItem[] = [
@@ -184,7 +238,7 @@ export default function HelpPage() {
     },
     {
       question: 'How do I import extinguishers from a CSV file?',
-      answer: 'On the Overview page, click "Import CSV". Download the CSV template (link below) to see the required format with example data. Fill in your extinguisher data following the template format and upload the file. The system will validate and import your extinguishers. Template: /extinguisher-import-template.csv | Guide: /CSV-IMPORT-GUIDE.txt',
+      answer: 'Each module has its own separate CSV import. On the Extinguishers tab, click "Import CSV" to bulk import fire extinguishers. PAT Testing, Emergency Lighting, and Fire Alarm each have an "Import CSV" button within their module page, along with a downloadable template specific to that module. Each template covers asset registration only (appliances, luminaires, or systems) — test history is logged manually after import.',
     },
     {
       question: 'How do I set up push notifications?',
@@ -253,6 +307,34 @@ export default function HelpPage() {
     {
       question: 'What extinguisher types are supported?',
       answer: 'The system supports: CO2, Water, Foam, Dry Powder, Dry Powder D Class, Wet Chemical, Fire Blanket, Aqua Spray, Lithium, Zenova, Lith Ex, and P50 variants (Foam, Powder, Water Mist, Eco, F Class).',
+    },
+    {
+      question: 'How do I set up the Fire Alarm Logbook?',
+      answer: 'Go to the Fire Alarm tab and click "Add System". Enter the system name, site, panel type, and ARC reference. Once created, use "Add Entry" in the Inspection Log to record weekly tests and other inspections. Switch tabs to log faults, engineer visits, and call points.',
+    },
+    {
+      question: 'What inspection types are available in the Fire Alarm Logbook?',
+      answer: 'The logbook supports: Weekly Test, Monthly Inspection, Quarterly Inspection, Six-Monthly Inspection, Annual Inspection, and Engineer Visit. Each type is tracked separately with its own compliance status and next due date.',
+    },
+    {
+      question: 'What does "Non Compliant" mean vs "Overdue" in PAT Testing and Emergency Lighting?',
+      answer: '"Overdue" means a scheduled test date has passed without a new test being recorded. "Non Compliant" means the most recent test was logged as a fail. Both require action, but they indicate different problems — a failed test needs investigation and remedial work, while an overdue test means the inspection simply hasn\'t been done yet.',
+    },
+    {
+      question: 'How do I log a PAT test?',
+      answer: 'Go to the PAT Testing tab and select an appliance from the list (or add one with "Add Appliance"). Click "Log Test" in the Test History tab on the right. Enter the test date, tester name, result (pass/fail), and next due date. The appliance status badge updates immediately.',
+    },
+    {
+      question: 'How does the Emergency Lighting next-due calculation work?',
+      answer: 'When you log a passing test, the system automatically calculates the next due date: daily +1 day, monthly +30 days, annual +365 days, 3-yearly +1095 days. If you log a fail, the next due date is set to the test date itself, making it immediately overdue to prompt urgent re-testing. You can also set a custom next test date when logging.',
+    },
+    {
+      question: 'Can I see all upcoming fire safety tests in one place?',
+      answer: 'Yes — use the Calendar tab. It shows upcoming test dates for fire extinguisher services, fire alarm inspections, PAT tests, and emergency lighting tests all in one month grid view. Each module has its own colour code. Click any event to see details and navigate directly to that asset.',
+    },
+    {
+      question: 'How do I enable Fire Alarm, PAT Testing, or Emergency Lighting for my account?',
+      answer: 'These are add-on modules that can be enabled by a Platform Administrator. Contact support@firexcheck.com if you\'d like to add these modules to your account. Once enabled, the module buttons will appear at the top of the dashboard.',
     },
   ];
 
@@ -529,7 +611,7 @@ export default function HelpPage() {
           <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
             <div className="flex items-center gap-3 mb-4">
               <Download className="w-6 h-6 text-green-600" />
-              <h3 className="text-xl font-semibold text-gray-900">CSV Import Resources</h3>
+              <h3 className="text-xl font-semibold text-gray-900">CSV Import — Fire Extinguishers Only</h3>
             </div>
             <p className="mb-4 text-gray-600">
               Bulk import your fire extinguisher data using our CSV template. Download the template below,
@@ -559,6 +641,17 @@ export default function HelpPage() {
                 <li>• All required and optional fields with examples</li>
                 <li>• 4 sample extinguishers showing proper format</li>
                 <li>• Compatible with Excel, Google Sheets, and CSV editors</li>
+              </ul>
+            </div>
+            <div className="p-3 mt-3 text-sm rounded-lg bg-blue-50 border border-blue-200">
+              <p className="font-medium text-blue-900 mb-1">Other module imports</p>
+              <p className="text-blue-800">
+                PAT Testing, Emergency Lighting, and Fire Alarm each have their own CSV import with a separate downloadable template. Use the <strong>Import CSV</strong> button inside each module — the template is available alongside it.
+              </p>
+              <ul className="mt-2 space-y-1 text-blue-700">
+                <li>• <strong>PAT Testing</strong> — imports appliances (asset ref, description, location, class)</li>
+                <li>• <strong>Emergency Lighting</strong> — imports luminaires (ref, description, location, type)</li>
+                <li>• <strong>Fire Alarm</strong> — imports systems (system ref, panel details, ARC info)</li>
               </ul>
             </div>
           </div>
@@ -710,6 +803,70 @@ export default function HelpPage() {
                   </a>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Module Guides */}
+          <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+            <h3 className="mb-5 text-xl font-bold text-gray-900">Module Quick Guides</h3>
+            <div className="space-y-6">
+
+              {/* Fire Alarm */}
+              <div className="flex gap-4">
+                <div className="p-2 bg-red-100 rounded-lg self-start">
+                  <BellRing className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h4 className="mb-2 font-semibold text-gray-900">Fire Alarm Logbook</h4>
+                  <ol className="space-y-1 text-sm text-gray-600 list-decimal list-inside">
+                    <li>Add a system via the Fire Alarm tab — enter site, panel type, and ARC reference</li>
+                    <li>Log a Weekly Test using "Add Entry" — select type, conductor, outcome, and notes</li>
+                    <li>Record faults in the Fault Log tab; mark resolved once remediated</li>
+                    <li>Add engineer visits in Engineer Visits with work carried out details</li>
+                    <li>Generate PDF reports from the Reports tab (Weekly Log, Faults, Engineer)</li>
+                  </ol>
+                  <p className="mt-2 text-xs text-gray-400">Governed by BS 5839-1:2025</p>
+                </div>
+              </div>
+
+              {/* PAT Testing */}
+              <div className="flex gap-4">
+                <div className="p-2 bg-blue-100 rounded-lg self-start">
+                  <Plug className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="mb-2 font-semibold text-gray-900">PAT Testing</h4>
+                  <ol className="space-y-1 text-sm text-gray-600 list-decimal list-inside">
+                    <li>Add appliances using the "Add Appliance" button — enter asset ref, description, location, and site</li>
+                    <li>Select an appliance to view its test history and details panel</li>
+                    <li>Click "Log Test" to record a result — pass/fail, tester name, and next due date</li>
+                    <li>Status badges update automatically: Compliant, Due Soon, Overdue, or Non Compliant (failed)</li>
+                    <li>Use the compliance summary card at the top to see your overall PAT status at a glance</li>
+                    <li>Generate a PAT Testing PDF report from the Reports tab</li>
+                  </ol>
+                </div>
+              </div>
+
+              {/* Emergency Lighting */}
+              <div className="flex gap-4">
+                <div className="p-2 bg-amber-100 rounded-lg self-start">
+                  <Lightbulb className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h4 className="mb-2 font-semibold text-gray-900">Emergency Lighting</h4>
+                  <ol className="space-y-1 text-sm text-gray-600 list-decimal list-inside">
+                    <li>Add luminaires using "Add Luminaire" — enter reference (e.g. EL-001), location, type, and site</li>
+                    <li>Select a luminaire to view its test history and compliance rows</li>
+                    <li>Click "Log Test" and select the test type: Daily, Monthly, Annual, or 3-Yearly</li>
+                    <li>Monthly tests require duration (target ≥30 seconds); annual tests require duration in minutes and lux reading</li>
+                    <li>A fail sets next due to today making it immediately overdue — re-test after remediation</li>
+                    <li>Use the compliance card at the top to see total fittings, compliant, due soon, and failed counts</li>
+                    <li>Generate an Emergency Lighting PDF report from the Reports tab</li>
+                  </ol>
+                  <p className="mt-2 text-xs text-gray-400">Governed by BS 5266-1:2016</p>
+                </div>
+              </div>
+
             </div>
           </div>
 

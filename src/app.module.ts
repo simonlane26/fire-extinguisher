@@ -23,6 +23,10 @@ import { PublicModule } from './public/public.module';
 import { PhotosModule } from './photos/photos.module';
 import { UsersModule } from './users/users.module';
 import { QuotesModule } from './quotes/quotes.module';
+import { PlatformAdminModule } from './platform-admin/platform-admin.module';
+import { FireAlarmModule } from './fire-alarm/fire-alarm.module';
+import { PATTestingModule } from './pat-testing/pat-testing.module';
+import { EmergencyLightingModule } from './emergency-lighting/emergency-lighting.module';
 
 @Module({
   imports: [
@@ -52,6 +56,10 @@ import { QuotesModule } from './quotes/quotes.module';
     PhotosModule,
     UsersModule,
     QuotesModule,
+    PlatformAdminModule,
+    FireAlarmModule,
+    PATTestingModule,
+    EmergencyLightingModule,
   ],
   controllers: [AppController],
   providers: [

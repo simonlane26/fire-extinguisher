@@ -1,0 +1,5 @@
+luminaireRef,description,location,luminaireType,fittingType,zone,notes,site
+EL-001,Non-Maintained LED Bulkhead,Main Corridor,escape_route,self_contained,Zone A,,Main Site
+EL-002,Maintained Twin Spot,Fire Exit,escape_route,self_contained,Zone A,,Main Site
+EL-003,Open Area LED,Reception,open_area,self_contained,Zone B,,Main Site
+EL-004,High Bay Emergency,Warehouse,high_risk,central_battery,Zone C,Check battery monthly,Warehouse

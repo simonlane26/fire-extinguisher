@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext } from 'react';
 import LoginForm from './LoginForm';
 import { login as apiLogin, register as apiRegister, getCurrentUser, setToken, getToken, clearToken } from '../lib/api';
+import OnboardingWizard, { needsOnboarding, markOnboardingComplete } from '../pages/OnboardingWizard';
 import type { AuthedUser, Tenant, RoleKey, PermissionKey } from '../types';
 
 export type AuthCtx = {
@@ -25,7 +26,7 @@ const PERMISSIONS: Record<PermissionKey, RoleKey[]> = {
   PERFORM_INSPECTIONS: ['super_admin', 'admin', 'manager', 'inspector'],
   VIEW_INSPECTIONS: ['super_admin', 'admin', 'manager', 'inspector', 'viewer'],
   VIEW_REPORTS: ['super_admin', 'admin', 'manager'],
-  VIEW_BILLING: ['super_admin'],
+  VIEW_BILLING: ['super_admin', 'admin'],
   MANAGE_SETTINGS: ['super_admin', 'admin'],
 };
 
@@ -40,6 +41,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   const [currentUser, setCurrentUser] = useState<(AuthedUser & { tenant: Tenant }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Check if user is already authenticated on mount
   useEffect(() => {
@@ -47,7 +49,9 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     if (token) {
       getCurrentUser()
         .then((response) => {
-          setCurrentUser(response.user as any);
+          const user = response.user as any;
+          setCurrentUser(user);
+          setShowOnboarding(needsOnboarding(user.role, user.tenantId));
           setLoading(false);
         })
         .catch(() => {
@@ -63,7 +67,11 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     try {
       const response = await apiLogin(email, password);
       setToken(response.access_token);
-      setCurrentUser(response.user as any);
+      // Fetch full profile (includes isPlatformAdmin) instead of using login response
+      const profile = await getCurrentUser();
+      const user = profile.user as any;
+      setCurrentUser(user);
+      setShowOnboarding(needsOnboarding(user.role, user.tenantId));
     } catch (err: any) {
       throw new Error(err.message || 'Login failed');
     }
@@ -89,6 +97,11 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     setCurrentUser(null);
   };
 
+  const handleOnboardingComplete = () => {
+    if (currentUser) markOnboardingComplete(currentUser.tenantId);
+    setShowOnboarding(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -102,6 +115,10 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   if (!currentUser) {
     return <LoginForm onLogin={handleLogin} onRegister={handleRegister} />;
+  }
+
+  if (showOnboarding) {
+    return <OnboardingWizard currentUser={currentUser} onComplete={handleOnboardingComplete} />;
   }
 
   const authValue: AuthCtx = {

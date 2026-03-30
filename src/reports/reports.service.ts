@@ -1081,4 +1081,739 @@ export class ReportsService {
       if (browser) await browser.close();
     }
   }
+
+  // Generate Fire Alarm Logbook Report PDF
+  async buildFireAlarmLogbookReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    systems: Array<{
+      id: string;
+      systemRef: string;
+      name?: string | null;
+      panelMake?: string | null;
+      panelModel?: string | null;
+      site?: { name: string } | null;
+      logEntries: Array<{
+        id: string;
+        entryType: string;
+        conductedBy: string;
+        conductedAt: Date | string;
+        outcome: string;
+        notes?: string | null;
+      }>;
+    }>;
+    dateLabel: string;
+  }): Promise<Buffer> {
+    const { tenant, systems, dateLabel } = params;
+
+    const totalEntries = systems.reduce((s, sys) => s + sys.logEntries.length, 0);
+    const passEntries = systems.reduce(
+      (s, sys) => s + sys.logEntries.filter((e) => e.outcome === 'pass').length, 0
+    );
+    const passRate = totalEntries > 0 ? Math.round((passEntries / totalEntries) * 100) : 0;
+
+    const outcomeColour = (outcome: string) => {
+      if (outcome === 'pass') return '#10b981';
+      if (outcome === 'fail') return '#ef4444';
+      return '#f59e0b';
+    };
+
+    const entryTypeLabel = (t: string) =>
+      t.replace('_', '-').replace(/^\w/, (c) => c.toUpperCase());
+
+    const html = `
+      <html>
+      <head>
+        <style>
+          * { box-sizing: border-box; }
+          body { font-family: Arial, sans-serif; padding: 24px; color: #111; font-size: 13px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 2px solid #ef4444; padding-bottom: 16px; }
+          h1 { margin: 0; color: #ef4444; font-size: 22px; }
+          .meta { color: #666; font-size: 12px; margin-top: 4px; }
+          .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0; }
+          .summary-card { background: #f3f4f6; padding: 14px; border-radius: 8px; text-align: center; }
+          .summary-card .number { font-size: 28px; font-weight: bold; color: #ef4444; }
+          .summary-card .label { font-size: 11px; color: #666; margin-top: 4px; }
+          .system-block { margin: 28px 0; page-break-inside: avoid; }
+          .system-heading { background: #1f2937; color: white; padding: 10px 14px; border-radius: 6px 6px 0 0; }
+          .system-heading h2 { margin: 0; font-size: 14px; }
+          .system-heading .sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+          table { width: 100%; border-collapse: collapse; }
+          th { background: #ef4444; color: white; padding: 9px 10px; text-align: left; font-size: 12px; }
+          td { border-bottom: 1px solid #e5e7eb; padding: 8px 10px; font-size: 12px; vertical-align: top; }
+          tr:nth-child(even) td { background: #fafafa; }
+          .badge { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: bold; color: white; }
+          .type-badge { background: #6366f1; color: white; display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+          .no-entries { padding: 16px; text-align: center; color: #9ca3af; font-style: italic; background: #f9fafb; }
+          .footer { margin-top: 48px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 11px; color: #999; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1>Fire Alarm Logbook Report</h1>
+            <div class="meta">${escapeHtml(tenant.name)} &nbsp;·&nbsp; ${escapeHtml(dateLabel)} &nbsp;·&nbsp; Generated: ${new Date().toLocaleDateString('en-GB')}</div>
+          </div>
+          ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height:55px;"/>` : ''}
+        </div>
+
+        <div class="summary">
+          <div class="summary-card">
+            <div class="number">${systems.length}</div>
+            <div class="label">Fire Alarm Systems</div>
+          </div>
+          <div class="summary-card">
+            <div class="number">${totalEntries}</div>
+            <div class="label">Log Entries</div>
+          </div>
+          <div class="summary-card">
+            <div class="number" style="color:#10b981">${passRate}%</div>
+            <div class="label">Pass Rate</div>
+          </div>
+          <div class="summary-card">
+            <div class="number" style="color:#ef4444">${systems.reduce((s, sys) => s + sys.logEntries.filter((e) => e.outcome === 'fail').length, 0)}</div>
+            <div class="label">Failures Recorded</div>
+          </div>
+        </div>
+
+        ${systems.map((sys) => `
+          <div class="system-block">
+            <div class="system-heading">
+              <h2>${escapeHtml(sys.name || sys.systemRef)}</h2>
+              <div class="sub">
+                Ref: ${escapeHtml(sys.systemRef)}
+                ${sys.site ? ` &nbsp;·&nbsp; Site: ${escapeHtml(sys.site.name)}` : ''}
+                ${sys.panelMake ? ` &nbsp;·&nbsp; Panel: ${escapeHtml(sys.panelMake)}${sys.panelModel ? ' ' + escapeHtml(sys.panelModel) : ''}` : ''}
+              </div>
+            </div>
+            ${sys.logEntries.length === 0
+              ? `<div class="no-entries">No log entries for this period</div>`
+              : `<table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Conducted By</th>
+                      <th>Outcome</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${sys.logEntries
+                      .sort((a, b) => new Date(b.conductedAt).getTime() - new Date(a.conductedAt).getTime())
+                      .map((e) => `
+                        <tr>
+                          <td>${new Date(e.conductedAt).toLocaleDateString('en-GB')}</td>
+                          <td><span class="type-badge">${escapeHtml(entryTypeLabel(e.entryType))}</span></td>
+                          <td>${escapeHtml(e.conductedBy)}</td>
+                          <td><span class="badge" style="background:${outcomeColour(e.outcome)}">${escapeHtml(e.outcome.toUpperCase())}</span></td>
+                          <td style="color:#555">${escapeHtml(e.notes || '—')}</td>
+                        </tr>
+                      `).join('')}
+                  </tbody>
+                </table>`
+            }
+          </div>
+        `).join('')}
+
+        <div class="footer">
+          <p>Generated with Firexcheck.com — Professional Fire Safety Management</p>
+          <p>Report ID: ${Date.now()} | ${new Date().toISOString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    let browser: Browser | undefined;
+    try {
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
+      return pdfBuffer;
+    } finally {
+      if (browser) await browser.close();
+    }
+  }
+
+  // ─── Fire Alarm Weekly Test Log ───────────────────────────────────────────
+
+  async buildFireAlarmWeeklyTestReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    systems: Array<{
+      systemRef: string;
+      name?: string | null;
+      panelMake?: string | null;
+      panelModel?: string | null;
+      site?: { name: string } | null;
+      logEntries: Array<{
+        entryType: string;
+        conductedBy: string;
+        conductedAt: Date | string;
+        outcome: string;
+        notes?: string | null;
+        data?: Record<string, unknown> | null;
+      }>;
+    }>;
+    dateLabel: string;
+  }): Promise<Buffer> {
+    const { tenant, systems, dateLabel } = params;
+
+    const allEntries = systems.flatMap((s) => s.logEntries);
+    const passCount = allEntries.filter((e) => e.outcome === 'pass').length;
+    const failCount = allEntries.filter((e) => e.outcome === 'fail').length;
+    const passRate = allEntries.length > 0 ? Math.round((passCount / allEntries.length) * 100) : 0;
+
+    const outcomeColour = (o: string) => o === 'pass' ? '#10b981' : o === 'fail' ? '#ef4444' : '#f59e0b';
+    const bool = (v: unknown) => v === true ? '✓ Yes' : v === false ? '✗ No' : '—';
+
+    const html = `<html><head><style>
+      * { box-sizing: border-box; }
+      body { font-family: Arial, sans-serif; padding: 24px; color: #111; font-size: 12px; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #ef4444; padding-bottom: 14px; }
+      h1 { margin: 0; color: #ef4444; font-size: 20px; }
+      .meta { color: #666; font-size: 11px; margin-top: 4px; }
+      .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0 24px; }
+      .sc { background: #f3f4f6; padding: 12px; border-radius: 8px; text-align: center; }
+      .sc .n { font-size: 26px; font-weight: bold; color: #ef4444; }
+      .sc .l { font-size: 11px; color: #666; margin-top: 3px; }
+      .system-block { margin: 24px 0; page-break-inside: avoid; }
+      .sh { background: #1f2937; color: white; padding: 9px 12px; border-radius: 6px 6px 0 0; }
+      .sh h2 { margin: 0; font-size: 13px; }
+      .sh .sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+      table { width: 100%; border-collapse: collapse; }
+      th { background: #ef4444; color: white; padding: 8px 9px; text-align: left; font-size: 11px; }
+      td { border-bottom: 1px solid #e5e7eb; padding: 7px 9px; font-size: 11px; vertical-align: top; }
+      tr:nth-child(even) td { background: #fafafa; }
+      .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; color: white; }
+      .no-entries { padding: 14px; text-align: center; color: #9ca3af; font-style: italic; background: #f9fafb; }
+      .footer { margin-top: 40px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; color: #999; text-align: center; }
+    </style></head><body>
+      <div class="header">
+        <div>
+          <h1>Fire Alarm Weekly Test Log</h1>
+          <div class="meta">${escapeHtml(tenant.name)} &nbsp;·&nbsp; ${escapeHtml(dateLabel)} &nbsp;·&nbsp; Generated: ${new Date().toLocaleDateString('en-GB')}</div>
+        </div>
+        ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height:50px;"/>` : ''}
+      </div>
+
+      <div class="summary">
+        <div class="sc"><div class="n">${allEntries.length}</div><div class="l">Weekly Tests</div></div>
+        <div class="sc"><div class="n" style="color:#10b981">${passRate}%</div><div class="l">Pass Rate</div></div>
+        <div class="sc"><div class="n" style="color:#ef4444">${failCount}</div><div class="l">Failures</div></div>
+        <div class="sc"><div class="n">${systems.length}</div><div class="l">Systems</div></div>
+      </div>
+
+      ${systems.map((sys) => `
+        <div class="system-block">
+          <div class="sh">
+            <h2>${escapeHtml(sys.name || sys.systemRef)}</h2>
+            <div class="sub">Ref: ${escapeHtml(sys.systemRef)}${sys.site ? ` &nbsp;·&nbsp; ${escapeHtml(sys.site.name)}` : ''}${sys.panelMake ? ` &nbsp;·&nbsp; Panel: ${escapeHtml(sys.panelMake)}${sys.panelModel ? ' ' + escapeHtml(sys.panelModel) : ''}` : ''}</div>
+          </div>
+          ${sys.logEntries.length === 0
+            ? `<div class="no-entries">No weekly tests for this period</div>`
+            : `<table><thead><tr>
+                <th>Date</th><th>Tested By</th><th>Outcome</th>
+                <th>Alarm OK</th><th>Zone OK</th><th>Reset OK</th><th>Faults Found</th><th>Notes</th>
+               </tr></thead><tbody>
+               ${sys.logEntries.map((e) => {
+                 const d = (e.data || {}) as Record<string, unknown>;
+                 return `<tr>
+                   <td>${new Date(e.conductedAt).toLocaleDateString('en-GB')}</td>
+                   <td>${escapeHtml(e.conductedBy)}</td>
+                   <td><span class="badge" style="background:${outcomeColour(e.outcome)}">${e.outcome.toUpperCase()}</span></td>
+                   <td>${bool(d.alarmActivated)}</td>
+                   <td>${bool(d.zoneCorrect)}</td>
+                   <td>${bool(d.resetOk)}</td>
+                   <td>${bool(d.faultsFound)}</td>
+                   <td style="color:#555">${escapeHtml(e.notes || '—')}</td>
+                 </tr>`;
+               }).join('')}
+               </tbody></table>`
+          }
+        </div>
+      `).join('')}
+
+      <div class="footer">
+        <p>Generated with Firexcheck.com — Professional Fire Safety Management &nbsp;·&nbsp; ${new Date().toISOString()}</p>
+      </div>
+    </body></html>`;
+
+    return this.renderPdf(html);
+  }
+
+  // ─── Fire Alarm Fault History Report ─────────────────────────────────────
+
+  async buildFireAlarmFaultHistoryReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    systems: Array<{
+      systemRef: string;
+      name?: string | null;
+      site?: { name: string } | null;
+      logEntries: Array<{
+        conductedBy: string;
+        conductedAt: Date | string;
+        outcome: string;
+        notes?: string | null;
+        data?: Record<string, unknown> | null;
+      }>;
+    }>;
+    dateLabel: string;
+  }): Promise<Buffer> {
+    const { tenant, systems, dateLabel } = params;
+
+    const allEntries = systems.flatMap((s) => s.logEntries);
+    const resolvedCount = allEntries.filter((e) => (e.data as any)?.resolved === true).length;
+    const criticalCount = allEntries.filter((e) => (e.data as any)?.severity === 'critical').length;
+    const majorCount = allEntries.filter((e) => (e.data as any)?.severity === 'major').length;
+
+    const sevColour = (s: string) =>
+      s === 'critical' ? '#ef4444' : s === 'major' ? '#f97316' : '#f59e0b';
+
+    const html = `<html><head><style>
+      * { box-sizing: border-box; }
+      body { font-family: Arial, sans-serif; padding: 24px; color: #111; font-size: 12px; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #ef4444; padding-bottom: 14px; }
+      h1 { margin: 0; color: #ef4444; font-size: 20px; }
+      .meta { color: #666; font-size: 11px; margin-top: 4px; }
+      .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0 24px; }
+      .sc { background: #f3f4f6; padding: 12px; border-radius: 8px; text-align: center; }
+      .sc .n { font-size: 26px; font-weight: bold; color: #ef4444; }
+      .sc .l { font-size: 11px; color: #666; margin-top: 3px; }
+      .system-block { margin: 24px 0; page-break-inside: avoid; }
+      .sh { background: #1f2937; color: white; padding: 9px 12px; border-radius: 6px 6px 0 0; }
+      .sh h2 { margin: 0; font-size: 13px; }
+      .sh .sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+      table { width: 100%; border-collapse: collapse; }
+      th { background: #ef4444; color: white; padding: 8px 9px; text-align: left; font-size: 11px; }
+      td { border-bottom: 1px solid #e5e7eb; padding: 7px 9px; font-size: 11px; vertical-align: top; }
+      tr:nth-child(even) td { background: #fafafa; }
+      .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; color: white; }
+      .resolved { color: #10b981; font-weight: bold; }
+      .open { color: #f59e0b; font-weight: bold; }
+      .no-entries { padding: 14px; text-align: center; color: #9ca3af; font-style: italic; background: #f9fafb; }
+      .footer { margin-top: 40px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; color: #999; text-align: center; }
+    </style></head><body>
+      <div class="header">
+        <div>
+          <h1>Fire Alarm Fault History</h1>
+          <div class="meta">${escapeHtml(tenant.name)} &nbsp;·&nbsp; ${escapeHtml(dateLabel)} &nbsp;·&nbsp; Generated: ${new Date().toLocaleDateString('en-GB')}</div>
+        </div>
+        ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height:50px;"/>` : ''}
+      </div>
+
+      <div class="summary">
+        <div class="sc"><div class="n">${allEntries.length}</div><div class="l">Total Faults</div></div>
+        <div class="sc"><div class="n" style="color:#ef4444">${criticalCount}</div><div class="l">Critical</div></div>
+        <div class="sc"><div class="n" style="color:#f97316">${majorCount}</div><div class="l">Major</div></div>
+        <div class="sc"><div class="n" style="color:#10b981">${resolvedCount}</div><div class="l">Resolved</div></div>
+      </div>
+
+      ${systems.map((sys) => `
+        <div class="system-block">
+          <div class="sh">
+            <h2>${escapeHtml(sys.name || sys.systemRef)}</h2>
+            <div class="sub">Ref: ${escapeHtml(sys.systemRef)}${sys.site ? ` &nbsp;·&nbsp; ${escapeHtml(sys.site.name)}` : ''}</div>
+          </div>
+          ${sys.logEntries.length === 0
+            ? `<div class="no-entries">No faults recorded for this period</div>`
+            : `<table><thead><tr>
+                <th>Date</th><th>Reported By</th><th>Severity</th>
+                <th>Description</th><th>Remedial Action</th><th>Status</th>
+               </tr></thead><tbody>
+               ${sys.logEntries.map((e) => {
+                 const d = (e.data || {}) as Record<string, unknown>;
+                 const sev = String(d.severity || 'minor');
+                 const resolved = d.resolved === true;
+                 return `<tr>
+                   <td>${new Date(e.conductedAt).toLocaleDateString('en-GB')}</td>
+                   <td>${escapeHtml(e.conductedBy)}</td>
+                   <td><span class="badge" style="background:${sevColour(sev)}">${sev.toUpperCase()}</span></td>
+                   <td style="color:#333">${escapeHtml(e.notes || '—')}</td>
+                   <td style="color:#555">${escapeHtml(String(d.remedialAction || '—'))}</td>
+                   <td class="${resolved ? 'resolved' : 'open'}">${resolved ? '✓ Resolved' : '⚠ Open'}</td>
+                 </tr>`;
+               }).join('')}
+               </tbody></table>`
+          }
+        </div>
+      `).join('')}
+
+      <div class="footer">
+        <p>Generated with Firexcheck.com — Professional Fire Safety Management &nbsp;·&nbsp; ${new Date().toISOString()}</p>
+      </div>
+    </body></html>`;
+
+    return this.renderPdf(html);
+  }
+
+  // ─── Fire Alarm Engineer Maintenance Report ───────────────────────────────
+
+  async buildFireAlarmEngineerReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    systems: Array<{
+      systemRef: string;
+      name?: string | null;
+      site?: { name: string } | null;
+      logEntries: Array<{
+        conductedBy: string;
+        conductedAt: Date | string;
+        outcome: string;
+        notes?: string | null;
+        data?: Record<string, unknown> | null;
+      }>;
+    }>;
+    dateLabel: string;
+  }): Promise<Buffer> {
+    const { tenant, systems, dateLabel } = params;
+
+    const allEntries = systems.flatMap((s) => s.logEntries);
+    const passCount = allEntries.filter((e) => e.outcome === 'pass').length;
+    const failCount = allEntries.filter((e) => e.outcome === 'fail').length;
+    const passRate = allEntries.length > 0 ? Math.round((passCount / allEntries.length) * 100) : 0;
+
+    const outcomeColour = (o: string) => o === 'pass' ? '#10b981' : o === 'fail' ? '#ef4444' : '#f59e0b';
+
+    const html = `<html><head><style>
+      * { box-sizing: border-box; }
+      body { font-family: Arial, sans-serif; padding: 24px; color: #111; font-size: 12px; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #ef4444; padding-bottom: 14px; }
+      h1 { margin: 0; color: #ef4444; font-size: 20px; }
+      .meta { color: #666; font-size: 11px; margin-top: 4px; }
+      .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 16px 0 24px; }
+      .sc { background: #f3f4f6; padding: 12px; border-radius: 8px; text-align: center; }
+      .sc .n { font-size: 26px; font-weight: bold; color: #ef4444; }
+      .sc .l { font-size: 11px; color: #666; margin-top: 3px; }
+      .system-block { margin: 24px 0; page-break-inside: avoid; }
+      .sh { background: #1f2937; color: white; padding: 9px 12px; border-radius: 6px 6px 0 0; }
+      .sh h2 { margin: 0; font-size: 13px; }
+      .sh .sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+      table { width: 100%; border-collapse: collapse; }
+      th { background: #ef4444; color: white; padding: 8px 9px; text-align: left; font-size: 11px; }
+      td { border-bottom: 1px solid #e5e7eb; padding: 7px 9px; font-size: 11px; vertical-align: top; }
+      tr:nth-child(even) td { background: #fafafa; }
+      .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; color: white; }
+      .next-action { font-size: 10px; color: #6366f1; margin-top: 2px; }
+      .no-entries { padding: 14px; text-align: center; color: #9ca3af; font-style: italic; background: #f9fafb; }
+      .footer { margin-top: 40px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; color: #999; text-align: center; }
+    </style></head><body>
+      <div class="header">
+        <div>
+          <h1>Fire Alarm Engineer Maintenance Report</h1>
+          <div class="meta">${escapeHtml(tenant.name)} &nbsp;·&nbsp; ${escapeHtml(dateLabel)} &nbsp;·&nbsp; Generated: ${new Date().toLocaleDateString('en-GB')}</div>
+        </div>
+        ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height:50px;"/>` : ''}
+      </div>
+
+      <div class="summary">
+        <div class="sc"><div class="n">${allEntries.length}</div><div class="l">Engineer Visits</div></div>
+        <div class="sc"><div class="n" style="color:#10b981">${passRate}%</div><div class="l">Pass Rate</div></div>
+        <div class="sc"><div class="n" style="color:#ef4444">${failCount}</div><div class="l">Failures</div></div>
+        <div class="sc"><div class="n">${systems.length}</div><div class="l">Systems</div></div>
+      </div>
+
+      ${systems.map((sys) => `
+        <div class="system-block">
+          <div class="sh">
+            <h2>${escapeHtml(sys.name || sys.systemRef)}</h2>
+            <div class="sub">Ref: ${escapeHtml(sys.systemRef)}${sys.site ? ` &nbsp;·&nbsp; ${escapeHtml(sys.site.name)}` : ''}</div>
+          </div>
+          ${sys.logEntries.length === 0
+            ? `<div class="no-entries">No engineer visits for this period</div>`
+            : `<table><thead><tr>
+                <th>Date</th><th>Engineer</th><th>Company</th>
+                <th>Work Carried Out</th><th>Outcome</th><th>Next Action</th>
+               </tr></thead><tbody>
+               ${sys.logEntries.map((e) => {
+                 const d = (e.data || {}) as Record<string, unknown>;
+                 return `<tr>
+                   <td>${new Date(e.conductedAt).toLocaleDateString('en-GB')}</td>
+                   <td>${escapeHtml(e.conductedBy)}</td>
+                   <td>${escapeHtml(String(d.company || '—'))}</td>
+                   <td style="color:#333">${escapeHtml(e.notes || '—')}</td>
+                   <td><span class="badge" style="background:${outcomeColour(e.outcome)}">${e.outcome.toUpperCase()}</span></td>
+                   <td style="color:#6366f1">${escapeHtml(String(d.nextAction || '—'))}</td>
+                 </tr>`;
+               }).join('')}
+               </tbody></table>`
+          }
+        </div>
+      `).join('')}
+
+      <div class="footer">
+        <p>Generated with Firexcheck.com — Professional Fire Safety Management &nbsp;·&nbsp; ${new Date().toISOString()}</p>
+      </div>
+    </body></html>`;
+
+    return this.renderPdf(html);
+  }
+
+  // ─── PAT Test Report ──────────────────────────────────────────────────────
+
+  async buildPATTestReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    appliances: {
+      applianceRef: string; description: string; location: string;
+      applianceClass?: string | null;
+      tests: {
+        testedBy: string; testedAt: string | Date; visualInspect: string;
+        earthOhms?: number | null; insulationMohms?: number | null;
+        functionalCheck: string; outcome: string; nextTestDate?: string | Date | null;
+        comments?: string | null; reportRef?: string | null;
+      }[];
+    }[];
+    dateLabel: string;
+  }): Promise<Buffer> {
+    const { tenant, appliances, dateLabel } = params;
+    const reportNo = `PAT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+
+    const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const fmt = (d: string | Date | null | undefined) =>
+      d ? new Date(d).toLocaleDateString('en-GB') : '—';
+    const badge = (v: string) =>
+      v === 'pass'
+        ? `<span style="color:#16a34a;font-weight:700;">PASS</span>`
+        : v === 'fail'
+        ? `<span style="color:#dc2626;font-weight:700;">FAIL</span>`
+        : `<span style="color:#6b7280;">N/A</span>`;
+
+    // Flatten all tests into rows, each tagged with the appliance
+    const rows = appliances.flatMap(app =>
+      app.tests.length > 0
+        ? app.tests.map(t => ({ app, t }))
+        : [{ app, t: null as any }],
+    );
+
+    const tableRows = rows.map(({ app, t }, i) => {
+      if (!t) {
+        return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f9fafb'};">
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(app.applianceRef)}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(app.description)}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(app.location)}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${esc(app.applianceClass ?? '—')}</td>
+          <td colspan="7" style="padding:5px 6px;border:1px solid #e5e7eb;color:#9ca3af;font-style:italic;">No tests recorded</td>
+        </tr>`;
+      }
+      return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f9fafb'};">
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(app.applianceRef)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(app.description)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(app.location)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${esc(app.applianceClass ?? '—')}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${badge(t.visualInspect)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${t.earthOhms != null ? esc(t.earthOhms) : '—'}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${t.insulationMohms != null ? esc(t.insulationMohms) : '—'}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${badge(t.functionalCheck)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${fmt(t.nextTestDate)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${badge(t.outcome)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;font-size:10px;">${esc(t.comments)}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11px; color: #111; margin: 0; padding: 0; }
+  .header { background: #1e3a5f; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { margin: 0; font-size: 16px; font-weight: 700; }
+  .header .sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+  .meta { display: flex; gap: 24px; padding: 10px 20px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; font-size: 11px; }
+  .meta span { font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; font-size: 10.5px; }
+  th { background: #1e3a5f; color: #fff; padding: 6px 6px; border: 1px solid #1e3a5f; text-align: left; font-size: 10px; }
+  .footer { margin-top: 20px; padding: 10px 20px; font-size: 9px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+</style></head><body>
+<div class="header">
+  <div>
+    <div class="sub">${esc(tenant.name)}</div>
+    <h1>Portable Appliance Testing Report</h1>
+    <div class="sub">${dateLabel}</div>
+  </div>
+  <div style="text-align:right;">
+    <div><span>Report No:</span> ${esc(reportNo)}</div>
+    <div style="margin-top:4px;"><span>Date:</span> ${new Date().toLocaleDateString('en-GB')}</div>
+  </div>
+</div>
+<div class="meta">
+  <div>Total Appliances: <span>${appliances.length}</span></div>
+  <div>Passed: <span style="color:#16a34a;">${rows.filter(r => r.t?.outcome === 'pass').length}</span></div>
+  <div>Failed: <span style="color:#dc2626;">${rows.filter(r => r.t?.outcome === 'fail').length}</span></div>
+  <div>Not Yet Tested: <span style="color:#6b7280;">${appliances.filter(a => a.tests.length === 0).length}</span></div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>ID No.</th>
+      <th>Description</th>
+      <th>Location</th>
+      <th>Class</th>
+      <th>Visual<br>Inspect</th>
+      <th>Earth<br>Ω</th>
+      <th>Insulation<br>MΩ</th>
+      <th>Functional<br>Check</th>
+      <th>Next Test</th>
+      <th>Pass/Fail</th>
+      <th>Comments</th>
+    </tr>
+  </thead>
+  <tbody>${tableRows}</tbody>
+</table>
+<div class="footer">
+  This report is generated in accordance with BS EN 60335 and IEE Code of Practice for In-service Inspection and Testing of Electrical Equipment.
+  Generated ${new Date().toLocaleString('en-GB')} — Firexcheck.com
+</div>
+</body></html>`;
+
+    return this.renderPdf(html);
+  }
+
+  // ─── Emergency Lighting Report ───────────────────────────────────────────
+
+  async buildEmergencyLightingReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    luminaires: {
+      luminaireRef: string; description: string; location: string;
+      luminaireType: string; zone?: string | null;
+      tests: {
+        testType: string; testedBy: string; testedAt: string | Date;
+        durationSecs?: number | null; durationMins?: number | null;
+        luxReading?: number | null; outcome: string;
+        defectsFound?: string | null; nextTestDate?: string | Date | null;
+        comments?: string | null;
+      }[];
+    }[];
+    dateLabel: string;
+  }): Promise<Buffer> {
+    const { tenant, luminaires, dateLabel } = params;
+    const reportNo = `EL-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+
+    const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const fmt = (d: string | Date | null | undefined) =>
+      d ? new Date(d).toLocaleDateString('en-GB') : '—';
+    const badge = (v: string) =>
+      v === 'pass'
+        ? `<span style="color:#16a34a;font-weight:700;">PASS</span>`
+        : `<span style="color:#dc2626;font-weight:700;">FAIL</span>`;
+
+    const testTypeLabel: Record<string, string> = {
+      daily: 'Daily',
+      monthly: 'Monthly',
+      annual: 'Annual',
+      three_yearly: '3-Yearly',
+    };
+
+    const rows = luminaires.flatMap(lum =>
+      lum.tests.length > 0
+        ? lum.tests.map(t => ({ lum, t }))
+        : [{ lum, t: null as any }],
+    );
+
+    const tableRows = rows.map(({ lum, t }, i) => {
+      if (!t) {
+        return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f9fafb'};">
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(lum.luminaireRef)}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(lum.description)}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(lum.location)}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;font-size:9px;">${esc(lum.luminaireType.replace('_', ' '))}</td>
+          <td colspan="8" style="padding:5px 6px;border:1px solid #e5e7eb;color:#9ca3af;font-style:italic;">No tests recorded</td>
+        </tr>`;
+      }
+      const dur = t.testType === 'monthly' && t.durationSecs != null
+        ? `${t.durationSecs}s`
+        : t.durationMins != null
+        ? `${t.durationMins}min`
+        : '—';
+      return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f9fafb'};">
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(lum.luminaireRef)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(lum.description)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(lum.location)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;font-size:9px;">${esc(lum.luminaireType.replace(/_/g, ' '))}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${esc(testTypeLabel[t.testType] ?? t.testType)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${fmt(t.testedAt)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${esc(t.testedBy)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${dur}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${t.luxReading != null ? `${esc(t.luxReading)} lx` : '—'}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${badge(t.outcome)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;font-size:10px;">${esc(t.defectsFound)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${fmt(t.nextTestDate)}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11px; color: #111; margin: 0; padding: 0; }
+  .header { background: #78350f; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { margin: 0; font-size: 16px; font-weight: 700; }
+  .header .sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+  .meta { display: flex; gap: 24px; padding: 10px 20px; background: #fffbeb; border-bottom: 1px solid #fde68a; font-size: 11px; }
+  .meta span { font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; font-size: 10px; }
+  th { background: #78350f; color: #fff; padding: 6px 6px; border: 1px solid #78350f; text-align: left; font-size: 9.5px; }
+  .footer { margin-top: 20px; padding: 10px 20px; font-size: 9px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+</style></head><body>
+<div class="header">
+  <div>
+    <div class="sub">${esc(tenant.name)}</div>
+    <h1>Emergency Lighting Test Report</h1>
+    <div class="sub">${dateLabel}</div>
+  </div>
+  <div style="text-align:right;">
+    <div><span>Report No:</span> ${esc(reportNo)}</div>
+    <div style="margin-top:4px;"><span>Date:</span> ${new Date().toLocaleDateString('en-GB')}</div>
+  </div>
+</div>
+<div class="meta">
+  <div>Total Luminaires: <span>${luminaires.length}</span></div>
+  <div>Passed: <span style="color:#16a34a;">${rows.filter(r => r.t?.outcome === 'pass').length}</span></div>
+  <div>Failed: <span style="color:#dc2626;">${rows.filter(r => r.t?.outcome === 'fail').length}</span></div>
+  <div>Not Yet Tested: <span style="color:#6b7280;">${luminaires.filter(l => l.tests.length === 0).length}</span></div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>Ref</th>
+      <th>Description</th>
+      <th>Location</th>
+      <th>Type</th>
+      <th>Test Type</th>
+      <th>Date</th>
+      <th>Tested By</th>
+      <th>Duration</th>
+      <th>Lux (lx)</th>
+      <th>Pass/Fail</th>
+      <th>Defects</th>
+      <th>Next Test</th>
+    </tr>
+  </thead>
+  <tbody>${tableRows}</tbody>
+</table>
+<div class="footer">
+  Generated in accordance with BS 5266-1:2016 Emergency Lighting — Code of Practice for the Emergency Lighting of Premises.
+  Generated ${new Date().toLocaleString('en-GB')} — Firexcheck.com
+</div>
+</body></html>`;
+
+    return this.renderPdf(html);
+  }
+
+  // ─── Shared PDF renderer ──────────────────────────────────────────────────
+
+  private async renderPdf(html: string): Promise<Buffer> {
+    let browser: Browser | undefined;
+    try {
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable';
+      browser = await puppeteer.launch({
+        headless: true,
+        executablePath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      return Buffer.from(await page.pdf({ format: 'A4', printBackground: true }));
+    } finally {
+      if (browser) await browser.close();
+    }
+  }
 }

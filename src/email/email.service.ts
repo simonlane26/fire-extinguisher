@@ -322,6 +322,187 @@ export class EmailService {
     });
   }
 
+  async sendFireAlarmOverdueAlert(params: {
+    siteName: string;
+    systemRef: string;
+    systemName?: string;
+    panelMake?: string;
+    panelModel?: string;
+    testType: string;
+    overdueSince: Date;
+    daysOverdue: number;
+    recipientEmail: string;
+    recipientName: string;
+    companyName: string;
+  }): Promise<boolean> {
+    const { siteName, systemRef, systemName, panelMake, panelModel, testType, overdueSince, daysOverdue, recipientEmail, recipientName, companyName } = params;
+
+    const panelLabel = [panelMake, panelModel].filter(Boolean).join(' ') || 'N/A';
+    const systemLabel = systemName ? `${systemRef} – ${systemName}` : systemRef;
+    const typeLabel = testType.replace(/_/g, '-').replace(/\b\w/g, c => c.toUpperCase());
+    const subject = `OVERDUE: Fire Alarm ${typeLabel} Test — ${siteName}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fire Alarm Test Overdue</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f3f4f6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 10px;">🔔</div>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 700;">Fire Alarm Test Overdue</h1>
+      <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">${companyName}</p>
+    </div>
+    <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <p style="font-size: 16px; margin: 0 0 20px;">Hi ${recipientName},</p>
+      <p style="margin: 0 0 20px;">A <strong>${typeLabel} fire alarm test</strong> is overdue and requires immediate attention.</p>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; color: #991b1b; font-size: 14px;">Site:</td>
+            <td style="padding: 8px 0; font-weight: 600; text-align: right;">${siteName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #991b1b; font-size: 14px;">Panel:</td>
+            <td style="padding: 8px 0; font-weight: 600; text-align: right;">${panelLabel}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #991b1b; font-size: 14px;">System:</td>
+            <td style="padding: 8px 0; font-weight: 600; text-align: right;">${systemLabel}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #991b1b; font-size: 14px;">Test Type:</td>
+            <td style="padding: 8px 0; font-weight: 600; text-align: right;">${typeLabel}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #991b1b; font-size: 14px;">Was Due:</td>
+            <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #dc2626;">${this.formatDate(overdueSince)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #991b1b; font-size: 14px;">Days Overdue:</td>
+            <td style="padding: 8px 0; font-weight: 700; text-align: right; color: #dc2626;">${daysOverdue} day${daysOverdue !== 1 ? 's' : ''}</td>
+          </tr>
+        </table>
+      </div>
+      <p style="margin: 20px 0;">Please arrange for the test to be carried out as soon as possible to maintain compliance with BS 5839-1.</p>
+      <p style="margin: 20px 0; color: #6b7280; font-size: 13px;">This is an automated alert from your fire safety management system.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    return this.sendEmail({ to: recipientEmail, subject, html });
+  }
+
+  async sendPATTestOverdueAlert(params: {
+    siteName: string;
+    applianceRef: string;
+    description: string;
+    location: string;
+    daysOverdue: number;
+    nextTestDue: Date;
+    recipientEmail: string;
+    recipientName: string;
+    companyName: string;
+  }): Promise<boolean> {
+    const { siteName, applianceRef, description, location, daysOverdue, nextTestDue, recipientEmail, recipientName, companyName } = params;
+    const subject = `OVERDUE: PAT Test Due — ${siteName}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f3f4f6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 10px;">🔌</div>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 700;">PAT Test Overdue</h1>
+      <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">${companyName}</p>
+    </div>
+    <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <p style="font-size: 16px; margin: 0 0 20px;">Hi ${recipientName},</p>
+      <p style="margin: 0 0 20px;">A <strong>PAT test</strong> is overdue and requires immediate attention.</p>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding:8px 0;color:#991b1b;font-size:14px;">Site:</td><td style="padding:8px 0;font-weight:600;text-align:right;">${siteName}</td></tr>
+          <tr><td style="padding:8px 0;color:#991b1b;font-size:14px;">Appliance ID:</td><td style="padding:8px 0;font-weight:600;text-align:right;">${applianceRef}</td></tr>
+          <tr><td style="padding:8px 0;color:#991b1b;font-size:14px;">Description:</td><td style="padding:8px 0;font-weight:600;text-align:right;">${description}</td></tr>
+          <tr><td style="padding:8px 0;color:#991b1b;font-size:14px;">Location:</td><td style="padding:8px 0;font-weight:600;text-align:right;">${location}</td></tr>
+          <tr><td style="padding:8px 0;color:#991b1b;font-size:14px;">Was Due:</td><td style="padding:8px 0;font-weight:600;text-align:right;color:#dc2626;">${this.formatDate(nextTestDue)}</td></tr>
+          <tr><td style="padding:8px 0;color:#991b1b;font-size:14px;">Days Overdue:</td><td style="padding:8px 0;font-weight:700;text-align:right;color:#dc2626;">${daysOverdue} day${daysOverdue !== 1 ? 's' : ''}</td></tr>
+        </table>
+      </div>
+      <p style="margin:20px 0;">Please arrange for PAT testing to be carried out as soon as possible to maintain compliance.</p>
+      <p style="margin:20px 0;color:#6b7280;font-size:13px;">This is an automated alert from your fire safety management system.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    return this.sendEmail({ to: recipientEmail, subject, html });
+  }
+
+  async sendEmergencyLightingOverdueAlert(params: {
+    siteName: string;
+    luminaireRef: string;
+    description: string;
+    location: string;
+    testType: string;
+    daysOverdue: number;
+    overdueSince: Date;
+    recipientEmail: string;
+    recipientName: string;
+    companyName: string;
+  }): Promise<boolean> {
+    const { siteName, luminaireRef, description, location, testType, daysOverdue, overdueSince, recipientEmail, recipientName, companyName } = params;
+    const testLabel = testType === 'three_yearly' ? '3-Yearly' : testType.charAt(0).toUpperCase() + testType.slice(1);
+    const subject = `OVERDUE: Emergency Lighting ${testLabel} Test — ${siteName}`;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f3f4f6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #d97706 0%, #92400e 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 10px;">💡</div>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 700;">Emergency Lighting Test Overdue</h1>
+      <p style="margin: 8px 0 0; opacity: 0.9; font-size: 14px;">${companyName}</p>
+    </div>
+    <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <p style="font-size: 16px; margin: 0 0 20px;">Hi ${recipientName},</p>
+      <p style="margin: 0 0 20px;">An <strong>emergency lighting ${testLabel.toLowerCase()} test</strong> is overdue and requires attention.</p>
+      <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding:8px 0;color:#92400e;font-size:14px;">Site:</td><td style="padding:8px 0;font-weight:600;text-align:right;">${siteName}</td></tr>
+          <tr><td style="padding:8px 0;color:#92400e;font-size:14px;">Luminaire Ref:</td><td style="padding:8px 0;font-weight:600;text-align:right;">${luminaireRef}</td></tr>
+          <tr><td style="padding:8px 0;color:#92400e;font-size:14px;">Description:</td><td style="padding:8px 0;font-weight:600;text-align:right;">${description}</td></tr>
+          <tr><td style="padding:8px 0;color:#92400e;font-size:14px;">Location:</td><td style="padding:8px 0;font-weight:600;text-align:right;">${location}</td></tr>
+          <tr><td style="padding:8px 0;color:#92400e;font-size:14px;">Test Type:</td><td style="padding:8px 0;font-weight:600;text-align:right;">${testLabel}</td></tr>
+          <tr><td style="padding:8px 0;color:#92400e;font-size:14px;">Was Due:</td><td style="padding:8px 0;font-weight:600;text-align:right;color:#d97706;">${this.formatDate(overdueSince)}</td></tr>
+          <tr><td style="padding:8px 0;color:#92400e;font-size:14px;">Days Overdue:</td><td style="padding:8px 0;font-weight:700;text-align:right;color:#d97706;">${daysOverdue} day${daysOverdue !== 1 ? 's' : ''}</td></tr>
+        </table>
+      </div>
+      <p style="margin:20px 0;">Please arrange for the emergency lighting test to be carried out as soon as possible to maintain compliance with BS 5266-1:2016.</p>
+      <p style="margin:20px 0;color:#6b7280;font-size:13px;">This is an automated alert from your fire safety management system.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    return this.sendEmail({ to: recipientEmail, subject, html });
+  }
+
   private formatDate(date: Date): string {
     return new Date(date).toLocaleDateString('en-GB', {
       weekday: 'long',

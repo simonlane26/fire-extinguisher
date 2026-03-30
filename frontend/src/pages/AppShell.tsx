@@ -34,8 +34,12 @@ const AppShell: React.FC = () => {
           secondaryColor: '',
           subscriptionPlan: 'trial',
           subscriptionStatus: '',
-          createdAt: ''
-        }} updateTenant={function (u: Partial<Tenant>): void {
+          createdAt: '',
+          stockManagementEnabled: true,
+          fireAlarmEnabled: false,
+          patTestingEnabled: false,
+          emergencyLightingEnabled: false,
+        }} userRole="admin" updateTenant={function (u: Partial<Tenant>): void {
           throw new Error('Function not implemented.');
         } } />}
       </main>

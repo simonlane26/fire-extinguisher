@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Check, Crown, Zap, Building2, AlertCircle } from 'lucide-react';
+import { CreditCard, Check, Crown, Zap, Building2, AlertCircle, BellRing, Lightbulb, Plug, Plus } from 'lucide-react';
 import type { Tenant } from '../types';
 
 interface BillingPageProps {
@@ -165,6 +165,11 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
       setLoading(false);
       setLoadingPlan(null);
     }
+  };
+
+  const handleAddOn = (_module: string) => {
+    // Stripe add-on checkout — to be wired up with price IDs
+    window.location.href = `mailto:support@firexcheck.com?subject=Add-on Module Request&body=I would like to add the ${_module} module to my account.`;
   };
 
   const handleManageBilling = async () => {
@@ -447,6 +452,110 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
             Contact Sales
           </a>
         </div>
+      </div>
+
+      {/* Add-on Modules */}
+      <div className="p-6 bg-white shadow rounded-2xl">
+        <div className="flex items-center gap-3 mb-1">
+          <Plus className="w-5 h-5 text-gray-500" />
+          <h3 className="text-xl font-bold text-gray-900">Add-on Modules</h3>
+        </div>
+        <p className="mb-5 text-sm text-gray-500 ml-8">
+          Extend your plan with additional compliance modules. Added to your monthly subscription.
+        </p>
+        <div className="space-y-3">
+
+          {/* Fire Alarm Logbook */}
+          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-red-200 hover:bg-red-50/30 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <BellRing className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900">Fire Alarm Logbook</div>
+                <div className="text-sm text-gray-500">BS 5839-1 digital logbook — inspections, faults, engineer visits & reports</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 shrink-0 ml-4">
+              <div className="text-right">
+                <div className="text-lg font-bold text-gray-900">+£12<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                <div className="text-xs text-gray-400">excl. VAT</div>
+              </div>
+              <button
+                onClick={() => handleAddOn('fire-alarm')}
+                disabled={tenant.fireAlarmEnabled}
+                className="px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                style={tenant.fireAlarmEnabled
+                  ? { borderColor: '#d1d5db', color: '#6b7280', background: '#f9fafb' }
+                  : { borderColor: safeColor, color: safeColor, background: 'white' }}
+              >
+                {tenant.fireAlarmEnabled ? 'Active' : 'Add to Plan'}
+              </button>
+            </div>
+          </div>
+
+          {/* Emergency Lighting */}
+          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-amber-200 hover:bg-amber-50/30 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Lightbulb className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900">Emergency Lighting</div>
+                <div className="text-sm text-gray-500">BS 5266-1 luminaire register — daily, monthly, annual & 3-yearly test logs</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 shrink-0 ml-4">
+              <div className="text-right">
+                <div className="text-lg font-bold text-gray-900">+£12<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                <div className="text-xs text-gray-400">excl. VAT</div>
+              </div>
+              <button
+                onClick={() => handleAddOn('emergency-lighting')}
+                disabled={tenant.emergencyLightingEnabled}
+                className="px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                style={tenant.emergencyLightingEnabled
+                  ? { borderColor: '#d1d5db', color: '#6b7280', background: '#f9fafb' }
+                  : { borderColor: safeColor, color: safeColor, background: 'white' }}
+              >
+                {tenant.emergencyLightingEnabled ? 'Active' : 'Add to Plan'}
+              </button>
+            </div>
+          </div>
+
+          {/* PAT Testing */}
+          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-blue-200 hover:bg-blue-50/30 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Plug className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900">PAT Testing</div>
+                <div className="text-sm text-gray-500">Portable appliance register — test logs, compliance tracking & PDF reports</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 shrink-0 ml-4">
+              <div className="text-right">
+                <div className="text-lg font-bold text-gray-900">+£15<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                <div className="text-xs text-gray-400">excl. VAT</div>
+              </div>
+              <button
+                onClick={() => handleAddOn('pat-testing')}
+                disabled={tenant.patTestingEnabled}
+                className="px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                style={tenant.patTestingEnabled
+                  ? { borderColor: '#d1d5db', color: '#6b7280', background: '#f9fafb' }
+                  : { borderColor: safeColor, color: safeColor, background: 'white' }}
+              >
+                {tenant.patTestingEnabled ? 'Active' : 'Add to Plan'}
+              </button>
+            </div>
+          </div>
+
+        </div>
+        <p className="mt-4 text-xs text-gray-400">
+          Add-ons are billed monthly alongside your subscription. Contact <a href="mailto:support@firexcheck.com" className="underline">support@firexcheck.com</a> to add a module to your account.
+        </p>
       </div>
 
       {/* Real-world explainer box */}

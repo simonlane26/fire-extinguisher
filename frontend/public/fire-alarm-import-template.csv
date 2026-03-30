@@ -1,0 +1,3 @@
+systemRef,name,panelMake,panelModel,panelSerial,arcCompany,arcNumber,installDate,notes,site
+FAP-01,Main Panel,Hochiki,ESP,HS-001234,SecureARC,ARC-9876,2022-01-15,Annual service due Jan,Main Site
+FAP-02,Warehouse Panel,Notifier,NFS2-3030,NF-005678,SecureARC,ARC-9877,2021-06-01,,Warehouse

@@ -1,0 +1,5 @@
+applianceRef,description,location,applianceClass,notes,site
+PAT-001,Laptop Dell XPS,Office Room 1,I,Annual test required,Main Site
+PAT-002,Kettle,Kitchen,I,,Main Site
+PAT-003,Power Tool Drill,Workshop,I,Check cord integrity,Warehouse
+PAT-004,Extension Lead 4-way,Meeting Room A,I,,Main Site

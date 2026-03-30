@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'frontend/dist',
   // Load UI from Railway - offline features still work via native plugins
   server: {
-    url: 'https://fire-extinguisher-production.up.railway.app',
+    url: 'https://angelic-renewal-production.up.railway.app',
     cleartext: true
   },
   android: {

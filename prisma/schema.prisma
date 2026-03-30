@@ -24,7 +24,10 @@ model Tenant {
   subscriptionStatus      String            @default("trial")
   trialEndsAt             DateTime?
   stockManagementEnabled  Boolean           @default(true)
-  createdAt               DateTime          @default(now())
+  fireAlarmEnabled        Boolean           @default(false)
+  patTestingEnabled        Boolean           @default(false)
+  emergencyLightingEnabled Boolean           @default(false)
+  createdAt                DateTime          @default(now())
   users                User[]
   sites                Site[]
   extinguishers        Extinguisher[]
@@ -37,6 +40,13 @@ model Tenant {
   inventoryItems       InventoryItem[]
   partUsages           PartUsage[]
   quotes               Quote[]
+  fireAlarmSystems     FireAlarmSystem[]
+  fireAlarmLogEntries  FireAlarmLogEntry[]
+  fireAlarmCallPoints  FireAlarmCallPoint[]
+  patAppliances           PATAppliance[]
+  patTests                PATTest[]
+  emergencyLuminaires     EmergencyLuminaire[]
+  emergencyLightTests     EmergencyLightTest[]
 
   @@index([subdomain])
   @@index([stripeCustomerId])
@@ -60,6 +70,9 @@ model Site {
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   extinguishers Extinguisher[]
   userSiteAccess UserSiteAccess[]
+  fireAlarmSystems FireAlarmSystem[]
+  patAppliances       PATAppliance[]
+  emergencyLuminaires EmergencyLuminaire[]
 
   @@index([tenantId])
   @@map("Site")
@@ -390,4 +403,178 @@ model QuoteLine {
   @@index([quoteId])
   @@index([extinguisherId])
   @@map("QuoteLine")
+}
+
+// ─── Fire Alarm Logbook ───────────────────────────────────────────────────────
+
+model FireAlarmSystem {
+  id          String   @id @default(cuid())
+  tenantId    String
+  siteId      String
+  systemRef   String   // User-defined ID e.g. "Panel A", "FAP-01"
+  name        String?  // Optional friendly name
+  panelMake   String?
+  panelModel  String?
+  panelSerial String?
+  arcCompany  String?
+  arcNumber   String?  // ARC reference/line number
+  installDate DateTime?
+  notes             String?
+  nextWeeklyDue     DateTime?
+  nextMonthlyDue    DateTime?
+  nextQuarterlyDue  DateTime?
+  nextSixMonthlyDue DateTime?
+  nextAnnualDue     DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  callPoints  FireAlarmCallPoint[]
+  logEntries  FireAlarmLogEntry[]
+
+  @@index([tenantId])
+  @@index([siteId])
+  @@map("FireAlarmSystem")
+}
+
+model FireAlarmCallPoint {
+  id           String    @id @default(cuid())
+  tenantId     String
+  systemId     String
+  pointRef     String    // e.g. "MCP-001", "Zone 1 - Lobby"
+  location     String?
+  floor        String?
+  zone         String?
+  lastTestedAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  tenant  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  system  FireAlarmSystem @relation(fields: [systemId], references: [id], onDelete: Cascade)
+
+  @@index([systemId])
+  @@index([tenantId])
+  @@map("FireAlarmCallPoint")
+}
+
+model FireAlarmLogEntry {
+  id           String   @id @default(cuid())
+  tenantId     String
+  systemId     String
+  entryType    String   // 'weekly'|'monthly'|'quarterly'|'six_monthly'|'annual'|'non_routine'
+  conductedBy  String
+  conductedAt  DateTime
+  outcome      String   // 'pass'|'fail'|'advisory'
+  notes        String?
+  data         Json?    // Type-specific checklist/fields (see service for shape)
+  createdAt    DateTime @default(now())
+
+  tenant  Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  system  FireAlarmSystem @relation(fields: [systemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([systemId])
+  @@index([entryType])
+  @@map("FireAlarmLogEntry")
+}
+
+// ─── PAT Testing ─────────────────────────────────────────────────────────────
+
+model PATAppliance {
+  id             String    @id @default(cuid())
+  tenantId       String
+  siteId         String
+  applianceRef   String    // ID No. e.g. "ID001"
+  description    String    // e.g. "Kettle"
+  location       String    // e.g. "Kitchen"
+  applianceClass String?   // "I" or "II"
+  notes          String?
+  lastTestedAt   DateTime?
+  nextTestDue    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site           Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  tests          PATTest[]
+
+  @@index([tenantId])
+  @@index([siteId])
+  @@map("PATAppliance")
+}
+
+model PATTest {
+  id              String    @id @default(cuid())
+  tenantId        String
+  applianceId     String
+  testedBy        String
+  testedAt        DateTime
+  visualInspect   String    // "pass" | "fail"
+  earthOhms       Float?
+  insulationMohms Float?
+  functionalCheck String    // "pass" | "fail" | "na"
+  outcome         String    // "pass" | "fail"
+  nextTestDate    DateTime?
+  comments        String?
+  reportRef       String?
+  createdAt       DateTime  @default(now())
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appliance       PATAppliance @relation(fields: [applianceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([applianceId])
+  @@map("PATTest")
+}
+
+// ─── Emergency Lighting ───────────────────────────────────────────────────────
+
+model EmergencyLuminaire {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  siteId             String
+  luminaireRef       String    // Location identity e.g. "EL-001"
+  description        String    // e.g. "Non-Maintained LED"
+  location           String    // e.g. "Main Corridor"
+  luminaireType      String    // "escape_route" | "open_area" | "high_risk" | "stairwell"
+  fittingType        String?   // "self_contained" | "central_battery"
+  zone               String?
+  notes              String?
+  nextDailyDue       DateTime?
+  nextMonthlyDue     DateTime?
+  nextAnnualDue      DateTime?
+  nextThreeYearlyDue DateTime?
+  lastTestedAt       DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site               Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  tests              EmergencyLightTest[]
+
+  @@index([tenantId])
+  @@index([siteId])
+  @@map("EmergencyLuminaire")
+}
+
+model EmergencyLightTest {
+  id              String    @id @default(cuid())
+  tenantId        String
+  luminaireId     String
+  testType        String    // "daily" | "monthly" | "annual" | "three_yearly"
+  testedBy        String
+  testedAt        DateTime
+  durationSecs    Int?      // Monthly: target 30+ seconds
+  durationMins    Int?      // Annual: 180 (escape route) or 60 (open area) minutes
+  luxReading      Float?    // Optional lux reading
+  outcome         String    // "pass" | "fail"
+  defectsFound    String?
+  remedialAction  String?
+  nextTestDate    DateTime?
+  comments        String?
+  reportRef       String?
+  createdAt       DateTime  @default(now())
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  luminaire       EmergencyLuminaire @relation(fields: [luminaireId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([luminaireId])
+  @@map("EmergencyLightTest")
 }

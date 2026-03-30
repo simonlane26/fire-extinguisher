@@ -1,15 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, MapPin, X } from 'lucide-react';
-import { fetchExtinguishers, fetchSites } from '../lib/api';
-import type { Extinguisher, Site } from '../types';
+import { Bell, ChevronLeft, ChevronRight, MapPin, X, Plug, Lightbulb } from 'lucide-react';
+import { fetchExtinguishers, fetchSites, faGetSystems, patGetAppliances, elGetLuminaires } from '../lib/api';
+import type { Extinguisher, FireAlarmSystem, PATAppliance, EmergencyLuminaire, Site } from '../types';
 
-type EventType = 'inspection' | 'maintenance' | 'expiry';
+type EventType = 'inspection' | 'maintenance' | 'expiry' | 'fire_alarm' | 'pat_test' | 'el_test';
 
-type CalEvent = {
-  date: string; // 'YYYY-MM-DD'
-  type: EventType;
-  ext: Extinguisher;
-};
+type CalEvent =
+  | { date: string; type: Exclude<EventType, 'fire_alarm' | 'pat_test' | 'el_test'>; ext: Extinguisher }
+  | { date: string; type: 'fire_alarm'; label: string; system: FireAlarmSystem }
+  | { date: string; type: 'pat_test'; label: string; appliance: PATAppliance }
+  | { date: string; type: 'el_test'; label: string; luminaire: EmergencyLuminaire };
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -22,9 +22,12 @@ function toDateStr(val: string | undefined): string | null {
   return val.slice(0, 10);
 }
 
-function eventLabel(type: EventType): string {
-  if (type === 'inspection') return 'Inspection';
-  if (type === 'maintenance') return 'Maintenance';
+function eventLabel(ev: CalEvent): string {
+  if (ev.type === 'fire_alarm') return ev.label;
+  if (ev.type === 'pat_test') return ev.label;
+  if (ev.type === 'el_test') return ev.label;
+  if (ev.type === 'inspection') return 'Inspection';
+  if (ev.type === 'maintenance') return 'Maintenance';
   return 'Expiry';
 }
 
@@ -36,6 +39,9 @@ function chipStyle(type: EventType, dateStr: string): string {
   if (diff < 0)  return 'bg-red-100 text-red-700 hover:bg-red-200';
   if (diff <= 7) return 'bg-orange-100 text-orange-700 hover:bg-orange-200';
   if (diff <= 30) return 'bg-amber-100 text-amber-700 hover:bg-amber-200';
+  if (type === 'fire_alarm')  return 'bg-rose-100 text-rose-700 hover:bg-rose-200';
+  if (type === 'pat_test')    return 'bg-violet-100 text-violet-700 hover:bg-violet-200';
+  if (type === 'el_test')     return 'bg-amber-100 text-amber-700 hover:bg-amber-200';
   if (type === 'inspection')  return 'bg-blue-100 text-blue-700 hover:bg-blue-200';
   if (type === 'maintenance') return 'bg-purple-100 text-purple-700 hover:bg-purple-200';
   return 'bg-gray-100 text-gray-600 hover:bg-gray-200';
@@ -49,6 +55,9 @@ function badgeStyle(type: EventType, dateStr: string): string {
   if (diff < 0)  return 'bg-red-100 text-red-700';
   if (diff <= 7) return 'bg-orange-100 text-orange-700';
   if (diff <= 30) return 'bg-amber-100 text-amber-700';
+  if (type === 'fire_alarm')  return 'bg-rose-100 text-rose-700';
+  if (type === 'pat_test')    return 'bg-violet-100 text-violet-700';
+  if (type === 'el_test')     return 'bg-amber-100 text-amber-700';
   if (type === 'inspection')  return 'bg-blue-100 text-blue-700';
   if (type === 'maintenance') return 'bg-purple-100 text-purple-700';
   return 'bg-gray-100 text-gray-600';
@@ -60,12 +69,31 @@ function formatDate(dateStr: string): string {
   });
 }
 
-const CalendarPage: React.FC = () => {
+const CalendarPage: React.FC<{
+  fireAlarmEnabled?: boolean;
+  patTestingEnabled?: boolean;
+  emergencyLightingEnabled?: boolean;
+  onNavigateToFireAlarm?: () => void;
+  onNavigateToPAT?: (id: string) => void;
+  onNavigateToEL?: (id: string) => void;
+  onNavigateToExtinguisher?: (id: string) => void;
+}> = ({
+  fireAlarmEnabled = false,
+  patTestingEnabled = false,
+  emergencyLightingEnabled = false,
+  onNavigateToFireAlarm,
+  onNavigateToPAT,
+  onNavigateToEL,
+  onNavigateToExtinguisher,
+}) => {
   const today = new Date();
   const [year, setYear]   = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
+  const [fireAlarmSystems, setFireAlarmSystems] = useState<FireAlarmSystem[]>([]);
+  const [patAppliances, setPatAppliances] = useState<PATAppliance[]>([]);
+  const [elLuminaires, setElLuminaires] = useState<EmergencyLuminaire[]>([]);
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CalEvent | null>(null);
@@ -74,13 +102,22 @@ const CalendarPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    Promise.all([fetchExtinguishers(), fetchSites()])
-      .then(([exts, siteList]) => {
-        setExtinguishers(exts);
-        setSites(siteList);
+    const fetches: Promise<unknown>[] = [fetchExtinguishers(), fetchSites()];
+    if (fireAlarmEnabled) fetches.push(faGetSystems());
+    if (patTestingEnabled) fetches.push(patGetAppliances());
+    if (emergencyLightingEnabled) fetches.push(elGetLuminaires());
+    Promise.all(fetches)
+      .then((results) => {
+        const [exts, siteList, ...rest] = results;
+        setExtinguishers(exts as Extinguisher[]);
+        setSites(siteList as Site[]);
+        let idx = 0;
+        if (fireAlarmEnabled) setFireAlarmSystems(rest[idx++] as FireAlarmSystem[]);
+        if (patTestingEnabled) setPatAppliances(rest[idx++] as PATAppliance[]);
+        if (emergencyLightingEnabled) setElLuminaires(rest[idx] as EmergencyLuminaire[]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [fireAlarmEnabled, patTestingEnabled, emergencyLightingEnabled]);
 
   // Close popover on outside click
   useEffect(() => {
@@ -100,7 +137,7 @@ const CalendarPage: React.FC = () => {
   // Build events indexed by 'YYYY-MM-DD'
   const eventsByDay: Record<string, CalEvent[]> = {};
   for (const ext of filtered) {
-    const pairs: [string | undefined, EventType][] = [
+    const pairs: [string | undefined, Exclude<EventType, 'fire_alarm' | 'pat_test' | 'el_test'>][] = [
       [ext.nextInspection,  'inspection'],
       [ext.nextMaintenance, 'maintenance'],
       [ext.expiryDate,      'expiry'],
@@ -110,6 +147,67 @@ const CalendarPage: React.FC = () => {
       if (!ds) continue;
       if (!eventsByDay[ds]) eventsByDay[ds] = [];
       eventsByDay[ds].push({ date: ds, type, ext });
+    }
+  }
+
+  // Fire alarm next-due events
+  const filteredSystems = siteFilter === 'all'
+    ? fireAlarmSystems
+    : fireAlarmSystems.filter(s => s.siteId === siteFilter);
+  for (const sys of filteredSystems) {
+    const pairs: [string | null | undefined, string][] = [
+      [sys.nextWeeklyDue,      'Weekly Test Due'],
+      [sys.nextMonthlyDue,     'Monthly Inspection Due'],
+      [sys.nextQuarterlyDue,   'Quarterly Inspection Due'],
+      [sys.nextSixMonthlyDue,  '6-Monthly Inspection Due'],
+      [sys.nextAnnualDue,      'Annual Inspection Due'],
+    ];
+    const sysLabel = sys.name ? `${sys.systemRef} — ${sys.name}` : sys.systemRef;
+    for (const [val, prefix] of pairs) {
+      const ds = toDateStr(val ?? undefined);
+      if (!ds) continue;
+      if (!eventsByDay[ds]) eventsByDay[ds] = [];
+      eventsByDay[ds].push({ date: ds, type: 'fire_alarm', label: `${prefix}: ${sysLabel}`, system: sys });
+    }
+  }
+
+  // PAT test next-due events
+  const filteredPATAppliances = siteFilter === 'all'
+    ? patAppliances
+    : patAppliances.filter(a => a.siteId === siteFilter);
+  for (const appliance of filteredPATAppliances) {
+    const ds = toDateStr(appliance.nextTestDue ?? undefined);
+    if (!ds) continue;
+    if (!eventsByDay[ds]) eventsByDay[ds] = [];
+    eventsByDay[ds].push({
+      date: ds,
+      type: 'pat_test',
+      label: `PAT Due: ${appliance.applianceRef} — ${appliance.description}`,
+      appliance,
+    });
+  }
+
+  // Emergency lighting next-due events
+  const filteredELLuminaires = siteFilter === 'all'
+    ? elLuminaires
+    : elLuminaires.filter(l => l.siteId === siteFilter);
+  const elDueFields: { field: keyof EmergencyLuminaire; prefix: string }[] = [
+    { field: 'nextMonthlyDue',     prefix: 'EL Monthly' },
+    { field: 'nextAnnualDue',      prefix: 'EL Annual' },
+    { field: 'nextThreeYearlyDue', prefix: 'EL 3-Yearly' },
+  ];
+  for (const luminaire of filteredELLuminaires) {
+    for (const { field, prefix } of elDueFields) {
+      const val = luminaire[field] as string | null | undefined;
+      const ds = toDateStr(val ?? undefined);
+      if (!ds) continue;
+      if (!eventsByDay[ds]) eventsByDay[ds] = [];
+      eventsByDay[ds].push({
+        date: ds,
+        type: 'el_test',
+        label: `${prefix}: ${luminaire.luminaireRef} — ${luminaire.description}`,
+        luminaire,
+      });
     }
   }
 
@@ -135,7 +233,10 @@ const CalendarPage: React.FC = () => {
 
   function handleChipClick(e: React.MouseEvent, ev: CalEvent) {
     e.stopPropagation();
-    if (selected?.ext.id === ev.ext.id && selected?.type === ev.type && selected?.date === ev.date) {
+    const getKey = (e: CalEvent) => e.type === 'fire_alarm' ? e.system.id + e.label : e.type === 'pat_test' ? e.appliance.id : e.type === 'el_test' ? e.luminaire.id + e.label : e.ext.id;
+    const selKey = selected ? getKey(selected) : null;
+    const evKey = getKey(ev);
+    if (selKey && selected?.type === ev.type && selected?.date === ev.date && selKey === evKey) {
       setSelected(null);
       return;
     }
@@ -248,11 +349,19 @@ const CalendarPage: React.FC = () => {
                   {shown.map((ev, i) => (
                     <button
                       key={i}
+                      type="button"
                       onClick={e => handleChipClick(e, ev)}
                       className={`w-full text-left text-xs px-1.5 py-0.5 rounded truncate transition-colors ${chipStyle(ev.type, ev.date)}`}
                     >
-                      <span className="font-medium">{eventLabel(ev.type)}</span>
-                      <span className="opacity-75"> · {ev.ext.location}</span>
+                      {ev.type === 'fire_alarm' ? (
+                        <span className="flex items-center gap-0.5"><Bell size={9} className="shrink-0" /><span className="truncate">{ev.label}</span></span>
+                      ) : ev.type === 'pat_test' ? (
+                        <span className="flex items-center gap-0.5"><Plug size={9} className="shrink-0" /><span className="truncate">{ev.label}</span></span>
+                      ) : ev.type === 'el_test' ? (
+                        <span className="flex items-center gap-0.5"><Lightbulb size={9} className="shrink-0" /><span className="truncate">{ev.label}</span></span>
+                      ) : (
+                        <><span className="font-medium">{eventLabel(ev)}</span><span className="opacity-75"> · {ev.ext.location}</span></>
+                      )}
                     </button>
                   ))}
                   {overflow > 0 && (
@@ -268,11 +377,14 @@ const CalendarPage: React.FC = () => {
       {/* Legend */}
       <div className="flex flex-wrap gap-4 mt-4 text-xs text-gray-600">
         {[
-          { label: 'Overdue',          cls: 'bg-red-100 border-red-300' },
-          { label: 'Due ≤ 7 days',     cls: 'bg-orange-100 border-orange-300' },
-          { label: 'Due ≤ 30 days',    cls: 'bg-amber-100 border-amber-300' },
-          { label: 'Inspection',       cls: 'bg-blue-100 border-blue-300' },
-          { label: 'Maintenance',      cls: 'bg-purple-100 border-purple-300' },
+          { label: 'Overdue',           cls: 'bg-red-100 border-red-300' },
+          { label: 'Due ≤ 7 days',      cls: 'bg-orange-100 border-orange-300' },
+          { label: 'Due ≤ 30 days',     cls: 'bg-amber-100 border-amber-300' },
+          { label: 'Inspection',        cls: 'bg-blue-100 border-blue-300' },
+          { label: 'Maintenance',       cls: 'bg-purple-100 border-purple-300' },
+          ...(fireAlarmEnabled ? [{ label: 'Fire Alarm Test', cls: 'bg-rose-100 border-rose-300' }] : []),
+          ...(patTestingEnabled ? [{ label: 'PAT Test Due', cls: 'bg-violet-100 border-violet-300' }] : []),
+          ...(emergencyLightingEnabled ? [{ label: 'EL Test Due', cls: 'bg-amber-100 border-amber-300' }] : []),
         ].map(({ label, cls }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`w-3 h-3 rounded-sm border ${cls}`} />
@@ -292,14 +404,24 @@ const CalendarPage: React.FC = () => {
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="min-w-0">
               <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full mb-1.5 font-medium ${badgeStyle(selected.type, selected.date)}`}>
-                {eventLabel(selected.type)} Due
+                {selected.type === 'fire_alarm' ? <Bell size={10} className="mr-1" /> : selected.type === 'pat_test' ? <Plug size={10} className="mr-1" /> : selected.type === 'el_test' ? <Lightbulb size={10} className="mr-1" /> : null}
+                {eventLabel(selected)} Due
               </span>
-              <div className="font-semibold text-gray-900 truncate">{selected.ext.type}</div>
-              {selected.ext.capacity && (
-                <div className="text-xs text-gray-500">{selected.ext.capacity}</div>
+              {selected.type === 'fire_alarm' ? (
+                <div className="font-semibold text-gray-900 truncate">{selected.system.systemRef}{selected.system.name ? ` — ${selected.system.name}` : ''}</div>
+              ) : selected.type === 'pat_test' ? (
+                <div className="font-semibold text-gray-900 truncate">{selected.appliance.applianceRef} — {selected.appliance.description}</div>
+              ) : selected.type === 'el_test' ? (
+                <div className="font-semibold text-gray-900 truncate">{selected.luminaire.luminaireRef} — {selected.luminaire.description}</div>
+              ) : (
+                <>
+                  <div className="font-semibold text-gray-900 truncate">{selected.ext.type}</div>
+                  {selected.ext.capacity && <div className="text-xs text-gray-500">{selected.ext.capacity}</div>}
+                </>
               )}
             </div>
             <button
+              type="button"
               onClick={() => setSelected(null)}
               className="text-gray-400 hover:text-gray-600 shrink-0 mt-0.5"
               aria-label="Close"
@@ -310,38 +432,95 @@ const CalendarPage: React.FC = () => {
 
           {/* Details */}
           <div className="space-y-2 text-sm">
-            <div className="flex items-start gap-2 text-gray-600">
-              <MapPin size={13} className="shrink-0 mt-0.5" />
-              <div>
-                <div>{selected.ext.location}</div>
-                {selected.ext.building && (
-                  <div className="text-xs text-gray-500">{selected.ext.building}</div>
+            {selected.type === 'fire_alarm' ? (
+              <>
+                {selected.system.site && (
+                  <div className="flex items-start gap-2 text-gray-600">
+                    <MapPin size={13} className="shrink-0 mt-0.5" />
+                    <div>{selected.system.site.name}</div>
+                  </div>
                 )}
-                {selected.ext.site && (
-                  <div className="text-xs text-gray-400">{selected.ext.site.name}</div>
+                {selected.system.panelMake && (
+                  <div className="flex justify-between text-gray-600">
+                    <span className="font-medium">Panel</span>
+                    <span>{selected.system.panelMake} {selected.system.panelModel}</span>
+                  </div>
                 )}
+              </>
+            ) : selected.type === 'pat_test' ? (
+              <div className="flex items-start gap-2 text-gray-600">
+                <MapPin size={13} className="shrink-0 mt-0.5" />
+                <div>
+                  <div>{selected.appliance.location}</div>
+                  {selected.appliance.applianceClass && <div className="text-xs text-gray-500">Class {selected.appliance.applianceClass}</div>}
+                  {selected.appliance.site && <div className="text-xs text-gray-400">{selected.appliance.site.name}</div>}
+                </div>
               </div>
-            </div>
+            ) : selected.type === 'el_test' ? (
+              <div className="flex items-start gap-2 text-gray-600">
+                <MapPin size={13} className="shrink-0 mt-0.5" />
+                <div>
+                  <div>{selected.luminaire.location}</div>
+                  {selected.luminaire.luminaireType && <div className="text-xs text-gray-500">{selected.luminaire.luminaireType.replace(/_/g, ' ')}</div>}
+                  {selected.luminaire.site && <div className="text-xs text-gray-400">{selected.luminaire.site.name}</div>}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2 text-gray-600">
+                <MapPin size={13} className="shrink-0 mt-0.5" />
+                <div>
+                  <div>{selected.ext.location}</div>
+                  {selected.ext.building && <div className="text-xs text-gray-500">{selected.ext.building}</div>}
+                  {selected.ext.site && <div className="text-xs text-gray-400">{selected.ext.site.name}</div>}
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-between text-gray-600 border-t pt-2 mt-2">
               <span className="font-medium">Due date</span>
               <span>{formatDate(selected.date)}</span>
             </div>
 
-            <div className="flex justify-between text-gray-600">
-              <span className="font-medium">Status</span>
-              <span className={selected.ext.status === 'Active' ? 'text-green-600' : 'text-red-600'}>
-                {selected.ext.status}
-              </span>
-            </div>
-
-            {selected.ext.serialNumber && (
-              <div className="flex justify-between text-gray-600">
-                <span className="font-medium">Serial</span>
-                <span className="font-mono text-xs">{selected.ext.serialNumber}</span>
-              </div>
+            {selected.type !== 'fire_alarm' && selected.type !== 'pat_test' && selected.type !== 'el_test' && (
+              <>
+                <div className="flex justify-between text-gray-600">
+                  <span className="font-medium">Status</span>
+                  <span className={selected.ext.status === 'Active' ? 'text-green-600' : 'text-red-600'}>
+                    {selected.ext.status}
+                  </span>
+                </div>
+                {selected.ext.serialNumber && (
+                  <div className="flex justify-between text-gray-600">
+                    <span className="font-medium">Serial</span>
+                    <span className="font-mono text-xs">{selected.ext.serialNumber}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
+
+          {/* Navigate to asset */}
+          {(
+            (selected.type === 'pat_test' && onNavigateToPAT) ||
+            (selected.type === 'el_test' && onNavigateToEL) ||
+            (selected.type === 'fire_alarm' && onNavigateToFireAlarm) ||
+            (selected.type !== 'fire_alarm' && selected.type !== 'pat_test' && selected.type !== 'el_test' && onNavigateToExtinguisher)
+          ) && (
+            <button
+              type="button"
+              onClick={() => {
+                const ev = selected;
+                setSelected(null);
+                if (ev.type === 'pat_test' && onNavigateToPAT) onNavigateToPAT(ev.appliance.id);
+                else if (ev.type === 'el_test' && onNavigateToEL) onNavigateToEL(ev.luminaire.id);
+                else if (ev.type === 'fire_alarm' && onNavigateToFireAlarm) onNavigateToFireAlarm();
+                else if (ev.type !== 'fire_alarm' && ev.type !== 'pat_test' && ev.type !== 'el_test' && onNavigateToExtinguisher) onNavigateToExtinguisher(ev.ext.id);
+              }}
+              className="mt-3 w-full text-sm font-medium py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700 transition-colors"
+            >
+              Open →
+            </button>
+          )}
         </div>
       )}
     </div>

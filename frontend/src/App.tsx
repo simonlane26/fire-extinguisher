@@ -26,6 +26,10 @@ import {
   Cloud,
   CloudOff,
   CalendarDays,
+  BellRing,
+  ShieldCheck,
+  Plug,
+  Lightbulb,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
@@ -49,6 +53,10 @@ import HelpPage from './pages/HelpPage';
 import ReportsPage from './pages/ReportsPage';
 import ComplianceDashboard from './pages/ComplianceDashboard';
 import CalendarPage from './pages/CalendarPage';
+import FireAlarmLogbookPage from './pages/FireAlarmLogbookPage';
+import PATTestingPage from './pages/PATTestingPage';
+import EmergencyLightingPage from './pages/EmergencyLightingPage';
+import PlatformAdminPage from './pages/PlatformAdminPage';
 import QuotesListPage from './pages/QuotesListPage';
 import QuoteCreatePage from './pages/QuoteCreatePage';
 import QuoteDetailPage from './pages/QuoteDetailPage';
@@ -102,6 +110,10 @@ const MOCK_TENANTS: Record<string, Tenant> = {
     subscriptionPlan: 'trial',
     subscriptionStatus: 'trial',
     createdAt: '2024-12-01',
+    stockManagementEnabled: true,
+    fireAlarmEnabled: false,
+    patTestingEnabled: false,
+    emergencyLightingEnabled: false,
   },
 };
 
@@ -150,7 +162,7 @@ const PERMISSIONS: Record<PermissionKey, RoleKey[]> = {
   PERFORM_INSPECTIONS: ['super_admin', 'admin', 'manager', 'inspector'],
   VIEW_INSPECTIONS: ['super_admin', 'admin', 'manager', 'inspector', 'viewer'],
   VIEW_REPORTS: ['super_admin', 'admin', 'manager'],
-  VIEW_BILLING: ['super_admin'],
+  VIEW_BILLING: ['super_admin', 'admin'],
   MANAGE_SETTINGS: ['super_admin', 'admin'],
 };
 
@@ -271,8 +283,11 @@ const FireExtinguisherApp: React.FC = () => {
   const { currentUser, setCurrentUser, hasPermission, logout } = actx;
 
   const [activeTab, setActiveTab] =
-    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'calendar' | 'reports' | 'help' | 'quotes'>('overview');
+    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'calendar' | 'reports' | 'help' | 'quotes' | 'fire-alarm' | 'pat-testing' | 'emergency-lighting' | 'platform-admin'>('overview');
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<{ id: string; name: string } | null>(null);
+  const [patPendingId, setPATPendingId] = useState<string | undefined>(undefined);
+  const [elPendingId, setELPendingId] = useState<string | undefined>(undefined);
+  const [extPendingId, setExtPendingId] = useState<string | undefined>(undefined);
 
   // Extinguishers state (seed with demo; will be replaced by API load)
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([
@@ -507,6 +522,12 @@ useEffect(() => {
     setSelectedExtinguisher(ext);
     setShowDetails(true);
   };
+
+  useEffect(() => {
+    if (!extPendingId || extinguishers.length === 0) return;
+    const match = extinguishers.find(e => e.id === extPendingId);
+    if (match) { openDetails(match); setExtPendingId(undefined); }
+  }, [extPendingId, extinguishers]);
 
   // Add modal + QR
   const [openAdd, setOpenAdd] = useState(false);
@@ -949,17 +970,63 @@ useEffect(() => {
           />
         </section>
 
+        {/* Module cards — Extinguishers, Fire Alarm, PAT Testing, Emergency Lighting */}
+        <div className="flex justify-center gap-3 flex-wrap">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-all border-2 shadow-sm ${
+              activeTab === 'overview'
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-600'
+            }`}
+          >
+            <Flame size={18} />
+            Extinguishers
+          </button>
+          {tenant.fireAlarmEnabled && (
+            <button
+              onClick={() => setActiveTab('fire-alarm')}
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-all border-2 shadow-sm ${
+                activeTab === 'fire-alarm'
+                  ? 'bg-red-600 text-white border-red-600 shadow-md'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-red-400 hover:text-red-600'
+              }`}
+            >
+              <BellRing size={18} />
+              Fire Alarm
+            </button>
+          )}
+          {tenant.patTestingEnabled && (
+            <button
+              onClick={() => setActiveTab('pat-testing')}
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-all border-2 shadow-sm ${
+                activeTab === 'pat-testing'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-blue-400 hover:text-blue-600'
+              }`}
+            >
+              <Plug size={18} />
+              PAT Testing
+            </button>
+          )}
+          {tenant.emergencyLightingEnabled && (
+            <button
+              onClick={() => setActiveTab('emergency-lighting')}
+              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-all border-2 shadow-sm ${
+                activeTab === 'emergency-lighting'
+                  ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-amber-400 hover:text-amber-600'
+              }`}
+            >
+              <Lightbulb size={18} />
+              Emergency Lighting
+            </button>
+          )}
+        </div>
+
         {/* Tabs */}
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <TabButton
-              active={activeTab === 'overview'}
-              onClick={() => setActiveTab('overview')}
-              primaryColor={tenant.primaryColor}
-            >
-              Overview
-            </TabButton>
-
             <TabButton
               active={activeTab === 'sites'}
               onClick={() => setActiveTab('sites')}
@@ -1066,6 +1133,17 @@ useEffect(() => {
               <HelpCircle size={16} />
               <span>Help</span>
             </TabButton>
+
+            {currentUser.isPlatformAdmin && (
+              <TabButton
+                active={activeTab === 'platform-admin'}
+                onClick={() => setActiveTab('platform-admin')}
+                primaryColor={tenant.primaryColor}
+              >
+                <ShieldCheck size={16} />
+                <span>Platform</span>
+              </TabButton>
+            )}
           </div>
         </div>
         {/* Sites tab */}
@@ -1432,11 +1510,27 @@ useEffect(() => {
           <ComplianceDashboard
             primaryColor={tenant.primaryColor}
             onNavigate={() => setActiveTab('overview')}
+            fireAlarmEnabled={tenant.fireAlarmEnabled}
+            onNavigateFireAlarm={() => setActiveTab('fire-alarm')}
+            patTestingEnabled={tenant.patTestingEnabled}
+            onNavigatePATTesting={() => setActiveTab('pat-testing')}
+            emergencyLightingEnabled={tenant.emergencyLightingEnabled}
+            onNavigateEmergencyLighting={() => setActiveTab('emergency-lighting')}
           />
         )}
 
         {/* Calendar tab */}
-        {activeTab === 'calendar' && <CalendarPage />}
+        {activeTab === 'calendar' && (
+          <CalendarPage
+            fireAlarmEnabled={tenant.fireAlarmEnabled}
+            patTestingEnabled={tenant.patTestingEnabled}
+            emergencyLightingEnabled={tenant.emergencyLightingEnabled}
+            onNavigateToFireAlarm={() => setActiveTab('fire-alarm')}
+            onNavigateToPAT={(id) => { setPATPendingId(id); setActiveTab('pat-testing'); }}
+            onNavigateToEL={(id) => { setELPendingId(id); setActiveTab('emergency-lighting'); }}
+            onNavigateToExtinguisher={(id) => { setExtPendingId(id); setActiveTab('overview'); }}
+          />
+        )}
 
         {/* Reports tab */}
         {activeTab === 'reports' && (
@@ -1445,11 +1539,26 @@ useEffect(() => {
             buildingFilter={buildingFilter}
             typeFilter={typeFilter}
             statusFilter={statusFilter}
+            fireAlarmEnabled={tenant.fireAlarmEnabled}
+            patTestingEnabled={tenant.patTestingEnabled}
+            emergencyLightingEnabled={tenant.emergencyLightingEnabled}
           />
         )}
 
         {/* Help tab */}
         {activeTab === 'help' && <HelpPage />}
+
+        {/* Fire Alarm Logbook tab */}
+        {activeTab === 'fire-alarm' && tenant.fireAlarmEnabled && <FireAlarmLogbookPage />}
+
+        {/* PAT Testing tab */}
+        {activeTab === 'pat-testing' && tenant.patTestingEnabled && <PATTestingPage initialSelectId={patPendingId} />}
+
+        {/* Emergency Lighting tab */}
+        {activeTab === 'emergency-lighting' && tenant.emergencyLightingEnabled && <EmergencyLightingPage initialSelectId={elPendingId} />}
+
+        {/* Platform Admin tab */}
+        {activeTab === 'platform-admin' && currentUser.isPlatformAdmin && <PlatformAdminPage />}
       </div>
 
       {/* Modals / overlays */}

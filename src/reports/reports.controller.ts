@@ -518,6 +518,160 @@ export class ReportsController {
     res.send(pdfBuffer);
   }
 
+  // Fire Alarm Logbook Report
+  @Get('fire-alarm/logbook')
+  async generateFireAlarmLogbookReport(
+    @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
+    @Query('systemId') systemId?: string,
+    @Query('days') daysStr?: string,
+  ) {
+    const tenantId = user.tenantId;
+    const days = daysStr ? parseInt(daysStr, 10) : 365;
+
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+
+    const systemWhere: any = { tenantId };
+    if (systemId && systemId !== 'all') systemWhere.id = systemId;
+
+    const cutoff = days > 0 ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : null;
+
+    const systems = await this.prisma.fireAlarmSystem.findMany({
+      where: systemWhere,
+      include: {
+        site: { select: { name: true } },
+        logEntries: {
+          where: cutoff ? { conductedAt: { gte: cutoff } } : {},
+          orderBy: { conductedAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const dateLabel = days === 0
+      ? 'All time'
+      : days <= 31 ? `Last ${days} days`
+      : days <= 92 ? 'Last 3 months'
+      : days <= 183 ? 'Last 6 months'
+      : 'Last 12 months';
+
+    const pdfBuffer = await this.reports.buildFireAlarmLogbookReport({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      systems,
+      dateLabel,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="fire-alarm-logbook-${new Date().toISOString().slice(0, 10)}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  }
+
+  // Fire Alarm Weekly Test Log
+  @Get('fire-alarm/weekly-tests')
+  async generateFireAlarmWeeklyTestReport(
+    @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
+    @Query('systemId') systemId?: string,
+    @Query('days') daysStr?: string,
+  ) {
+    const tenantId = user.tenantId;
+    const days = daysStr ? parseInt(daysStr, 10) : 365;
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+    const systemWhere: any = { tenantId };
+    if (systemId && systemId !== 'all') systemWhere.id = systemId;
+    const cutoff = days > 0 ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : null;
+
+    const systems = await this.prisma.fireAlarmSystem.findMany({
+      where: systemWhere,
+      include: {
+        site: { select: { name: true } },
+        logEntries: {
+          where: { entryType: 'weekly', ...(cutoff ? { conductedAt: { gte: cutoff } } : {}) },
+          orderBy: { conductedAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const dateLabel = days === 0 ? 'All time' : days <= 31 ? `Last ${days} days` : days <= 92 ? 'Last 3 months' : days <= 183 ? 'Last 6 months' : 'Last 12 months';
+    const pdfBuffer = await this.reports.buildFireAlarmWeeklyTestReport({ tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined }, systems: systems as any, dateLabel });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="fire-alarm-weekly-tests-${new Date().toISOString().slice(0, 10)}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  }
+
+  // Fire Alarm Fault History Report
+  @Get('fire-alarm/fault-history')
+  async generateFireAlarmFaultHistoryReport(
+    @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
+    @Query('systemId') systemId?: string,
+    @Query('days') daysStr?: string,
+  ) {
+    const tenantId = user.tenantId;
+    const days = daysStr ? parseInt(daysStr, 10) : 365;
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+    const systemWhere: any = { tenantId };
+    if (systemId && systemId !== 'all') systemWhere.id = systemId;
+    const cutoff = days > 0 ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : null;
+
+    const systems = await this.prisma.fireAlarmSystem.findMany({
+      where: systemWhere,
+      include: {
+        site: { select: { name: true } },
+        logEntries: {
+          where: { entryType: 'fault', ...(cutoff ? { conductedAt: { gte: cutoff } } : {}) },
+          orderBy: { conductedAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const dateLabel = days === 0 ? 'All time' : days <= 31 ? `Last ${days} days` : days <= 92 ? 'Last 3 months' : days <= 183 ? 'Last 6 months' : 'Last 12 months';
+    const pdfBuffer = await this.reports.buildFireAlarmFaultHistoryReport({ tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined }, systems: systems as any, dateLabel });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="fire-alarm-fault-history-${new Date().toISOString().slice(0, 10)}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  }
+
+  // Fire Alarm Engineer Maintenance Report
+  @Get('fire-alarm/engineer-visits')
+  async generateFireAlarmEngineerReport(
+    @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
+    @Query('systemId') systemId?: string,
+    @Query('days') daysStr?: string,
+  ) {
+    const tenantId = user.tenantId;
+    const days = daysStr ? parseInt(daysStr, 10) : 365;
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({ where: { id: tenantId } });
+    const systemWhere: any = { tenantId };
+    if (systemId && systemId !== 'all') systemWhere.id = systemId;
+    const cutoff = days > 0 ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : null;
+
+    const systems = await this.prisma.fireAlarmSystem.findMany({
+      where: systemWhere,
+      include: {
+        site: { select: { name: true } },
+        logEntries: {
+          where: { entryType: 'engineer_visit', ...(cutoff ? { conductedAt: { gte: cutoff } } : {}) },
+          orderBy: { conductedAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const dateLabel = days === 0 ? 'All time' : days <= 31 ? `Last ${days} days` : days <= 92 ? 'Last 3 months' : days <= 183 ? 'Last 6 months' : 'Last 12 months';
+    const pdfBuffer = await this.reports.buildFireAlarmEngineerReport({ tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined }, systems: systems as any, dateLabel });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="fire-alarm-engineer-visits-${new Date().toISOString().slice(0, 10)}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  }
+
   // Extinguishers by Type Report
   @Get('extinguishers/by-type')
   async generateExtinguishersByTypeReport(
@@ -573,6 +727,82 @@ export class ReportsController {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename="extinguishers-by-type-report.pdf"');
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  }
+
+  // PAT Testing Report
+  @Get('pat-testing')
+  async generatePATTestReport(
+    @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
+    @Query('siteId') siteId?: string,
+    @Query('days') daysStr?: string,
+  ) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: user.tenantId } });
+    if (!tenant) throw new Error('Tenant not found');
+
+    const days = daysStr ? parseInt(daysStr, 10) : 365;
+    const cutoff = days > 0 ? new Date(Date.now() - days * 86_400_000) : undefined;
+
+    const appliances = await this.prisma.pATAppliance.findMany({
+      where: { tenantId: user.tenantId, ...(siteId && siteId !== 'all' ? { siteId } : {}) },
+      include: {
+        site: { select: { name: true } },
+        tests: {
+          where: cutoff ? { testedAt: { gte: cutoff } } : undefined,
+          orderBy: { testedAt: 'desc' },
+        },
+      },
+      orderBy: [{ siteId: 'asc' }, { applianceRef: 'asc' }],
+    });
+
+    const dateLabel = days === 0 ? 'All time' : days <= 31 ? `Last ${days} days` : days <= 92 ? 'Last 3 months' : days <= 183 ? 'Last 6 months' : 'Last 12 months';
+    const pdfBuffer = await this.reports.buildPATTestReport({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      appliances: appliances as any,
+      dateLabel,
+    });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="pat-testing-report-${new Date().toISOString().slice(0, 10)}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  }
+
+  // Emergency Lighting Report
+  @Get('emergency-lighting')
+  async generateEmergencyLightingReport(
+    @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
+    @Query('siteId') siteId?: string,
+    @Query('days') daysStr?: string,
+  ) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: user.tenantId } });
+    if (!tenant) throw new Error('Tenant not found');
+
+    const days = daysStr ? parseInt(daysStr, 10) : 365;
+    const cutoff = days > 0 ? new Date(Date.now() - days * 86_400_000) : undefined;
+
+    const luminaires = await (this.prisma as any).emergencyLuminaire.findMany({
+      where: { tenantId: user.tenantId, ...(siteId && siteId !== 'all' ? { siteId } : {}) },
+      include: {
+        site: { select: { name: true } },
+        tests: {
+          where: cutoff ? { testedAt: { gte: cutoff } } : undefined,
+          orderBy: { testedAt: 'desc' },
+        },
+      },
+      orderBy: [{ siteId: 'asc' }, { luminaireRef: 'asc' }],
+    });
+
+    const dateLabel = days === 0 ? 'All time' : days <= 31 ? `Last ${days} days` : days <= 92 ? 'Last 3 months' : days <= 183 ? 'Last 6 months' : 'Last 12 months';
+    const pdfBuffer = await this.reports.buildEmergencyLightingReport({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      luminaires: luminaires as any,
+      dateLabel,
+    });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="emergency-lighting-report-${new Date().toISOString().slice(0, 10)}.pdf"`);
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
   }

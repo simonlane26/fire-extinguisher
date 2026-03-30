@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Filter, MapPin } from 'lucide-react';
-import { getAuthHeaders, fetchExtinguishers, fetchSites } from '../lib/api';
-import type { Site } from '../types';
+import { FileText, Users, Filter, MapPin, BellRing, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
+import { getAuthHeaders, fetchExtinguishers, fetchSites, faGetSystems, patGetAppliances, downloadPATTestReport, elGetLuminaires, downloadEmergencyLightingReport } from '../lib/api';
+import type { Site, FireAlarmSystem } from '../types';
 
 // Determine API base URL based on environment
 const getApiBase = () => {
@@ -31,13 +31,26 @@ type Props = {
   buildingFilter?: string;
   typeFilter?: string;
   statusFilter?: string;
+  fireAlarmEnabled?: boolean;
+  patTestingEnabled?: boolean;
+  emergencyLightingEnabled?: boolean;
 };
+
+const FIRE_ALARM_DATE_RANGES = [
+  { label: 'Last 30 days', days: 30 },
+  { label: 'Last 3 months', days: 91 },
+  { label: 'Last 12 months', days: 365 },
+  { label: 'All time', days: 0 },
+];
 
 const ReportsPage: React.FC<Props> = ({
   primaryColor = '#7c3aed',
   buildingFilter = 'all',
   typeFilter = 'all',
   statusFilter = 'all',
+  fireAlarmEnabled = false,
+  patTestingEnabled = false,
+  emergencyLightingEnabled = false,
 }) => {
   const [generatingUsers, setGeneratingUsers] = useState(false);
   const [generatingByType, setGeneratingByType] = useState(false);
@@ -49,11 +62,53 @@ const ReportsPage: React.FC<Props> = ({
   const [users, setUsers] = useState<any[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
 
+  // Fire alarm export state
+  const [faSystems, setFaSystems] = useState<FireAlarmSystem[]>([]);
+  const [faSelectedSystem, setFaSelectedSystem] = useState<string>('all');
+  const [faDateRange, setFaDateRange] = useState<number>(365);
+  const [faExporting, setFaExporting] = useState(false);
+  const [faWeeklyExporting, setFaWeeklyExporting] = useState(false);
+  const [faFaultExporting, setFaFaultExporting] = useState(false);
+  const [faEngineerExporting, setFaEngineerExporting] = useState(false);
+  const [faWeeklyOpen, setFaWeeklyOpen] = useState(false);
+  const [faFaultOpen, setFaFaultOpen] = useState(false);
+  const [faEngineerOpen, setFaEngineerOpen] = useState(false);
+
+  // PAT testing export state
+  const [patSelectedSite, setPatSelectedSite] = useState<string>('all');
+  const [patDateRange, setPatDateRange] = useState<number>(365);
+  const [patExporting, setPatExporting] = useState(false);
+  const [patHasAppliances, setPatHasAppliances] = useState(false);
+
+  // Emergency Lighting export state
+  const [elSelectedSite, setElSelectedSite] = useState<string>('all');
+  const [elDateRange, setElDateRange] = useState<number>(365);
+  const [elExporting, setElExporting] = useState(false);
+  const [elHasLuminaires, setElHasLuminaires] = useState(false);
+
   useEffect(() => {
     fetchExtinguisherTypes();
     fetchUsers();
     fetchSites().then(setSites).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (fireAlarmEnabled) {
+      faGetSystems().then(setFaSystems).catch(() => {});
+    }
+  }, [fireAlarmEnabled]);
+
+  useEffect(() => {
+    if (patTestingEnabled) {
+      patGetAppliances().then((a: any[]) => setPatHasAppliances(a.length > 0)).catch(() => {});
+    }
+  }, [patTestingEnabled]);
+
+  useEffect(() => {
+    if (emergencyLightingEnabled) {
+      elGetLuminaires().then((l: any[]) => setElHasLuminaires(l.length > 0)).catch(() => {});
+    }
+  }, [emergencyLightingEnabled]);
 
   const fetchExtinguisherTypes = async () => {
     try {
@@ -133,6 +188,79 @@ const ReportsPage: React.FC<Props> = ({
       alert(error?.message || 'Failed to generate extinguishers report');
     } finally {
       setGeneratingByType(false);
+    }
+  };
+
+  const generateFireAlarmReport = async () => {
+    try {
+      setFaExporting(true);
+      const params = new URLSearchParams();
+      if (faSelectedSystem !== 'all') params.append('systemId', faSelectedSystem);
+      params.append('days', String(faDateRange));
+
+      const res = await fetch(`${API_BASE}/reports/fire-alarm/logbook?${params.toString()}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to generate fire alarm report');
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to generate fire alarm report');
+    } finally {
+      setFaExporting(false);
+    }
+  };
+
+  const generateFireAlarmWeeklyReport = async () => {
+    try {
+      setFaWeeklyExporting(true);
+      const params = new URLSearchParams();
+      if (faSelectedSystem !== 'all') params.append('systemId', faSelectedSystem);
+      params.append('days', String(faDateRange));
+      const res = await fetch(`${API_BASE}/reports/fire-alarm/weekly-tests?${params.toString()}`, { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Failed to generate report');
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank', 'noopener,noreferrer');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to generate weekly test report');
+    } finally {
+      setFaWeeklyExporting(false);
+    }
+  };
+
+  const generateFireAlarmFaultReport = async () => {
+    try {
+      setFaFaultExporting(true);
+      const params = new URLSearchParams();
+      if (faSelectedSystem !== 'all') params.append('systemId', faSelectedSystem);
+      params.append('days', String(faDateRange));
+      const res = await fetch(`${API_BASE}/reports/fire-alarm/fault-history?${params.toString()}`, { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Failed to generate report');
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank', 'noopener,noreferrer');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to generate fault history report');
+    } finally {
+      setFaFaultExporting(false);
+    }
+  };
+
+  const generateFireAlarmEngineerReport = async () => {
+    try {
+      setFaEngineerExporting(true);
+      const params = new URLSearchParams();
+      if (faSelectedSystem !== 'all') params.append('systemId', faSelectedSystem);
+      params.append('days', String(faDateRange));
+      const res = await fetch(`${API_BASE}/reports/fire-alarm/engineer-visits?${params.toString()}`, { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error('Failed to generate report');
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank', 'noopener,noreferrer');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to generate engineer maintenance report');
+    } finally {
+      setFaEngineerExporting(false);
     }
   };
 
@@ -330,7 +458,275 @@ const ReportsPage: React.FC<Props> = ({
             {generatingBySite ? 'Generating...' : 'Generate Site Report'}
           </button>
         </div>
+        {/* Fire Alarm Reports — unified card */}
+        {fireAlarmEnabled && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            {/* Card header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-lg" style={{ backgroundColor: `${primaryColor}20` }}>
+                <BellRing size={24} style={{ color: primaryColor }} />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Fire Alarm Logbook</h2>
+                <p className="text-xs text-gray-400 mt-0.5">BS 5839-1 inspection log export</p>
+              </div>
+            </div>
+
+            <p className="text-gray-600 mb-4 text-sm">
+              Generate a PDF report of fire alarm log entries for audits, handover, or your own records.
+            </p>
+
+            {/* Shared selectors */}
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">System</label>
+                <select
+                  value={faSelectedSystem}
+                  onChange={(e) => setFaSelectedSystem(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-sm"
+                >
+                  <option value="all">All Systems ({faSystems.length})</option>
+                  {faSystems.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name || s.systemRef}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                <select
+                  value={faDateRange}
+                  onChange={(e) => setFaDateRange(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-sm"
+                >
+                  {FIRE_ALARM_DATE_RANGES.map((r) => (
+                    <option key={r.days} value={r.days}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Main logbook button */}
+            <button
+              type="button"
+              onClick={generateFireAlarmReport}
+              disabled={faExporting || faSystems.length === 0}
+              className="w-full px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-60 transition-opacity flex items-center justify-center gap-2 mb-3"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <FileText size={16} />
+              {faExporting ? 'Generating...' : 'Generate Logbook Report (PDF)'}
+            </button>
+
+            {/* Weekly Test Log — collapsible */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden mb-2">
+              <button
+                type="button"
+                onClick={() => setFaWeeklyOpen(o => !o)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <FileText size={14} className="text-gray-400" /> Weekly Test Log
+                </span>
+                {faWeeklyOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              {faWeeklyOpen && (
+                <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-gray-50">
+                  <p className="text-xs text-gray-500 mb-3">PDF log of all weekly fire alarm tests with checklist results, suitable for compliance audits.</p>
+                  <button
+                    type="button"
+                    onClick={generateFireAlarmWeeklyReport}
+                    disabled={faWeeklyExporting || faSystems.length === 0}
+                    className="w-full px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-60 transition-opacity flex items-center justify-center gap-2"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <FileText size={16} />
+                    {faWeeklyExporting ? 'Generating...' : 'Generate Weekly Test Log (PDF)'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Fault History — collapsible */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden mb-2">
+              <button
+                type="button"
+                onClick={() => setFaFaultOpen(o => !o)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <FileText size={14} className="text-red-400" /> Fault History
+                </span>
+                {faFaultOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              {faFaultOpen && (
+                <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-gray-50">
+                  <p className="text-xs text-gray-500 mb-3">Full history of reported faults with severity, remedial actions taken, and resolution status.</p>
+                  <button
+                    type="button"
+                    onClick={generateFireAlarmFaultReport}
+                    disabled={faFaultExporting || faSystems.length === 0}
+                    className="w-full px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-60 transition-opacity flex items-center justify-center gap-2 bg-red-600"
+                  >
+                    <FileText size={16} />
+                    {faFaultExporting ? 'Generating...' : 'Generate Fault History (PDF)'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Engineer Maintenance Report — collapsible */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden mb-2">
+              <button
+                type="button"
+                onClick={() => setFaEngineerOpen(o => !o)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <FileText size={14} className="text-indigo-400" /> Engineer Maintenance Report
+                </span>
+                {faEngineerOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              {faEngineerOpen && (
+                <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-gray-50">
+                  <p className="text-xs text-gray-500 mb-3">Record of all engineer visits including work carried out, outcomes, and next recommended actions.</p>
+                  <button
+                    type="button"
+                    onClick={generateFireAlarmEngineerReport}
+                    disabled={faEngineerExporting || faSystems.length === 0}
+                    className="w-full px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-60 transition-opacity flex items-center justify-center gap-2 bg-indigo-600"
+                  >
+                    <FileText size={16} />
+                    {faEngineerExporting ? 'Generating...' : 'Generate Engineer Report (PDF)'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {faSystems.length === 0 && (
+              <p className="text-xs text-gray-400 mt-2 text-center">No fire alarm systems configured yet.</p>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* PAT Testing Report */}
+      {patTestingEnabled && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">PAT Testing Report</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Full appliance register with test results — matches the standard PAT Test Report form layout.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
+              <select
+                title="Site filter"
+                value={patSelectedSite}
+                onChange={e => setPatSelectedSite(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="all">All Sites</option>
+                {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+              <select
+                title="Date range filter"
+                value={patDateRange}
+                onChange={e => setPatDateRange(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                {FIRE_ALARM_DATE_RANGES.map(r => <option key={r.days} value={r.days}>{r.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              setPatExporting(true);
+              try { await downloadPATTestReport(patSelectedSite !== 'all' ? patSelectedSite : undefined, patDateRange); }
+              catch { alert('Failed to generate PAT report'); }
+              finally { setPatExporting(false); }
+            }}
+            disabled={patExporting || !patHasAppliances}
+            className="w-full py-3 px-4 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {patExporting ? 'Generating…' : 'Generate PAT Test Report (PDF)'}
+          </button>
+          {!patHasAppliances && (
+            <p className="text-xs text-gray-400 mt-2 text-center">Add appliances in the PAT Testing tab first</p>
+          )}
+        </div>
+      )}
+
+      {/* Emergency Lighting Report */}
+      {emergencyLightingEnabled && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-100">
+                <Lightbulb size={20} className="text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Emergency Lighting Report</h3>
+                <p className="text-sm text-gray-500 mt-0.5">BS 5266-1:2016 compliant test log</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Site</label>
+              <select
+                title="Site filter"
+                value={elSelectedSite}
+                onChange={e => setElSelectedSite(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="all">All Sites</option>
+                {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Date Range</label>
+              <select
+                title="Date range"
+                value={elDateRange}
+                onChange={e => setElDateRange(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value={30}>Last 30 days</option>
+                <option value={90}>Last 3 months</option>
+                <option value={180}>Last 6 months</option>
+                <option value={365}>Last 12 months</option>
+                <option value={0}>All time</option>
+              </select>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              setElExporting(true);
+              try { await downloadEmergencyLightingReport(elSelectedSite !== 'all' ? elSelectedSite : undefined, elDateRange); }
+              catch { alert('Failed to generate emergency lighting report'); }
+              finally { setElExporting(false); }
+            }}
+            disabled={elExporting || !elHasLuminaires}
+            className="w-full py-3 px-4 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {elExporting ? 'Generating…' : 'Generate Emergency Lighting Report (PDF)'}
+          </button>
+          {!elHasLuminaires && (
+            <p className="text-xs text-gray-400 mt-2 text-center">Add luminaires in the Emergency Lighting tab first</p>
+          )}
+        </div>
+      )}
 
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <h3 className="font-semibold text-blue-900 mb-2">Additional Reports</h3>
