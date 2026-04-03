@@ -276,7 +276,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
           style={{ backgroundColor: billingCycle === 'annual' ? safeColor : '#d1d5db' }}
           aria-label={`Switch to ${billingCycle === 'monthly' ? 'annual' : 'monthly'} billing`}
           role="switch"
-          aria-checked={billingCycle === 'annual' ? 'true' : 'false'}
+          aria-checked={billingCycle === 'annual'}
         >
           <span
             className={`inline-block w-4 h-4 transition transform bg-white rounded-full ${
@@ -459,6 +459,9 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         <div className="flex items-center gap-3 mb-1">
           <Plus className="w-5 h-5 text-gray-500" />
           <h3 className="text-xl font-bold text-gray-900">Add-on Modules</h3>
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+            Coming Soon
+          </span>
         </div>
         <p className="mb-5 text-sm text-gray-500 ml-8">
           Extend your plan with additional compliance modules. Added to your monthly subscription.
