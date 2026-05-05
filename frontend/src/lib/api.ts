@@ -1560,3 +1560,19 @@ export async function importFireAlarmCsv(file: File): Promise<{ success: boolean
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'Import failed'); }
   return res.json();
 }
+
+/* ─── Billing / Stripe ──────────────────────────────────────────────────── */
+
+export async function createAddonCheckoutSession(priceId: string): Promise<{ url: string }> {
+  const returnUrl = window.location.href;
+  const res = await fetch(`${API_BASE}/billing/create-addon-checkout-session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ priceId, returnUrl }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.message || 'Failed to start checkout');
+  }
+  return res.json();
+}

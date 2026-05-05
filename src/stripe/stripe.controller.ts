@@ -1,6 +1,6 @@
 // src/stripe/stripe.controller.ts
 import { Body, Controller, Post, Headers, Req, UseGuards } from '@nestjs/common';
-import { StripeService, STRIPE_PRICE_IDS } from './stripe.service';
+import { StripeService, STRIPE_PRICE_IDS, ADDON_PRICE_MODULE_MAP } from './stripe.service';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { TenantGuard } from '../auth/tenant.guard';
@@ -29,6 +29,32 @@ export class StripeController {
     });
 
     return { sessionId: session.id, url: session.url };
+  }
+
+  @Post('create-addon-checkout-session')
+  @UseGuards(TenantGuard)
+  async createAddonCheckoutSession(
+    @CurrentUser() user: CurrentUserData,
+    @Body() body: { priceId: string; returnUrl: string }
+  ) {
+    if (!this.stripeService.isConfigured()) {
+      return { error: 'Billing is not configured' };
+    }
+
+    const addonModule = ADDON_PRICE_MODULE_MAP[body.priceId];
+    if (!addonModule) {
+      return { error: 'Unknown add-on price ID' };
+    }
+
+    const session = await this.stripeService.createAddonCheckoutSession({
+      tenantId: user.tenantId,
+      priceId: body.priceId,
+      addonModule,
+      successUrl: `${body.returnUrl}?addon_success=true`,
+      cancelUrl: `${body.returnUrl}?addon_canceled=true`,
+    });
+
+    return { url: session.url };
   }
 
   @Post('create-portal-session')

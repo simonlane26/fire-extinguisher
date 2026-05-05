@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Check, Crown, Zap, Building2, AlertCircle, BellRing, Lightbulb, Plug, Plus } from 'lucide-react';
+import { CreditCard, Check, Crown, Zap, Building2, AlertCircle, BellRing, Lightbulb, Plug, Plus, Loader2 } from 'lucide-react';
+import { createAddonCheckoutSession } from '../lib/api';
 import type { Tenant } from '../types';
 
 interface BillingPageProps {
@@ -167,9 +168,26 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
     }
   };
 
-  const handleAddOn = (_module: string) => {
-    // Stripe add-on checkout — to be wired up with price IDs
-    window.location.href = `mailto:support@firexcheck.com?subject=Add-on Module Request&body=I would like to add the ${_module} module to my account.`;
+  const [addonLoading, setAddonLoading] = useState<string | null>(null);
+
+  const ADDON_PRICE_IDS: Record<string, string> = {
+    'fire-alarm':          'price_1TTkDZGRZTmazyiYbtWgLBXq',
+    'emergency-lighting':  'price_1TTkEUGRZTmazyiYKgNAdH2R',
+    'pat-testing':         'price_1TTkFEGRZTmazyiYFj04zTP9',
+  };
+
+  const handleAddOn = async (module: string) => {
+    const priceId = ADDON_PRICE_IDS[module];
+    if (!priceId) return;
+    setAddonLoading(module);
+    try {
+      const { url } = await createAddonCheckoutSession(priceId);
+      window.location.href = url;
+    } catch (err: any) {
+      alert(err.message || 'Failed to start checkout. Please try again.');
+    } finally {
+      setAddonLoading(null);
+    }
   };
 
   const handleManageBilling = async () => {
@@ -486,13 +504,14 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
               </div>
               <button
                 onClick={() => handleAddOn('fire-alarm')}
-                disabled={tenant.fireAlarmEnabled}
-                className="px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={tenant.fireAlarmEnabled || addonLoading === 'fire-alarm'}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 style={tenant.fireAlarmEnabled
                   ? { borderColor: '#d1d5db', color: '#6b7280', background: '#f9fafb' }
                   : { borderColor: safeColor, color: safeColor, background: 'white' }}
               >
-                {tenant.fireAlarmEnabled ? 'Active' : 'Add to Plan'}
+                {addonLoading === 'fire-alarm' && <Loader2 size={13} className="animate-spin" />}
+                {tenant.fireAlarmEnabled ? 'Active' : addonLoading === 'fire-alarm' ? 'Redirecting…' : 'Add to Plan'}
               </button>
             </div>
           </div>
@@ -515,13 +534,14 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
               </div>
               <button
                 onClick={() => handleAddOn('emergency-lighting')}
-                disabled={tenant.emergencyLightingEnabled}
-                className="px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={tenant.emergencyLightingEnabled || addonLoading === 'emergency-lighting'}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 style={tenant.emergencyLightingEnabled
                   ? { borderColor: '#d1d5db', color: '#6b7280', background: '#f9fafb' }
                   : { borderColor: safeColor, color: safeColor, background: 'white' }}
               >
-                {tenant.emergencyLightingEnabled ? 'Active' : 'Add to Plan'}
+                {addonLoading === 'emergency-lighting' && <Loader2 size={13} className="animate-spin" />}
+                {tenant.emergencyLightingEnabled ? 'Active' : addonLoading === 'emergency-lighting' ? 'Redirecting…' : 'Add to Plan'}
               </button>
             </div>
           </div>
@@ -544,13 +564,14 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
               </div>
               <button
                 onClick={() => handleAddOn('pat-testing')}
-                disabled={tenant.patTestingEnabled}
-                className="px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={tenant.patTestingEnabled || addonLoading === 'pat-testing'}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 style={tenant.patTestingEnabled
                   ? { borderColor: '#d1d5db', color: '#6b7280', background: '#f9fafb' }
                   : { borderColor: safeColor, color: safeColor, background: 'white' }}
               >
-                {tenant.patTestingEnabled ? 'Active' : 'Add to Plan'}
+                {addonLoading === 'pat-testing' && <Loader2 size={13} className="animate-spin" />}
+                {tenant.patTestingEnabled ? 'Active' : addonLoading === 'pat-testing' ? 'Redirecting…' : 'Add to Plan'}
               </button>
             </div>
           </div>

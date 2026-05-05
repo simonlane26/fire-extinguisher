@@ -46,6 +46,16 @@ export const STRIPE_PRICE_IDS = {
   professional_annual: process.env.STRIPE_PRICE_PRO_ANNUAL || '',
   enterprise_monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY || '',
   enterprise_annual: process.env.STRIPE_PRICE_BUSINESS_ANNUAL || '',
+  // Add-on modules
+  addon_fire_alarm:          'price_1TTkDZGRZTmazyiYbtWgLBXq',
+  addon_emergency_lighting:  'price_1TTkEUGRZTmazyiYKgNAdH2R',
+  addon_pat_testing:         'price_1TTkFEGRZTmazyiYFj04zTP9',
+};
+
+export const ADDON_PRICE_MODULE_MAP: Record<string, 'fireAlarmEnabled' | 'emergencyLightingEnabled' | 'patTestingEnabled'> = {
+  'price_1TTkDZGRZTmazyiYbtWgLBXq': 'fireAlarmEnabled',
+  'price_1TTkEUGRZTmazyiYKgNAdH2R': 'emergencyLightingEnabled',
+  'price_1TTkFEGRZTmazyiYFj04zTP9': 'patTestingEnabled',
 };
 
 @Injectable()
@@ -118,6 +128,59 @@ export class StripeService {
       subscription_data: {
         metadata: {
           tenantId: params.tenantId,
+        },
+      },
+    });
+
+    return session;
+  }
+
+  /**
+   * Create a Stripe checkout session for an add-on module
+   */
+  async createAddonCheckoutSession(params: {
+    tenantId: string;
+    priceId: string;
+    addonModule: string;
+    successUrl: string;
+    cancelUrl: string;
+  }) {
+    if (!this.isConfigured()) {
+      throw new Error('Stripe is not configured');
+    }
+
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({
+      where: { id: params.tenantId },
+    });
+
+    let customerId = tenant.stripeCustomerId;
+    if (!customerId) {
+      const customer = await this.stripe.customers.create({
+        email: tenant.contactEmail || undefined,
+        metadata: { tenantId: tenant.id },
+      });
+      customerId = customer.id;
+      await this.prisma.tenant.update({
+        where: { id: tenant.id },
+        data: { stripeCustomerId: customerId },
+      });
+    }
+
+    const session = await this.stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [{ price: params.priceId, quantity: 1 }],
+      success_url: params.successUrl,
+      cancel_url: params.cancelUrl,
+      metadata: {
+        tenantId: params.tenantId,
+        addonModule: params.addonModule,
+      },
+      subscription_data: {
+        metadata: {
+          tenantId: params.tenantId,
+          addonModule: params.addonModule,
         },
       },
     });
@@ -277,8 +340,17 @@ export class StripeService {
     const tenantId = session.metadata?.tenantId;
     if (!tenantId) return;
 
-    // Subscription details will be updated via subscription.created event
-    console.log(`Checkout completed for tenant ${tenantId}`);
+    // Check if this checkout was for an add-on module
+    const addonModule = session.metadata?.addonModule as 'fireAlarmEnabled' | 'emergencyLightingEnabled' | 'patTestingEnabled' | undefined;
+    if (addonModule) {
+      await this.prisma.tenant.update({
+        where: { id: tenantId },
+        data: { [addonModule]: true },
+      });
+      console.log(`✅ Add-on module enabled: ${addonModule} for tenant ${tenantId}`);
+    } else {
+      console.log(`Checkout completed for tenant ${tenantId}`);
+    }
   }
 
   private async handlePaymentSucceeded(invoice: Stripe.Invoice) {
