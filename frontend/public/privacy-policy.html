@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Privacy Policy - Firexcheck</title>
+    <title>Privacy Policy - FireXCheck</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -23,43 +23,21 @@
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        h1 {
-            color: #7c3aed;
-            margin-bottom: 10px;
-        }
-        h2 {
-            color: #5b21b6;
-            margin-top: 30px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        h3 {
-            color: #6d28d9;
-            margin-top: 20px;
-        }
-        .meta {
-            color: #6b7280;
-            font-size: 0.9em;
-            margin-bottom: 30px;
-        }
-        a {
-            color: #7c3aed;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #7c3aed;
-        }
-        strong {
-            color: #1f2937;
-        }
-        ul, ol {
-            margin-left: 20px;
-        }
+        h1 { color: #dc2626; margin-bottom: 10px; }
+        h2 { color: #b91c1c; margin-top: 30px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb; }
+        h3 { color: #c2410c; margin-top: 20px; }
+        .meta { color: #6b7280; font-size: 0.9em; margin-bottom: 30px; }
+        .brand { color: #6b7280; font-size: 0.85em; margin-bottom: 6px; }
+        a { color: #dc2626; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #dc2626; }
+        strong { color: #1f2937; }
+        ul, ol { margin-left: 20px; }
+        li { margin-bottom: 4px; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9em; }
+        th { background: #fef2f2; color: #b91c1c; text-align: left; padding: 10px 12px; border: 1px solid #fecaca; }
+        td { padding: 10px 12px; border: 1px solid #e5e7eb; vertical-align: top; }
+        tr:nth-child(even) td { background: #fafafa; }
         .footer {
             margin-top: 40px;
             padding-top: 20px;
@@ -68,132 +46,180 @@
             color: #6b7280;
             font-size: 0.9em;
         }
+        .highlight-box {
+            background: #fef2f2;
+            border-left: 4px solid #dc2626;
+            padding: 14px 18px;
+            border-radius: 0 6px 6px 0;
+            margin: 16px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <a href="/" class="back-link">← Back to App</a>
 
+        <p class="brand">FireXCheck — Fire Safety Management System &nbsp;|&nbsp; An IgnisTech Product</p>
         <h1>Privacy Policy</h1>
         <div class="meta">
-            <strong>Last Updated:</strong> November 17, 2025<br>
-            <strong>Effective Date:</strong> November 17, 2025
+            <strong>Effective Date:</strong> 8 June 2026<br>
+            <strong>Last Updated:</strong> 8 June 2026
         </div>
 
-        <p>This Privacy Policy describes how Firexcheck ("we", "us", or "our") collects, uses, and shares your personal information when you use our fire extinguisher management system (the "Service").</p>
+        <p>This Privacy Policy explains how IgnisTech ("we", "us", "our") collects, uses, stores, and protects your personal data when you use the FireXCheck platform ("the Service"). FireXCheck is available as a web application at <a href="https://firexcheck.com">firexcheck.com</a> and as a mobile application on Google Play.</p>
+        <p>We are committed to protecting your privacy and handling your personal data in accordance with the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018, as amended by the Data (Use and Access) Act 2025.</p>
 
-        <p><strong>Quick Links:</strong></p>
+        <h2>1. Who We Are</h2>
+        <p>IgnisTech is the data controller for personal data collected through the FireXCheck platform. This means we determine the purposes and means of processing your personal data.</p>
+        <p><strong>Contact details:</strong><br>
+        Email: <a href="mailto:privacy.ignistech@gmail.com">privacy.ignistech@gmail.com</a><br>
+        Website: <a href="https://firexcheck.com">firexcheck.com</a></p>
+        <p>Where you use FireXCheck to store or manage personal data about third parties (such as your clients' contact details or employee records), you are the data controller for that data and we act as your data processor.</p>
+
+        <h2>2. What Personal Data We Collect</h2>
+
+        <h3>2.1 Information you provide directly</h3>
         <ul>
-            <li><a href="#information-collect">Information We Collect</a></li>
-            <li><a href="#how-we-use">How We Use Your Information</a></li>
-            <li><a href="#data-security">Data Security</a></li>
-            <li><a href="#your-rights">Your Rights</a></li>
-            <li><a href="#contact">Contact Us</a></li>
+            <li><strong>Account registration details:</strong> name, email address, and password (managed via Clerk authentication).</li>
+            <li><strong>Company information:</strong> company name, address, postcode, phone number, logo, and branding preferences.</li>
+            <li><strong>Billing information:</strong> payment card details and billing address (processed and stored by Stripe; we do not store your full card details).</li>
+            <li><strong>Site and asset data:</strong> site names, addresses, extinguisher details, inspection records, condition assessments, inspection notes, and photographs.</li>
+            <li><strong>User management data:</strong> names, email addresses, and roles of team members you invite to your organisation.</li>
+            <li><strong>Communications:</strong> any messages, support requests, or feedback you send to us.</li>
         </ul>
 
-        <h2 id="information-collect">Information We Collect</h2>
-
-        <h3>Information You Provide</h3>
+        <h3>2.2 Information collected automatically</h3>
         <ul>
-            <li><strong>Account Information:</strong> Company name, email, name, password, contact details</li>
-            <li><strong>Fire Extinguisher Data:</strong> Location, building details, inspection records, maintenance history, photos</li>
-            <li><strong>Payment Information:</strong> Billing address, payment card details (processed through Stripe)</li>
+            <li><strong>Device and browser information:</strong> IP address, browser type, operating system, and device identifiers.</li>
+            <li><strong>Usage data:</strong> pages visited, features used, timestamps, and interaction patterns.</li>
+            <li><strong>QR code scan data:</strong> when a QR code is scanned, we record the scan event, timestamp, and device information for audit and reporting purposes.</li>
         </ul>
 
-        <h3>Automatically Collected Information</h3>
+        <h3>2.3 Information from third-party services</h3>
         <ul>
-            <li><strong>Usage Data:</strong> IP address, browser type, device information, pages visited</li>
-            <li><strong>Cookies:</strong> Authentication tokens, session identifiers, preference settings</li>
+            <li><strong>Clerk:</strong> authentication data including OAuth profile information if you sign in via a third-party provider (e.g. Google).</li>
+            <li><strong>Stripe:</strong> payment confirmation, subscription status, and billing events.</li>
         </ul>
 
-        <h2 id="how-we-use">How We Use Your Information</h2>
-        <p>We use your information for:</p>
+        <h2>3. How We Use Your Personal Data</h2>
+        <table>
+            <thead>
+                <tr><th>Purpose</th><th>Details</th><th>Legal Basis</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Providing the Service</td><td>Managing your account, processing extinguisher records, generating QR codes, producing reports and compliance certificates.</td><td>Performance of contract</td></tr>
+                <tr><td>Billing and payments</td><td>Processing subscription payments, managing plan changes, and sending invoices.</td><td>Performance of contract</td></tr>
+                <tr><td>Communications</td><td>Sending service-related notifications including inspection reminders, overdue alerts, low stock warnings, and maintenance schedules.</td><td>Performance of contract</td></tr>
+                <tr><td>Service improvement</td><td>Analysing usage patterns to improve features, fix bugs, and develop new functionality.</td><td>Legitimate interests</td></tr>
+                <tr><td>Security</td><td>Protecting against unauthorised access, fraud, and other security threats.</td><td>Legitimate interests</td></tr>
+                <tr><td>Legal compliance</td><td>Meeting our legal and regulatory obligations, including responding to law enforcement requests.</td><td>Legal obligation</td></tr>
+                <tr><td>Marketing</td><td>With your consent, sending you information about new features, product updates, or related services.</td><td>Consent</td></tr>
+            </tbody>
+        </table>
+
+        <h2>4. Who We Share Your Data With</h2>
+        <p>We do not sell your personal data. We share your data only with the following categories of recipients, and only to the extent necessary:</p>
         <ul>
-            <li>Providing and maintaining the Service</li>
-            <li>Processing payments and sending notifications</li>
-            <li>Generating reports and QR codes</li>
-            <li>Improving user experience</li>
-            <li>Complying with legal obligations</li>
+            <li><strong>Clerk</strong> (authentication provider) — to manage your account login and security.</li>
+            <li><strong>Stripe</strong> (payment processor) — to process your subscription payments. Stripe is PCI-DSS compliant and acts as an independent data controller for payment data.</li>
+            <li><strong>Hosting and infrastructure providers</strong> — we use cloud hosting services to store and serve the application and your data. Our hosting provider processes data on our behalf under a data processing agreement.</li>
+            <li><strong>Law enforcement or regulatory authorities</strong> — where we are legally required to disclose your data, for example in response to a court order or regulatory request.</li>
         </ul>
 
-        <h2>How We Share Your Information</h2>
-        <p><strong>We do not sell your personal information.</strong> We may share with:</p>
+        <h2>5. International Data Transfers</h2>
+        <p>Some of our third-party service providers (including Clerk and Stripe) may process your data outside the United Kingdom. Where personal data is transferred internationally, we ensure that appropriate safeguards are in place, such as Standard Contractual Clauses approved by the UK Information Commissioner's Office (ICO), or transfers to countries with an adequacy decision.</p>
+
+        <h2>6. Data Retention</h2>
         <ul>
-            <li><strong>Service Providers:</strong> Stripe (payments), email service, database provider</li>
-            <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
-            <li><strong>With Your Consent:</strong> When you explicitly authorize sharing</li>
+            <li><strong>Account data:</strong> retained for the duration of your account plus 30 days after account closure or subscription cancellation.</li>
+            <li><strong>Extinguisher and inspection records:</strong> retained for the duration of your account. We recommend exporting your data before closing your account.</li>
+            <li><strong>Billing records:</strong> retained for 7 years from the date of the transaction, as required by UK tax and accounting regulations.</li>
+            <li><strong>QR code scan logs:</strong> retained for 12 months for audit and reporting purposes.</li>
+            <li><strong>Support correspondence:</strong> retained for 2 years from the date of the last communication.</li>
+        </ul>
+        <p>When data is no longer required, we securely delete or anonymise it.</p>
+
+        <h2>7. Data Security</h2>
+        <p>We take the security of your data seriously and implement appropriate technical and organisational measures, including:</p>
+        <ul>
+            <li>Encryption of data in transit (TLS/HTTPS) and at rest.</li>
+            <li>Secure authentication via Clerk with support for multi-factor authentication.</li>
+            <li>Role-based access controls within the application.</li>
+            <li>Regular security updates and monitoring.</li>
+            <li>Secure payment processing via PCI-DSS compliant Stripe infrastructure.</li>
+        </ul>
+        <p>No system is completely secure. If we become aware of a data breach that is likely to result in a risk to your rights and freedoms, we will notify you and the ICO in accordance with our legal obligations.</p>
+
+        <h2>8. Your Rights Under UK GDPR</h2>
+        <p>Under UK data protection law, you have the following rights in relation to your personal data:</p>
+        <ul>
+            <li><strong>Right of access:</strong> You can request a copy of the personal data we hold about you.</li>
+            <li><strong>Right to rectification:</strong> You can ask us to correct inaccurate or incomplete data.</li>
+            <li><strong>Right to erasure:</strong> You can ask us to delete your personal data in certain circumstances.</li>
+            <li><strong>Right to restriction:</strong> You can ask us to restrict the processing of your data in certain circumstances.</li>
+            <li><strong>Right to data portability:</strong> You can request your data in a structured, commonly used, machine-readable format. The Service provides CSV and Excel export functionality for this purpose.</li>
+            <li><strong>Right to object:</strong> You can object to processing based on legitimate interests or for direct marketing purposes.</li>
+            <li><strong>Rights related to automated decision-making:</strong> We do not make decisions based solely on automated processing that produce legal or similarly significant effects on you.</li>
+        </ul>
+        <p>To exercise any of these rights, please contact us at <a href="mailto:privacy.ignistech@gmail.com">privacy.ignistech@gmail.com</a>. We will respond to your request within one month.</p>
+
+        <h2>9. Your Right to Complain</h2>
+        <div class="highlight-box">
+            <strong>Important:</strong> Under the Data (Use and Access) Act 2025, which amends the Data Protection Act 2018, you have a statutory right to complain directly to us about how we handle your personal data. The requirements set out below come into force on 19 June 2026.
+        </div>
+
+        <h3>9.1 What is a data protection complaint?</h3>
+        <p>A data protection complaint is any expression of dissatisfaction about how we have collected, used, stored, shared, or otherwise processed your personal data, or about how we have responded to a request you have made to exercise your data protection rights.</p>
+
+        <h3>9.2 How to make a complaint</h3>
+        <p>You can submit a data protection complaint to us by any reasonable means, including:</p>
+        <ul>
+            <li>Email: <a href="mailto:privacy.ignistech@gmail.com">privacy.ignistech@gmail.com</a></li>
+            <li>Post: IgnisTech, Data Protection Complaints (address available on request).</li>
+            <li>Via any other communication channel through which you contact us, including social media.</li>
+        </ul>
+        <p>There is no required format for your complaint. Simply tell us what you are unhappy about regarding the handling of your personal data, and provide enough information for us to identify you and investigate your concerns.</p>
+
+        <h3>9.3 Our complaints process</h3>
+        <p>When we receive a data protection complaint, we will:</p>
+        <ul>
+            <li><strong>Acknowledge receipt within 30 calendar days</strong> of receiving your complaint, confirming who is handling it and what you can expect.</li>
+            <li><strong>Investigate your complaint</strong> without undue delay and make appropriate enquiries to understand what happened.</li>
+            <li><strong>Keep you informed</strong> of progress during our investigation.</li>
+            <li><strong>Tell you the outcome</strong> without undue delay once our investigation is complete, explaining our findings and any actions taken.</li>
         </ul>
 
-        <h2 id="data-security">Data Security</h2>
-        <p>We implement appropriate security measures including:</p>
+        <h3>9.4 If you are not satisfied</h3>
+        <p>If you are not satisfied with our response, you have the right to escalate your complaint to the <strong>Information Commissioner's Office (ICO)</strong>:</p>
         <ul>
-            <li>Encryption in transit (HTTPS/TLS) and at rest</li>
-            <li>Role-based access controls</li>
-            <li>JWT-based secure authentication</li>
-            <li>Daily automated backups</li>
-            <li>Continuous security monitoring</li>
+            <li>Website: <a href="https://ico.org.uk" target="_blank" rel="noopener">ico.org.uk</a></li>
+            <li>Telephone: 0303 123 1113</li>
+            <li>Post: Information Commissioner's Office, Wycliffe House, Water Lane, Wilmslow, Cheshire, SK9 5AF</li>
         </ul>
 
-        <h2>Data Retention</h2>
+        <h2>10. Cookies</h2>
+        <p>The Service uses cookies and similar technologies to provide essential functionality and improve your experience. We use:</p>
         <ul>
-            <li><strong>Account Data:</strong> While active + 90 days after deletion</li>
-            <li><strong>Financial Records:</strong> 7 years (legal requirement)</li>
-            <li><strong>Inspection Records:</strong> 5-7 years (fire safety regulations)</li>
+            <li><strong>Essential cookies:</strong> required for the Service to function, including authentication session cookies and security tokens. These cannot be disabled.</li>
+            <li><strong>Analytics cookies:</strong> to understand how the Service is used and to improve its performance. These are only set with your consent.</li>
         </ul>
+        <p>For detailed information about the specific cookies we use, please refer to our <a href="/cookie-policy.html">Cookie Policy</a>.</p>
 
-        <h2 id="your-rights">Your Rights</h2>
-        <p>Depending on your location, you may have rights to:</p>
-        <ul>
-            <li><strong>Access:</strong> Request access to your personal information</li>
-            <li><strong>Correction:</strong> Request correction of inaccurate information</li>
-            <li><strong>Deletion:</strong> Request deletion of your information</li>
-            <li><strong>Portability:</strong> Request a copy in portable format</li>
-            <li><strong>Objection:</strong> Object to processing</li>
-        </ul>
+        <h2>11. Children's Data</h2>
+        <p>The Service is not directed at or intended for use by children under the age of 16. We do not knowingly collect personal data from children. If you believe that we have collected data from a child under 16, please contact us immediately at <a href="mailto:privacy.ignistech@gmail.com">privacy.ignistech@gmail.com</a>.</p>
 
-        <h2>GDPR Compliance (EU/EEA)</h2>
-        <p>We comply with GDPR requirements. Legal basis for processing:</p>
-        <ul>
-            <li>Contract performance (providing the Service)</li>
-            <li>Legitimate interests (service improvement, fraud prevention)</li>
-            <li>Consent (marketing communications)</li>
-            <li>Legal obligation (fire safety compliance)</li>
-        </ul>
+        <h2>12. Changes to This Privacy Policy</h2>
+        <p>We may update this Privacy Policy from time to time. We will notify you of material changes by email or through the Service at least 30 days before the changes take effect.</p>
 
-        <h2>CCPA Compliance (California)</h2>
-        <p>California residents have rights under CCPA:</p>
-        <ul>
-            <li>Right to know what personal information we collect</li>
-            <li>Right to delete personal information</li>
-            <li>Right to opt-out of sale (we do not sell data)</li>
-            <li>Right to non-discrimination</li>
-        </ul>
-
-        <h2>Cookies</h2>
-        <p>We use cookies for authentication and functionality. See our <a href="/cookie-policy.html">Cookie Policy</a> for details.</p>
-
-        <h2>Children's Privacy</h2>
-        <p>The Service is not intended for children under 16. We do not knowingly collect information from children.</p>
-
-        <h2>Changes to Privacy Policy</h2>
-        <p>We may update this Privacy Policy. We will notify you of material changes via email or service notification.</p>
-
-        <h2 id="contact">Contact Us</h2>
-        <p>For privacy questions or to exercise your rights:</p>
-        <ul>
-            <li><strong>Email:</strong> <a href="mailto:privacy@firexcheck.com">privacy@firexcheck.com</a></li>
-            <li><strong>Data Protection Officer:</strong> <a href="mailto:dpo@firexcheck.com">dpo@firexcheck.com</a></li>
-            <li><strong>Support:</strong> <a href="mailto:support@firexcheck.com">support@firexcheck.com</a></li>
-        </ul>
+        <h2>13. Contact Us</h2>
+        <p>If you have any questions about this Privacy Policy, wish to exercise your data protection rights, or wish to make a data protection complaint, please contact us:</p>
+        <p><strong>IgnisTech</strong><br>
+        Email: <a href="mailto:privacy.ignistech@gmail.com">privacy.ignistech@gmail.com</a><br>
+        Website: <a href="https://firexcheck.com">firexcheck.com</a></p>
 
         <div class="footer">
-            <p><strong>Firexcheck - Fire Extinguisher Management System</strong></p>
-            <p>Keeping your premises safe and compliant.</p>
-            <p>
-                <a href="/terms-of-service.html">Terms of Service</a> •
-                <a href="/cookie-policy.html">Cookie Policy</a> •
-                <a href="/">Return to App</a>
-            </p>
+            <p>&copy; 2026 FireXCheck / IgnisTech. All rights reserved.</p>
+            <p><a href="/terms-of-service.html">Terms of Service</a> &nbsp;|&nbsp; <a href="/cookie-policy.html">Cookie Policy</a></p>
         </div>
     </div>
 </body>
