@@ -1,5 +1,5 @@
 // src/types.ts
-export type RoleKey = 'super_admin' | 'admin' | 'manager' | 'inspector' | 'viewer';
+export type RoleKey = 'super_admin' | 'admin' | 'manager' | 'inspector' | 'viewer' | 'building_owner';
 export type PermissionKey =
   | 'VIEW_USERS' | 'ADD_USERS' | 'EDIT_USERS' | 'DELETE_USERS'
   | 'VIEW_EXTINGUISHERS' | 'ADD_EXTINGUISHERS' | 'EDIT_EXTINGUISHERS' | 'DELETE_EXTINGUISHERS'

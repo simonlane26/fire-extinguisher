@@ -14,7 +14,7 @@ type Props = {
   onUpdateUser: (id: string, patch: Partial<User>) => void;
 };
 
-const ALL_ROLES: RoleKey[] = ['super_admin','admin','manager','inspector','viewer'];
+const ALL_ROLES: RoleKey[] = ['super_admin','admin','manager','inspector','viewer','building_owner'];
 
 function StatusPill({ status }: { status: User['status'] }) {
   const isActive = status === 'active';

@@ -131,7 +131,7 @@ export class AuthController {
       throw new ForbiddenException('Insufficient permissions to change roles');
     }
     // Validate target role
-    const validRoles = ['super_admin', 'admin', 'manager', 'inspector', 'viewer'];
+    const validRoles = ['super_admin', 'admin', 'manager', 'inspector', 'viewer', 'building_owner'];
     if (!validRoles.includes(role)) {
       throw new BadRequestException('Invalid role');
     }
@@ -320,7 +320,7 @@ export class AuthController {
     const { name, email, role, status = 'active' } = body;
 
     // Validate the role
-    const validRoles = ['super_admin', 'admin', 'manager', 'inspector', 'viewer'];
+    const validRoles = ['super_admin', 'admin', 'manager', 'inspector', 'viewer', 'building_owner'];
     if (!validRoles.includes(role)) {
       throw new BadRequestException('Invalid role');
     }
@@ -415,7 +415,7 @@ export class AuthController {
     }
 
     // Validate the role
-    const validRoles = ['super_admin', 'admin', 'manager', 'inspector', 'viewer'];
+    const validRoles = ['super_admin', 'admin', 'manager', 'inspector', 'viewer', 'building_owner'];
     if (!validRoles.includes(role)) {
       throw new BadRequestException('Invalid role');
     }

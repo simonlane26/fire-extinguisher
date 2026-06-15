@@ -1,7 +1,7 @@
 // src/components/RoleSwitcher.tsx
 import React from 'react';
 
-export type RoleKey = 'super_admin' | 'admin' | 'manager' | 'inspector' | 'viewer';
+export type RoleKey = 'super_admin' | 'admin' | 'manager' | 'inspector' | 'viewer' | 'building_owner';
 
 type RoleMeta = { name: string; description?: string };
 
@@ -13,7 +13,7 @@ type Props = {
   onSelect: (role: RoleKey) => void;
 };
 
-const ROLE_KEYS: RoleKey[] = ['super_admin', 'admin', 'manager', 'inspector', 'viewer'];
+const ROLE_KEYS: RoleKey[] = ['super_admin', 'admin', 'manager', 'inspector', 'viewer', 'building_owner'];
 
 const RoleSwitcher: React.FC<Props> = ({ open, onClose, currentRole, roles, onSelect }) => {
   if (!open) return null;

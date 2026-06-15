@@ -11,7 +11,7 @@ type Props = {
   availableRoles?: RoleKey[];
 };
 
-const ALL_ROLES: RoleKey[] = ['super_admin','admin','manager','inspector','viewer'];
+const ALL_ROLES: RoleKey[] = ['super_admin','admin','manager','inspector','viewer','building_owner'];
 
 export default function UserDetailsDrawer({
   open, user, canEdit, onClose, onChangeRole, availableRoles = ALL_ROLES,

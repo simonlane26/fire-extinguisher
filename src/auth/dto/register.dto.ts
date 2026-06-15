@@ -17,7 +17,7 @@ export class RegisterDto {
   @IsNotEmpty()
   tenantId: string;
 
-  @IsIn(['super_admin', 'admin', 'manager', 'inspector', 'viewer'])
+  @IsIn(['super_admin', 'admin', 'manager', 'inspector', 'viewer', 'building_owner'])
   @IsNotEmpty()
   role: string;
 }
