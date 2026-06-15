@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   HelpCircle,
   Book,
@@ -28,7 +28,7 @@ import {
 
 interface FAQItem {
   question: string;
-  answer: string;
+  answer: React.ReactNode;
 }
 
 interface FeatureSection {
@@ -246,11 +246,92 @@ export default function HelpPage() {
     },
     {
       question: 'How do I add team members?',
-      answer: 'Go to the Users tab (Admin only). Click "Invite User" and enter their email address. Choose their role (Admin, Technician, or Viewer). They\'ll receive an email invitation to join your organization.',
+      answer: 'Go to the Users tab (Admin only). Click "Add User" and enter their name and email address. Choose their role — Admin, Manager, Inspector, Building Owner, or Viewer. They\'ll receive an email invitation to set their password and join your organisation.',
     },
     {
-      question: 'What\'s the difference between user roles?',
-      answer: 'Admin: Full access to all features including billing and user management. Technician: Can view and edit extinguishers, perform inspections, and generate reports. Viewer: Read-only access to view extinguishers and reports.',
+      question: "What's the difference between user roles?",
+      answer: (
+        <div className="space-y-4">
+          <p>There are six roles, from highest to lowest access:</p>
+          <div className="space-y-2">
+            {[
+              {
+                role: 'Super Admin',
+                badge: 'bg-red-100 text-red-700',
+                desc: 'Full access to everything, including managing other admins. Typically the account owner.',
+              },
+              {
+                role: 'Admin',
+                badge: 'bg-orange-100 text-orange-700',
+                desc: 'Full access to all features including billing, settings, and user management. Cannot modify Super Admin accounts.',
+              },
+              {
+                role: 'Manager',
+                badge: 'bg-blue-100 text-blue-700',
+                desc: 'Can add, edit, and delete assets, perform inspections, and view compliance reports. No access to billing, settings, or users.',
+              },
+              {
+                role: 'Building Owner',
+                badge: 'bg-teal-100 text-teal-700',
+                desc: 'Read-only access to all assets and inspections, plus full access to compliance reports. Cannot add, edit, or delete records.',
+              },
+              {
+                role: 'Inspector',
+                badge: 'bg-purple-100 text-purple-700',
+                desc: 'Can view assets, perform inspections, and log test results. Cannot access reports, billing, settings, or users.',
+              },
+              {
+                role: 'Viewer',
+                badge: 'bg-gray-100 text-gray-600',
+                desc: 'Read-only access to view assets and inspection history only. No ability to make any changes.',
+              },
+            ].map(({ role, badge, desc }) => (
+              <div key={role} className="flex gap-3 items-start p-3 bg-gray-50 rounded-lg">
+                <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap mt-0.5 ${badge}`}>
+                  {role}
+                </span>
+                <span className="text-sm text-gray-600">{desc}</span>
+              </div>
+            ))}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-100 text-gray-700">
+                  <th className="p-2 text-left font-semibold border border-gray-200">Permission</th>
+                  {['Super Admin','Admin','Manager','Building Owner','Inspector','Viewer'].map(r => (
+                    <th key={r} className="p-2 text-center font-semibold border border-gray-200">{r}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { label: 'View assets & inspections', access: [true, true, true, true, true, true] },
+                  { label: 'Add / edit assets',         access: [true, true, true, false, true, false] },
+                  { label: 'Perform inspections',       access: [true, true, true, false, true, false] },
+                  { label: 'View reports',              access: [true, true, true, true, false, false] },
+                  { label: 'Manage users',              access: [true, true, false, false, false, false] },
+                  { label: 'View billing',              access: [true, true, false, false, false, false] },
+                  { label: 'Manage settings',           access: [true, true, false, false, false, false] },
+                  { label: 'Delete users',              access: [true, false, false, false, false, false] },
+                ].map(row => (
+                  <tr key={row.label} className="even:bg-gray-50">
+                    <td className="p-2 border border-gray-200 text-gray-700 font-medium">{row.label}</td>
+                    {row.access.map((has, i) => (
+                      <td key={i} className="p-2 text-center border border-gray-200">
+                        {has
+                          ? <span className="text-green-600 font-bold">✓</span>
+                          : <span className="text-gray-300">✕</span>
+                        }
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ),
     },
     {
       question: 'How do I create a site/location?',
