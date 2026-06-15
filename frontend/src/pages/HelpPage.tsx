@@ -415,7 +415,7 @@ export default function HelpPage() {
     },
     {
       question: 'How do I enable Fire Alarm, PAT Testing, or Emergency Lighting for my account?',
-      answer: 'These are add-on modules that can be enabled by a Platform Administrator. Contact support@firexcheck.com if you\'d like to add these modules to your account. Once enabled, the module buttons will appear at the top of the dashboard.',
+      answer: 'These are add-on modules that can be enabled by a Platform Administrator. Contact ignistech999@gmail.com if you\'d like to add these modules to your account. Once enabled, the module buttons will appear at the top of the dashboard.',
     },
   ];
 
@@ -821,10 +821,10 @@ export default function HelpPage() {
                     For general inquiries and technical support
                   </p>
                   <a
-                    href="mailto:support@firexcheck.com"
+                    href="mailto:ignistech999@gmail.com"
                     className="font-medium text-blue-600 hover:text-blue-700"
                   >
-                    support@firexcheck.com
+                    ignistech999@gmail.com
                   </a>
                 </div>
               </div>
@@ -839,10 +839,10 @@ export default function HelpPage() {
                     Report security vulnerabilities privately
                   </p>
                   <a
-                    href="mailto:security@firexcheck.com"
+                    href="mailto:ignistech999@gmail.com"
                     className="font-medium text-blue-600 hover:text-blue-700"
                   >
-                    security@firexcheck.com
+                    ignistech999@gmail.com
                   </a>
                 </div>
               </div>
@@ -877,10 +877,10 @@ export default function HelpPage() {
                     For billing and account-related questions
                   </p>
                   <a
-                    href="mailto:accounts@firexcheck.com"
+                    href="mailto:ignistech999@gmail.com"
                     className="font-medium text-blue-600 hover:text-blue-700"
                   >
-                    accounts@firexcheck.com
+                    ignistech999@gmail.com
                   </a>
                 </div>
               </div>
