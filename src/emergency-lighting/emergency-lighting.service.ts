@@ -171,7 +171,7 @@ export class EmergencyLightingService {
         if (!line) continue;
 
         const fields = this.parseCSVLine(line);
-        const [luminaireRef, description, location, luminaireType, fittingType, zone, notes, siteName] = fields;
+        const [luminaireRef, description, location, luminaireType, fittingType, zone, notes, nextMonthlyDue, nextAnnualDue, nextThreeYearlyDue, siteName] = fields;
 
         if (!luminaireRef || !description || !location || !luminaireType) {
           errors.push({ line: i + 2, error: 'Missing required fields: luminaireRef, description, location, luminaireType' });
@@ -208,6 +208,9 @@ export class EmergencyLightingService {
             fittingType: fittingType?.trim() || 'self_contained',
             zone: zone?.trim() || null,
             notes: notes?.trim() || null,
+            nextMonthlyDue: nextMonthlyDue?.trim() ? new Date(nextMonthlyDue.trim()) : null,
+            nextAnnualDue: nextAnnualDue?.trim() ? new Date(nextAnnualDue.trim()) : null,
+            nextThreeYearlyDue: nextThreeYearlyDue?.trim() ? new Date(nextThreeYearlyDue.trim()) : null,
           },
         });
         imported.push(luminaire);

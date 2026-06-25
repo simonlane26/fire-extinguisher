@@ -276,7 +276,7 @@ ${entry.notes ? `<h2>Notes</h2><p style="padding:8px;background:#f9fafb;border:1
         if (!line) continue;
 
         const fields = this.parseCSVLine(line);
-        const [systemRef, name, panelMake, panelModel, panelSerial, arcCompany, arcNumber, installDate, notes, siteName] = fields;
+        const [systemRef, name, panelMake, panelModel, panelSerial, arcCompany, arcNumber, installDate, notes, nextWeeklyDue, nextMonthlyDue, nextQuarterlyDue, nextSixMonthlyDue, nextAnnualDue, siteName] = fields;
 
         if (!systemRef) {
           errors.push({ line: i + 2, error: 'Missing required field: systemRef' }); continue;
@@ -308,6 +308,11 @@ ${entry.notes ? `<h2>Notes</h2><p style="padding:8px;background:#f9fafb;border:1
             arcNumber: arcNumber?.trim() || null,
             installDate: installDate?.trim() ? new Date(installDate.trim()) : null,
             notes: notes?.trim() || null,
+            nextWeeklyDue: nextWeeklyDue?.trim() ? new Date(nextWeeklyDue.trim()) : null,
+            nextMonthlyDue: nextMonthlyDue?.trim() ? new Date(nextMonthlyDue.trim()) : null,
+            nextQuarterlyDue: nextQuarterlyDue?.trim() ? new Date(nextQuarterlyDue.trim()) : null,
+            nextSixMonthlyDue: nextSixMonthlyDue?.trim() ? new Date(nextSixMonthlyDue.trim()) : null,
+            nextAnnualDue: nextAnnualDue?.trim() ? new Date(nextAnnualDue.trim()) : null,
           },
         });
         imported.push(system);

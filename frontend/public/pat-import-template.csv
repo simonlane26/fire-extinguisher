@@ -1,5 +1,5 @@
-applianceRef,description,location,applianceClass,notes,site
-PAT-001,Laptop Dell XPS,Office Room 1,I,Annual test required,Main Site
-PAT-002,Kettle,Kitchen,I,,Main Site
-PAT-003,Power Tool Drill,Workshop,I,Check cord integrity,Warehouse
-PAT-004,Extension Lead 4-way,Meeting Room A,I,,Main Site
+applianceRef,description,location,applianceClass,notes,nextTestDue,site
+PAT-001,Laptop Dell XPS,Office Room 1,I,Annual test required,2026-12-01,Main Site
+PAT-002,Kettle,Kitchen,I,,2026-09-15,Main Site
+PAT-003,Power Tool Drill,Workshop,I,Check cord integrity,2026-10-01,Warehouse
+PAT-004,Extension Lead 4-way,Meeting Room A,I,,,Main Site

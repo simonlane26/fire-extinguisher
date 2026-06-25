@@ -114,7 +114,7 @@ export class PATTestingService {
         if (!line) continue;
 
         const fields = this.parseCSVLine(line);
-        const [applianceRef, description, location, applianceClass, notes, siteName] = fields;
+        const [applianceRef, description, location, applianceClass, notes, nextTestDue, siteName] = fields;
 
         if (!applianceRef || !description || !location) {
           errors.push({ line: i + 2, error: 'Missing required fields: applianceRef, description, location' });
@@ -151,6 +151,7 @@ export class PATTestingService {
             location: location.trim(),
             applianceClass: applianceClass?.trim() || 'I',
             notes: notes?.trim() || null,
+            nextTestDue: nextTestDue?.trim() ? new Date(nextTestDue.trim()) : null,
           },
         });
         imported.push(appliance);

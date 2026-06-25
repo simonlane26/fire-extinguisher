@@ -1,5 +1,5 @@
-luminaireRef,description,location,luminaireType,fittingType,zone,notes,site
-EL-001,Non-Maintained LED Bulkhead,Main Corridor,escape_route,self_contained,Zone A,,Main Site
-EL-002,Maintained Twin Spot,Fire Exit,escape_route,self_contained,Zone A,,Main Site
-EL-003,Open Area LED,Reception,open_area,self_contained,Zone B,,Main Site
-EL-004,High Bay Emergency,Warehouse,high_risk,central_battery,Zone C,Check battery monthly,Warehouse
+luminaireRef,description,location,luminaireType,fittingType,zone,notes,nextMonthlyDue,nextAnnualDue,nextThreeYearlyDue,site
+EL-001,Non-Maintained LED Bulkhead,Main Corridor,escape_route,self_contained,Zone A,,2026-07-01,2027-01-01,,Main Site
+EL-002,Maintained Twin Spot,Fire Exit,escape_route,self_contained,Zone A,,2026-07-01,2027-01-01,,Main Site
+EL-003,Open Area LED,Reception,open_area,self_contained,Zone B,,2026-08-01,2027-02-01,,Main Site
+EL-004,High Bay Emergency,Warehouse,high_risk,central_battery,Zone C,Check battery monthly,2026-07-15,2027-01-15,2029-01-15,Warehouse
