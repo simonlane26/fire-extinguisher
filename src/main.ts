@@ -94,11 +94,8 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, Postman, etc.)
+      // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else if (process.env.NODE_ENV === 'development') {
-        // Allow all origins in development
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -109,11 +106,41 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
   });
 
-  // Security headers (helmet) — disable CSP since frontend is served separately via nginx
+  // Security headers
   app.use(helmet({
-    contentSecurityPolicy: false,
+    // Content Security Policy
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc:    ["'self'"],
+        scriptSrc:     ["'self'", 'https://js.stripe.com'],
+        styleSrc:      ["'self'", "'unsafe-inline'"],   // Tailwind inline styles
+        imgSrc:        ["'self'", 'data:', 'blob:', 'https:'],
+        connectSrc:    ["'self'", 'https://api.stripe.com', 'https://js.stripe.com'],
+        frameSrc:      ['https://js.stripe.com', 'https://hooks.stripe.com'],
+        objectSrc:     ["'none'"],
+        baseUri:       ["'self'"],
+        formAction:    ["'self'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    // HTTP Strict Transport Security — 1 year, include subdomains
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
+
+  // Permissions-Policy header (not yet in helmet's type definitions)
+  app.use((_req: any, res: any, next: any) => {
+    res.setHeader(
+      'Permissions-Policy',
+      'geolocation=(), microphone=(), usb=(), magnetometer=(), gyroscope=(), fullscreen=(self), payment=(https://js.stripe.com)',
+    );
+    next();
+  });
 
   // Global Exception Filter for error handling
   app.useGlobalFilters(new AllExceptionsFilter());
