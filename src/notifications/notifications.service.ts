@@ -13,10 +13,10 @@ export class NotificationsService {
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
     const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:noreply@example.com';
 
-    // Log VAPID configuration
-    this.logger.log(`VAPID_PUBLIC_KEY: ${vapidPublicKey ? vapidPublicKey.substring(0, 20) + '...' : 'NOT SET'}`);
-    this.logger.log(`VAPID_PRIVATE_KEY: ${vapidPrivateKey ? vapidPrivateKey.substring(0, 10) + '...' : 'NOT SET'}`);
-    this.logger.log(`VAPID_SUBJECT: ${vapidSubject}`);
+    // Log VAPID configuration status only — never log key material
+    this.logger.log(`VAPID_PUBLIC_KEY: ${vapidPublicKey ? 'SET' : 'NOT SET'}`);
+    this.logger.log(`VAPID_PRIVATE_KEY: ${vapidPrivateKey ? 'SET' : 'NOT SET'}`);
+    this.logger.log(`VAPID_SUBJECT: ${vapidSubject ? 'SET' : 'NOT SET'}`);
 
     if (!vapidPublicKey || !vapidPrivateKey) {
       this.logger.warn('⚠️  VAPID keys not configured. Push notifications will not work.');
@@ -318,7 +318,6 @@ export class NotificationsService {
 
   // Get public VAPID key for frontend
   getPublicKey(): string {
-    this.logger.log(`getPublicKey() called, returning: ${this.publicKey ? this.publicKey.substring(0, 20) + '...' : 'EMPTY'}`);
     return this.publicKey;
   }
 }

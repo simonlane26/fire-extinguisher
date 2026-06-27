@@ -49,7 +49,7 @@ export class FireAlarmService {
   }>) {
     await this.assertSystemOwner(tenantId, id);
     return this.prisma.fireAlarmSystem.update({
-      where: { id },
+      where: { id, tenantId },
       data: {
         ...dto,
         ...(dto.installDate ? { installDate: new Date(dto.installDate) } : {}),
@@ -59,7 +59,7 @@ export class FireAlarmService {
 
   async deleteSystem(tenantId: string, id: string) {
     await this.assertSystemOwner(tenantId, id);
-    return this.prisma.fireAlarmSystem.delete({ where: { id } });
+    return this.prisma.fireAlarmSystem.delete({ where: { id, tenantId } });
   }
 
   // ─── Call Points ──────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ export class FireAlarmService {
     };
     if (nextDueField[dto.entryType]) {
       await this.prisma.fireAlarmSystem.update({
-        where: { id: systemId },
+        where: { id: systemId, tenantId },
         data: { [nextDueField[dto.entryType]]: nextDueUpdate[dto.entryType] },
       });
     }

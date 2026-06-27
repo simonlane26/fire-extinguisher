@@ -281,7 +281,8 @@ export class AuthService {
       throw new BadRequestException('Verification token has expired');
     }
 
-    // Mark email as verified
+    // Mark email as verified — userId comes from the validated token, no tenant context needed
+    // eslint-disable-next-line local/require-tenant-scope
     await this.prisma.user.update({
       where: { id: verificationToken.userId },
       data: {
@@ -290,7 +291,6 @@ export class AuthService {
       },
     });
 
-    // Delete used token
     await this.prisma.verificationToken.delete({
       where: { id: verificationToken.id },
     });
@@ -385,7 +385,9 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(newPassword, salt);
 
     // Update password and invalidate ALL reset tokens for this user
+    // userId comes from the validated reset token — no tenant context needed for this auth flow
     await this.prisma.$transaction([
+      // eslint-disable-next-line local/require-tenant-scope
       this.prisma.user.update({
         where: { id: resetToken.userId },
         data: { passwordHash },

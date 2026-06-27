@@ -142,7 +142,7 @@ export class AuthController {
     }
     // Update user's role in the database
     const updatedUser = await this.prisma.user.update({
-      where: { id: user.id },
+      where: { id: user.id, tenantId: user.tenantId },
       data: { role },
       include: { tenant: true },
     });
@@ -263,19 +263,15 @@ export class AuthController {
     // Try S3 upload first, fallback to local storage if S3 not configured
     try {
       // Upload to S3
-      console.log('🚀 Attempting S3 upload...');
       const key = `tenants/${tenantId}/logos/${Date.now()}-${file.originalname}`;
       const url = await this.s3.upload(key, file.buffer, file.mimetype);
-      console.log('✅ S3 upload successful:', url);
 
       return {
         success: true,
         url,
       };
     } catch (s3Error) {
-      console.error('❌ S3 upload failed, using local storage:');
-      console.error('Error:', s3Error);
-      console.error('Message:', s3Error.message);
+      console.error(`❌ S3 upload failed, falling back to local storage: ${s3Error?.message ?? 'unknown error'}`);
       // S3 not configured, fallback to local storage
       this.prisma['$log']?.warn?.(`S3 upload failed, using local storage: ${s3Error.message}`);
 
@@ -449,6 +445,7 @@ export class AuthController {
     const updatedUser = await this.prisma.user.update({
       where: {
         id: userId,
+        tenantId: currentUser.tenantId,
       },
       data: {
         role: role,
@@ -499,15 +496,13 @@ export class AuthController {
       const response = await fetch(tenant.logoUrl);
 
       if (!response.ok) {
-        console.error(`Failed to fetch logo from ${tenant.logoUrl}: ${response.status} ${response.statusText}`);
-        throw new BadRequestException(`Failed to fetch logo: ${response.statusText}`);
+        console.error(`Failed to fetch logo: HTTP ${response.status} ${response.statusText}`);
+        throw new BadRequestException('Logo could not be loaded');
       }
 
       const arrayBuffer = await response.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
       const contentType = response.headers.get('content-type') || 'image/png';
-
-      console.log(`Successfully fetched logo for tenant ${tenantId}, size: ${buffer.length} bytes, type: ${contentType}`);
 
       // Set CORS headers
       res.setHeader('Access-Control-Allow-Origin', '*');
@@ -518,8 +513,9 @@ export class AuthController {
 
       return new StreamableFile(buffer);
     } catch (error) {
-      console.error(`Error in logo proxy for tenant ${tenantId}:`, error);
-      throw new BadRequestException(`Failed to load logo: ${error.message}`);
+      if (error instanceof BadRequestException) throw error;
+      console.error('Error in logo proxy:', error);
+      throw new BadRequestException('Logo could not be loaded');
     }
   }
 }

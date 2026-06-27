@@ -39,7 +39,7 @@ export class QuotesService {
         const foundIds = new Set(extinguishers.map(e => e.id));
         const missingIds = extinguisherIds.filter(id => !foundIds.has(id!));
         if (missingIds.length > 0) {
-          throw new NotFoundException(`Extinguishers not found: ${missingIds.join(', ')}`);
+          throw new NotFoundException('One or more selected extinguishers could not be found');
         }
       }
     }
@@ -399,7 +399,7 @@ export class QuotesService {
     }
 
     const updatedQuote = await this.prisma.quote.update({
-      where: { id },
+      where: { id, tenantId },
       data: dataToUpdate,
       include: {
         extinguisher: {
@@ -538,7 +538,7 @@ export class QuotesService {
     }
 
     await this.prisma.quote.delete({
-      where: { id },
+      where: { id, tenantId },
     });
 
     return { success: true, message: 'Quote deleted successfully' };

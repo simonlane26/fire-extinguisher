@@ -52,12 +52,12 @@ export class EmergencyLightingService {
     }>,
   ) {
     await this.assertLuminaireOwner(tenantId, id);
-    return (this.prisma.emergencyLuminaire as any).update({ where: { id }, data: dto });
+    return (this.prisma.emergencyLuminaire as any).update({ where: { id, tenantId }, data: dto });
   }
 
   async deleteLuminaire(tenantId: string, id: string) {
     await this.assertLuminaireOwner(tenantId, id);
-    return (this.prisma.emergencyLuminaire as any).delete({ where: { id } });
+    return (this.prisma.emergencyLuminaire as any).delete({ where: { id, tenantId } });
   }
 
   // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -140,7 +140,7 @@ export class EmergencyLightingService {
     const field = nextDueField[dto.testType];
     if (field) {
       await (this.prisma.emergencyLuminaire as any).update({
-        where: { id: luminaireId },
+        where: { id: luminaireId, tenantId },
         data: { lastTestedAt: testedAt, [field]: nextTestDate },
       });
     }

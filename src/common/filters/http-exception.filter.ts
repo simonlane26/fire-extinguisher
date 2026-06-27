@@ -17,36 +17,37 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    const isHttpException = exception instanceof HttpException;
+    const status = isHttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+    const is5xx = status >= 500;
 
-    const message =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : 'Internal server error';
+    // Always log full details server-side, including stack traces
+    this.logger.error(
+      `${request.method} ${request.url} → ${status}`,
+      exception instanceof Error ? exception.stack : String(exception),
+    );
 
-    const errorResponse = {
-      statusCode: status,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
-      message: typeof message === 'string' ? message : (message as any).message || 'An error occurred',
-    };
-
-    // Log the error — full stack only in development to avoid leaking internals
-    if (process.env.NODE_ENV !== 'production') {
-      this.logger.error(
-        `${request.method} ${request.url}`,
-        exception instanceof Error ? exception.stack : 'Unknown error',
-      );
+    // For 5xx errors, always return a generic message — never leak internals
+    // For 4xx HttpExceptions, the message is developer-set and intentional
+    let clientMessage: string;
+    if (is5xx) {
+      clientMessage = 'An unexpected error occurred. Please try again later.';
+    } else if (isHttpException) {
+      const body = exception.getResponse();
+      clientMessage = typeof body === 'string'
+        ? body
+        : (body as any).message ?? 'An error occurred';
+      // Normalise arrays from class-validator into a single string
+      if (Array.isArray(clientMessage)) {
+        clientMessage = (clientMessage as string[]).join('; ');
+      }
     } else {
-      this.logger.error(
-        `${request.method} ${request.url} → ${status}: ${typeof message === 'string' ? message : (message as any)?.message ?? 'Error'}`,
-      );
+      clientMessage = 'An unexpected error occurred. Please try again later.';
     }
 
-    response.status(status).json(errorResponse);
+    response.status(status).json({
+      statusCode: status,
+      message: clientMessage,
+    });
   }
 }

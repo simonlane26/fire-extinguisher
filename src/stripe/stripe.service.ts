@@ -251,19 +251,11 @@ export class StripeService {
   }
 
   private async handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-    console.log('🔔 Subscription update webhook received:', {
-      subscriptionId: subscription.id,
-      customerId: subscription.customer,
-      status: subscription.status,
-      metadata: subscription.metadata,
-    });
-
     // First try to get tenantId from subscription metadata
     let tenantId = subscription.metadata.tenantId;
 
     // If not in metadata, look up by Stripe customer ID
     if (!tenantId) {
-      console.log('⚠️  No tenantId in subscription metadata, looking up by customer ID...');
       const customerId = typeof subscription.customer === 'string'
         ? subscription.customer
         : subscription.customer.id;
@@ -273,23 +265,15 @@ export class StripeService {
       });
 
       if (!tenant) {
-        console.error('❌ No tenant found for customer:', customerId);
+        console.error('❌ No tenant found for subscription update');
         return;
       }
 
       tenantId = tenant.id;
-      console.log('✅ Found tenant by customer ID:', tenantId);
     }
 
     const priceId = subscription.items.data[0]?.price.id;
     const plan = this.getPlanFromPriceId(priceId);
-
-    console.log('✅ Updating tenant:', {
-      tenantId,
-      plan,
-      subscriptionId: subscription.id,
-      status: subscription.status,
-    });
 
     await this.prisma.tenant.update({
       where: { id: tenantId },
@@ -301,8 +285,6 @@ export class StripeService {
         trialEndsAt: plan !== 'trial' ? null : undefined,
       },
     });
-
-    console.log('✅ Tenant updated successfully');
   }
 
   private async handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -320,7 +302,7 @@ export class StripeService {
       });
 
       if (!tenant) {
-        console.error('❌ No tenant found for canceled subscription, customer:', customerId);
+        console.error('❌ No tenant found for canceled subscription');
         return;
       }
 
@@ -347,14 +329,11 @@ export class StripeService {
         where: { id: tenantId },
         data: { [addonModule]: true },
       });
-      console.log(`✅ Add-on module enabled: ${addonModule} for tenant ${tenantId}`);
-    } else {
-      console.log(`Checkout completed for tenant ${tenantId}`);
     }
   }
 
-  private async handlePaymentSucceeded(invoice: Stripe.Invoice) {
-    console.log(`Payment succeeded for invoice ${invoice.id}`);
+  private async handlePaymentSucceeded(_invoice: Stripe.Invoice) {
+    // Payment recorded by Stripe — no action needed
   }
 
   private async handlePaymentFailed(invoice: Stripe.Invoice) {

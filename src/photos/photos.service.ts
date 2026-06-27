@@ -96,7 +96,7 @@ export class PhotosService {
 
     // Delete from database (S3 deletion could be added here if needed)
     await this.prisma.inspectionPhoto.delete({
-      where: { id: photoId },
+      where: { id: photoId, tenantId },
     });
 
     return { success: true, message: 'Photo deleted successfully' };

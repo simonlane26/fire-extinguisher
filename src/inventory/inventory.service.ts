@@ -48,7 +48,7 @@ export class InventoryService {
     if (!item) throw new Error('Item not found');
 
     return this.prisma.inventoryItem.update({
-      where: { id },
+      where: { id, tenantId },
       data,
     });
   }
@@ -61,7 +61,7 @@ export class InventoryService {
     if (!item) throw new Error('Item not found');
 
     return this.prisma.inventoryItem.delete({
-      where: { id },
+      where: { id, tenantId },
     });
   }
 

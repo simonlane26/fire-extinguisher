@@ -107,7 +107,7 @@ export class EmailService {
           return false;
         }
 
-        console.log(`✅ Email sent to ${options.to}: ${options.subject} (Resend)`);
+        console.log(`✅ Email sent via Resend: ${options.subject}`);
         return true;
       } else if (this.provider === 'smtp' && this.transporter) {
         await this.transporter.sendMail({
@@ -117,7 +117,7 @@ export class EmailService {
           html: options.html,
           text: options.text || this.stripHtml(options.html),
         });
-        console.log(`✅ Email sent to ${options.to}: ${options.subject} (SMTP)`);
+        console.log(`✅ Email sent via SMTP: ${options.subject}`);
         return true;
       }
 

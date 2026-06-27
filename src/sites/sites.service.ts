@@ -95,7 +95,7 @@ export class SitesService {
     }
 
     return this.prisma.site.update({
-      where: { id },
+      where: { id, tenantId },
       data,
     });
   }
@@ -111,7 +111,7 @@ export class SitesService {
 
     // Soft delete - set status to inactive
     return this.prisma.site.update({
-      where: { id },
+      where: { id, tenantId },
       data: { status: 'inactive' },
     });
   }

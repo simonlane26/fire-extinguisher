@@ -83,7 +83,7 @@ export class ExtinguishersService {
 
       // Reduce stock by 1
       await this.prisma.inventoryItem.update({
-        where: { id: inventoryItem.id },
+        where: { id: inventoryItem.id, tenantId },
         data: {
           quantityInStock: {
             decrement: 1,
@@ -168,7 +168,7 @@ export class ExtinguishersService {
     if (updateData.lastMaintenance) updateData.lastMaintenance = new Date(updateData.lastMaintenance);
     if (updateData.nextMaintenance) updateData.nextMaintenance = new Date(updateData.nextMaintenance);
 
-    const updated = await this.prisma.extinguisher.update({ where: { id }, data: updateData });
+    const updated = await this.prisma.extinguisher.update({ where: { id, tenantId }, data: updateData });
 
     // Create inspection record if service-related fields were updated
     await this.createInspectionRecordIfNeeded(tenantId, id, existing, dto);
@@ -329,7 +329,7 @@ export class ExtinguishersService {
 
   async remove(tenantId: string, id: string) {
     await this.findOne(tenantId, id); // Verify ownership
-    return this.prisma.extinguisher.delete({ where: { id } });
+    return this.prisma.extinguisher.delete({ where: { id, tenantId } });
   }
 
   async exportToCsv(tenantId: string): Promise<string> {

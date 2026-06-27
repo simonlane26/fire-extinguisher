@@ -34,12 +34,12 @@ export class PATTestingService {
     applianceClass: string; notes: string;
   }>) {
     await this.assertApplianceOwner(tenantId, id);
-    return this.prisma.pATAppliance.update({ where: { id }, data: dto });
+    return this.prisma.pATAppliance.update({ where: { id, tenantId }, data: dto });
   }
 
   async deleteAppliance(tenantId: string, id: string) {
     await this.assertApplianceOwner(tenantId, id);
-    return this.prisma.pATAppliance.delete({ where: { id } });
+    return this.prisma.pATAppliance.delete({ where: { id, tenantId } });
   }
 
   // ─── Tests ─────────────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ export class PATTestingService {
   async getTests(tenantId: string, applianceId: string) {
     await this.assertApplianceOwner(tenantId, applianceId);
     return this.prisma.pATTest.findMany({
-      where: { applianceId },
+      where: { applianceId, tenantId },
       orderBy: { testedAt: 'desc' },
       take: 100,
     });
@@ -82,7 +82,7 @@ export class PATTestingService {
     let nextTestDue: Date | null = dto.nextTestDate ? new Date(dto.nextTestDate) : null;
     if (!nextTestDue && dto.outcome === 'fail') nextTestDue = new Date(dto.testedAt);
     await this.prisma.pATAppliance.update({
-      where: { id: applianceId },
+      where: { id: applianceId, tenantId },
       data: { lastTestedAt: new Date(dto.testedAt), nextTestDue },
     });
 
@@ -92,7 +92,7 @@ export class PATTestingService {
   async deleteTest(tenantId: string, id: string) {
     const test = await this.prisma.pATTest.findUnique({ where: { id } });
     if (!test || test.tenantId !== tenantId) throw new NotFoundException('Test record not found');
-    return this.prisma.pATTest.delete({ where: { id } });
+    return this.prisma.pATTest.delete({ where: { id, tenantId } });
   }
 
   // ─── CSV Import ───────────────────────────────────────────────────────────
