@@ -44,7 +44,7 @@ export class AuthService {
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Create user
@@ -182,7 +182,7 @@ export class AuthService {
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Create tenant and user in transaction
@@ -303,12 +303,9 @@ export class AuthService {
       where: { email },
     });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (user.emailVerified) {
-      throw new BadRequestException('Email already verified');
+    if (!user || user.emailVerified) {
+      // Generic message — don't reveal whether the email exists or is already verified
+      return { message: 'If that address is registered and unverified, a new verification email has been sent.' };
     }
 
     // Delete any existing tokens
@@ -384,18 +381,17 @@ export class AuthService {
     }
 
     // Hash new password
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(newPassword, salt);
 
-    // Update password and mark token as used
+    // Update password and invalidate ALL reset tokens for this user
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: resetToken.userId },
         data: { passwordHash },
       }),
-      this.prisma.passwordResetToken.update({
-        where: { id: resetToken.id },
-        data: { used: true },
+      this.prisma.passwordResetToken.deleteMany({
+        where: { userId: resetToken.userId },
       }),
     ]);
 

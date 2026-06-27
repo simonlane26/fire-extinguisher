@@ -35,11 +35,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message: typeof message === 'string' ? message : (message as any).message || 'An error occurred',
     };
 
-    // Log the error
-    this.logger.error(
-      `${request.method} ${request.url}`,
-      exception instanceof Error ? exception.stack : 'Unknown error',
-    );
+    // Log the error — full stack only in development to avoid leaking internals
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.error(
+        `${request.method} ${request.url}`,
+        exception instanceof Error ? exception.stack : 'Unknown error',
+      );
+    } else {
+      this.logger.error(
+        `${request.method} ${request.url} → ${status}: ${typeof message === 'string' ? message : (message as any)?.message ?? 'Error'}`,
+      );
+    }
 
     response.status(status).json(errorResponse);
   }

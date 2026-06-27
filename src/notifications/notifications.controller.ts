@@ -13,11 +13,11 @@ export class NotificationsController {
   @Public()
   @Get('public-key')
   getPublicKey() {
-    console.log('🔑 Controller: getPublicKey endpoint called');
-    // Hardcoded temporarily to bypass caching issues
-    return {
-      publicKey: 'BOKJVJV5LimKLHRY1-fAV7YOAOAlE5ESQFqLrAAqYL579cl2EUXxJ7QdaFF0houss0vCUuXy99HeBttiGHNdmtE'
-    };
+    const publicKey = process.env.VAPID_PUBLIC_KEY;
+    if (!publicKey) {
+      throw new Error('VAPID_PUBLIC_KEY is not configured');
+    }
+    return { publicKey };
   }
 
   // Subscribe to push notifications

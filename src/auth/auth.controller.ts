@@ -343,7 +343,7 @@ export class AuthController {
     // Create a cryptographically secure temporary password
     const tempPassword = randomBytes(16).toString('hex');
     const bcrypt = require('bcrypt');
-    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    const passwordHash = await bcrypt.hash(tempPassword, 12);
 
     // Create the user
     const newUser = await this.prisma.user.create({
