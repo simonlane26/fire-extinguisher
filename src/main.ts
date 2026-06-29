@@ -115,7 +115,7 @@ async function bootstrap() {
         scriptSrc:     ["'self'", 'https://js.stripe.com'],
         styleSrc:      ["'self'", "'unsafe-inline'"],   // Tailwind inline styles
         imgSrc:        ["'self'", 'data:', 'blob:', 'https:'],
-        connectSrc:    ["'self'", 'https://api.stripe.com', 'https://js.stripe.com'],
+        connectSrc:    ["'self'", 'https://api.stripe.com', 'https://js.stripe.com', 'https://*.amazonaws.com'],
         frameSrc:      ['https://js.stripe.com', 'https://hooks.stripe.com'],
         objectSrc:     ["'none'"],
         baseUri:       ["'self'"],
