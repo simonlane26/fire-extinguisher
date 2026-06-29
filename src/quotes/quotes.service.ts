@@ -465,7 +465,7 @@ export class QuotesService {
       // Get the tenant/company info
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: tenantId },
-        select: { companyName: true },
+        select: { companyName: true, logoUrl: true },
       });
 
       // Determine recipient email - for bulk quotes, get from first line's extinguisher site
@@ -518,6 +518,7 @@ export class QuotesService {
         vatAmount: quote.vatAmount,
         totalAmount: quote.totalAmount,
         companyName: tenant?.companyName || 'Fire Safety Services',
+        companyLogoUrl: tenant?.logoUrl ?? undefined,
         lines: emailLines,
         isBulkQuote: quote.isBulkQuote,
       });

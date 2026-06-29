@@ -709,6 +709,7 @@ export class EmailService {
       vatAmount,
       totalAmount,
       companyName,
+      companyLogoUrl,
       notes,
       termsConditions,
       lines,
@@ -765,16 +766,19 @@ export class EmailService {
   <div style="max-width: 700px; margin: 0 auto; padding: 20px;">
     <!-- Header -->
     <div style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h1 style="margin: 0; font-size: 28px; font-weight: bold;">QUOTE</h1>
-          <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 18px;">${quoteNumber}</p>
-        </div>
-        <div style="text-align: right;">
-          <p style="margin: 0; font-size: 16px; font-weight: 600;">${companyName}</p>
-          <p style="margin: 4px 0 0 0; opacity: 0.9; font-size: 14px;">Fire Safety Services</p>
-        </div>
-      </div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="vertical-align: middle;">
+            <h1 style="margin: 0; font-size: 28px; font-weight: bold; color: white;">QUOTE</h1>
+            <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 18px; color: white;">${quoteNumber}</p>
+          </td>
+          <td style="text-align: right; vertical-align: middle;">
+            ${companyLogoUrl ? `<img src="${companyLogoUrl}" alt="${companyName}" style="height: 56px; width: auto; max-width: 180px; object-fit: contain; background: white; border-radius: 8px; padding: 6px; display: block; margin: 0 0 8px auto;">` : ''}
+            <p style="margin: 0; font-size: 16px; font-weight: 600; color: white;">${companyName}</p>
+            <p style="margin: 4px 0 0 0; opacity: 0.9; font-size: 14px; color: white;">Fire Safety Services</p>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <!-- Quote Details -->
