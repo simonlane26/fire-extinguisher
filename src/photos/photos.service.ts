@@ -78,10 +78,29 @@ export class PhotosService {
       throw new NotFoundException('Extinguisher not found');
     }
 
-    return this.prisma.inspectionPhoto.findMany({
+    const photos = await this.prisma.inspectionPhoto.findMany({
       where: { tenantId, extinguisherId },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Replace stored S3 URLs with pre-signed URLs so private buckets work.
+    // Signed URLs are valid for 1 hour; the client should re-fetch if they expire.
+    if (this.s3Service.configured) {
+      return Promise.all(
+        photos.map(async (photo) => {
+          const key = this.s3Service.extractKey(photo.url);
+          if (!key) return photo;
+          try {
+            const signedUrl = await this.s3Service.presign(key);
+            return { ...photo, url: signedUrl };
+          } catch {
+            return photo; // fall back to stored URL if presigning fails
+          }
+        }),
+      );
+    }
+
+    return photos;
   }
 
   async deletePhoto(tenantId: string, photoId: string) {

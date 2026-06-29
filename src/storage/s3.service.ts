@@ -1,6 +1,7 @@
 // src/storage/s3.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class S3Service {
@@ -90,5 +91,36 @@ export class S3Service {
   // Alias for compatibility with existing code
   async upload(key: string, body: Buffer, contentType: string) {
     return this.uploadBuffer(key, body, contentType);
+  }
+
+  /**
+   * Generate a pre-signed URL for a private S3 object.
+   * Works regardless of bucket ACL / public-access settings.
+   * Default expiry: 1 hour (3600 seconds).
+   */
+  async presign(key: string, expiresIn = 3600): Promise<string> {
+    if (!this.isConfigured || !this.s3) {
+      throw new Error('S3 service is not configured');
+    }
+    const command = new GetObjectCommand({ Bucket: this.bucket, Key: key });
+    return getSignedUrl(this.s3, command, { expiresIn });
+  }
+
+  /**
+   * Extract the S3 object key from a stored URL.
+   * Stored format: https://{bucket}.s3.{region}.amazonaws.com/{key}
+   */
+  extractKey(url: string): string | null {
+    try {
+      const parsed = new URL(url);
+      // pathname starts with '/' — drop it to get the key
+      return parsed.pathname.slice(1);
+    } catch {
+      return null;
+    }
+  }
+
+  get configured(): boolean {
+    return this.isConfigured;
   }
 }
