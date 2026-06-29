@@ -42,9 +42,15 @@ export class PhotosService {
     const ext = file.mimetype === 'image/png' ? 'png' : 'jpg';
     const key = `photos/${tenantId}/${extinguisherId}/${timestamp}-${randomString}.${ext}`;
 
-    // Upload to S3
-    const imageUrl = await this.s3Service.upload(key, compressedBuffer, `image/${ext}`);
-    this.logger.log(`Photo uploaded to S3: ${imageUrl}`);
+    // Upload to S3, or store as inline base64 data URL when S3 is not configured
+    let imageUrl: string;
+    if (this.s3Service.configured) {
+      imageUrl = await this.s3Service.upload(key, compressedBuffer, `image/${ext}`);
+      this.logger.log('Photo uploaded to S3');
+    } else {
+      imageUrl = `data:image/${ext};base64,${compressedBuffer.toString('base64')}`;
+      this.logger.log('S3 not configured — storing photo as inline data URL');
+    }
 
     // Get user for uploadedBy
     const user = await this.prisma.user.findUnique({
@@ -66,12 +72,12 @@ export class PhotosService {
 
     this.logger.log(`Photo record created: ${photo.id}`);
 
-    // Return a pre-signed URL so the upload response is immediately usable
-    if (this.s3Service.configured) {
-      const key = this.s3Service.extractKey(photo.url);
-      if (key) {
+    // Pre-sign S3 URLs so they're immediately usable; data URLs are already inline
+    if (this.s3Service.configured && !photo.url.startsWith('data:')) {
+      const s3Key = this.s3Service.extractKey(photo.url);
+      if (s3Key) {
         try {
-          const signedUrl = await this.s3Service.presign(key);
+          const signedUrl = await this.s3Service.presign(s3Key);
           return { ...photo, url: signedUrl };
         } catch {
           // fall through to return plain URL
@@ -96,18 +102,18 @@ export class PhotosService {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Replace stored S3 URLs with pre-signed URLs so private buckets work.
-    // Signed URLs are valid for 1 hour; the client should re-fetch if they expire.
+    // Pre-sign S3 URLs so private buckets work; data URLs are already inline and need no signing
     if (this.s3Service.configured) {
       return Promise.all(
         photos.map(async (photo) => {
-          const key = this.s3Service.extractKey(photo.url);
-          if (!key) return photo;
+          if (photo.url.startsWith('data:')) return photo;
+          const s3Key = this.s3Service.extractKey(photo.url);
+          if (!s3Key) return photo;
           try {
-            const signedUrl = await this.s3Service.presign(key);
+            const signedUrl = await this.s3Service.presign(s3Key);
             return { ...photo, url: signedUrl };
           } catch {
-            return photo; // fall back to stored URL if presigning fails
+            return photo;
           }
         }),
       );

@@ -10,8 +10,6 @@ import { CurrentUser, CurrentUserData } from './decorators/current-user.decorato
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../storage/s3.service';
-import * as fs from 'fs';
-import * as path from 'path';
 import { randomBytes } from 'crypto';
 
 // SSRF protection: only allow HTTPS URLs or relative paths for logo
@@ -271,35 +269,12 @@ export class AuthController {
         url,
       };
     } catch (s3Error) {
-      console.error(`❌ S3 upload failed, falling back to local storage: ${s3Error?.message ?? 'unknown error'}`);
-      // S3 not configured, fallback to local storage
-      this.prisma['$log']?.warn?.(`S3 upload failed, using local storage: ${s3Error.message}`);
-
-      // Save to local uploads directory
-      const uploadsDir = path.join(process.cwd(), 'uploads', 'logos', tenantId);
-
-      // Create directory if it doesn't exist
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-
-      // Generate unique filename
-      const timestamp = Date.now();
-      const ext = path.extname(file.originalname);
-      const filename = `${timestamp}${ext}`;
-      const filepath = path.join(uploadsDir, filename);
-
-      // Write file to disk
-      fs.writeFileSync(filepath, file.buffer);
-
-      // Construct URL for accessing the file
-      // The URL will be served by the static assets middleware in main.ts
-      const url = `/uploads/logos/${tenantId}/${filename}`;
-
-      return {
-        success: true,
-        url,
-      };
+      console.error(`❌ S3 upload failed, falling back to inline storage: ${s3Error?.message ?? 'unknown error'}`);
+      // S3 not configured — encode as base64 data URL and store in the database.
+      // This avoids ephemeral filesystem problems on Railway and requires no external storage.
+      const mimeType = file.mimetype || 'image/jpeg';
+      const url = `data:${mimeType};base64,${file.buffer.toString('base64')}`;
+      return { success: true, url };
     }
   }
 
@@ -486,13 +461,24 @@ export class AuthController {
       throw new BadRequestException('Logo not found');
     }
 
+    // Inline base64 data URL — decode directly without any network fetch
+    if (tenant.logoUrl.startsWith('data:')) {
+      const match = tenant.logoUrl.match(/^data:([^;]+);base64,(.+)$/s);
+      if (!match) throw new BadRequestException('Logo could not be loaded');
+      const [, mimeType, b64] = match;
+      const buffer = Buffer.from(b64, 'base64');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return new StreamableFile(buffer);
+    }
+
     // SSRF protection: validate URL before fetching
     if (!isAllowedLogoUrl(tenant.logoUrl)) {
       throw new BadRequestException('Invalid logo URL');
     }
 
     try {
-      // Fetch the logo from S3 or local storage using native fetch
       const response = await fetch(tenant.logoUrl);
 
       if (!response.ok) {
@@ -504,7 +490,6 @@ export class AuthController {
       const buffer = Buffer.from(arrayBuffer);
       const contentType = response.headers.get('content-type') || 'image/png';
 
-      // Set CORS headers
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET');
       res.setHeader('Access-Control-Allow-Headers', '*');
