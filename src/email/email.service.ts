@@ -4,11 +4,19 @@ import * as nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { PrismaService } from '../prisma/prisma.service';
 
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+  cid: string;
+}
+
 export interface EmailOptions {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  attachments?: EmailAttachment[];
 }
 
 type EmailProvider = 'resend' | 'smtp' | 'none';
@@ -116,6 +124,7 @@ export class EmailService {
           subject: options.subject,
           html: options.html,
           text: options.text || this.stripHtml(options.html),
+          attachments: options.attachments,
         });
         console.log(`✅ Email sent via SMTP: ${options.subject}`);
         return true;
@@ -718,6 +727,27 @@ export class EmailService {
 
     const subject = `Quote ${quoteNumber} from ${companyName}`;
 
+    // Resolve logo: data URLs must become CID attachments; plain HTTPS URLs work inline
+    let logoImgTag = '';
+    const attachments: EmailAttachment[] = [];
+    if (companyLogoUrl) {
+      const dataMatch = companyLogoUrl.match(/^data:([^;]+);base64,(.+)$/s);
+      if (dataMatch) {
+        const [, mimeType, b64] = dataMatch;
+        const ext = mimeType.split('/')[1] || 'png';
+        attachments.push({
+          filename: `logo.${ext}`,
+          content: Buffer.from(b64, 'base64'),
+          contentType: mimeType,
+          cid: 'company-logo',
+        });
+        logoImgTag = `<img src="cid:company-logo" alt="${companyName}" style="height: 56px; width: auto; max-width: 180px; object-fit: contain; background: white; border-radius: 8px; padding: 6px; display: block; margin: 0 0 8px auto;">`;
+      } else {
+        // Regular HTTPS URL (S3 public bucket) — use directly
+        logoImgTag = `<img src="${companyLogoUrl}" alt="${companyName}" style="height: 56px; width: auto; max-width: 180px; object-fit: contain; background: white; border-radius: 8px; padding: 6px; display: block; margin: 0 0 8px auto;">`;
+      }
+    }
+
     // Group lines by extinguisher for bulk quotes
     const groupedLines = isBulkQuote
       ? this.groupLinesByExtinguisher(lines)
@@ -773,7 +803,7 @@ export class EmailService {
             <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 18px; color: white;">${quoteNumber}</p>
           </td>
           <td style="text-align: right; vertical-align: middle;">
-            ${companyLogoUrl ? `<img src="${companyLogoUrl}" alt="${companyName}" style="height: 56px; width: auto; max-width: 180px; object-fit: contain; background: white; border-radius: 8px; padding: 6px; display: block; margin: 0 0 8px auto;">` : ''}
+            ${logoImgTag}
             <p style="margin: 0; font-size: 16px; font-weight: 600; color: white;">${companyName}</p>
             <p style="margin: 4px 0 0 0; opacity: 0.9; font-size: 14px; color: white;">Fire Safety Services</p>
           </td>
@@ -882,6 +912,7 @@ export class EmailService {
       to: recipientEmail,
       subject,
       html,
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
   }
 
