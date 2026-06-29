@@ -148,6 +148,14 @@ self.addEventListener('fetch', (event) => {
     return; // Let the browser handle it natively
   }
 
+  // Never intercept cross-origin requests (e.g. S3, Stripe, external CDNs).
+  // Service worker fetch() is governed by connect-src CSP, but cross-origin
+  // images loaded natively by the browser go through img-src instead.
+  // Hijacking them here causes CSP violations in strict browsers (Chrome).
+  if (!url.startsWith(self.location.origin)) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
