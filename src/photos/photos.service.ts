@@ -64,7 +64,20 @@ export class PhotosService {
       },
     });
 
-    this.logger.log(`Photo record created: ${photo.id} with URL: ${photo.url}`);
+    this.logger.log(`Photo record created: ${photo.id}`);
+
+    // Return a pre-signed URL so the upload response is immediately usable
+    if (this.s3Service.configured) {
+      const key = this.s3Service.extractKey(photo.url);
+      if (key) {
+        try {
+          const signedUrl = await this.s3Service.presign(key);
+          return { ...photo, url: signedUrl };
+        } catch {
+          // fall through to return plain URL
+        }
+      }
+    }
     return photo;
   }
 

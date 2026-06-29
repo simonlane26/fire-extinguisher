@@ -77,7 +77,6 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
     if (!data) return;
     try {
       const fetchedPhotos = await fetchExtinguisherPhotos(data.id);
-      console.log('Loaded photos:', fetchedPhotos);
       setPhotos(fetchedPhotos);
     } catch (error) {
       console.error('Failed to load photos:', error);
@@ -102,12 +101,12 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
 
     setUploading(true);
     try {
-      const newPhoto = await uploadPhoto({
+      await uploadPhoto({
         file,
         extinguisherId: data.id,
       });
-      console.log('Uploaded photo:', newPhoto);
-      setPhotos(prev => [newPhoto, ...prev]);
+      // Re-fetch so photos go through the signing endpoint (pre-signed S3 URLs)
+      await loadPhotos();
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
