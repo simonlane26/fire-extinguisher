@@ -240,20 +240,55 @@ const CalendarPage: React.FC<{
       setSelected(null);
       return;
     }
+
+    // getBoundingClientRect() returns viewport coords — correct for position:fixed
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const containerRect = containerRef.current?.getBoundingClientRect();
-    const scrollTop = window.scrollY;
-    const scrollLeft = window.scrollX;
+    const popoverWidth = 288;   // w-72
+    const popoverHeight = 320;  // generous estimate; post-render clamp handles the rest
+    const gap = 6;
+    const pad = 8;
 
-    // Position below the chip, clamped to right edge
-    let left = rect.left + scrollLeft;
-    const popoverWidth = 288;
-    const maxLeft = (containerRect ? containerRect.right + scrollLeft : window.innerWidth) - popoverWidth - 8;
+    // Horizontal: clamp so card never overflows left or right edge
+    let left = rect.left;
+    const maxLeft = window.innerWidth - popoverWidth - pad;
     if (left > maxLeft) left = maxLeft;
+    if (left < pad) left = pad;
 
-    setPopoverPos({ top: rect.bottom + scrollTop + 4, left });
+    // Vertical: prefer below chip; flip above when not enough room
+    const spaceBelow = window.innerHeight - rect.bottom;
+    let top: number;
+    if (spaceBelow >= popoverHeight + gap + pad) {
+      top = rect.bottom + gap;
+    } else {
+      top = rect.top - popoverHeight - gap;
+      // If it would clip the top, push it down to stay within viewport
+      if (top < pad) top = pad;
+    }
+
+    setPopoverPos({ top, left });
     setSelected(ev);
   }
+
+  // After the popover renders, nudge it back into the viewport if the estimated
+  // height was too short (i.e. the card is actually taller than popoverHeight).
+  useEffect(() => {
+    if (!popoverRef.current || !popoverPos) return;
+    const r = popoverRef.current.getBoundingClientRect();
+    const pad = 8;
+    let { top, left } = popoverPos;
+    let changed = false;
+    if (r.bottom > window.innerHeight - pad) {
+      top -= r.bottom - (window.innerHeight - pad);
+      changed = true;
+    }
+    if (top < pad) { top = pad; changed = true; }
+    if (r.right > window.innerWidth - pad) {
+      left -= r.right - (window.innerWidth - pad);
+      changed = true;
+    }
+    if (left < pad) { left = pad; changed = true; }
+    if (changed) setPopoverPos({ top, left });
+  }, [selected]);
 
   if (loading) {
     return (
