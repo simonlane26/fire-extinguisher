@@ -283,7 +283,7 @@ const FireExtinguisherApp: React.FC = () => {
   const { currentUser, setCurrentUser, hasPermission, logout } = actx;
 
   const [activeTab, setActiveTab] =
-    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'calendar' | 'reports' | 'help' | 'quotes' | 'fire-alarm' | 'pat-testing' | 'emergency-lighting' | 'platform-admin'>('overview');
+    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'calendar' | 'reports' | 'help' | 'quotes' | 'fire-alarm' | 'pat-testing' | 'emergency-lighting' | 'platform-admin'>('calendar');
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<{ id: string; name: string } | null>(null);
   const [patPendingId, setPATPendingId] = useState<string | undefined>(undefined);
   const [elPendingId, setELPendingId] = useState<string | undefined>(undefined);
