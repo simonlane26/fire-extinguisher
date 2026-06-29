@@ -86,6 +86,13 @@ const ReportsPage: React.FC<Props> = ({
   const [elExporting, setElExporting] = useState(false);
   const [elHasLuminaires, setElHasLuminaires] = useState(false);
 
+  // Batch Certificate state
+  const [certSiteFilter, setCertSiteFilter] = useState<string>('all');
+  const [certBuildingFilter, setCertBuildingFilter] = useState<string>('all');
+  const [certTypeFilter, setCertTypeFilter] = useState<string>('all');
+  const [generatingCert, setGeneratingCert] = useState(false);
+  const [buildings, setBuildings] = useState<string[]>([]);
+
   useEffect(() => {
     fetchExtinguisherTypes();
     fetchUsers();
@@ -114,9 +121,13 @@ const ReportsPage: React.FC<Props> = ({
     try {
       const extinguishers = await fetchExtinguishers();
 
-      // Extract unique types
       const types = [...new Set(extinguishers.map((e: any) => e.type))].sort();
       setExtinguisherTypes(types as string[]);
+
+      const uniqueBuildings = [...new Set(
+        extinguishers.map((e: any) => e.building).filter(Boolean)
+      )].sort();
+      setBuildings(uniqueBuildings as string[]);
     } catch (error) {
       console.error('Failed to fetch extinguisher types:', error);
     }
@@ -280,6 +291,26 @@ const ReportsPage: React.FC<Props> = ({
       alert(error?.message || 'Failed to generate site report');
     } finally {
       setGeneratingBySite(false);
+    }
+  };
+
+  const generateBatchCertificate = async () => {
+    try {
+      setGeneratingCert(true);
+      const params = new URLSearchParams();
+      if (certSiteFilter !== 'all') params.append('siteId', certSiteFilter);
+      if (certBuildingFilter !== 'all') params.append('building', certBuildingFilter);
+      if (certTypeFilter !== 'all') params.append('type', certTypeFilter);
+      const res = await fetch(`${API_BASE}/reports/extinguishers/batch-certificate?${params.toString()}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to generate batch certificate');
+      const blob = await res.blob();
+      window.open(URL.createObjectURL(blob), '_blank', 'noopener,noreferrer');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to generate batch certificate');
+    } finally {
+      setGeneratingCert(false);
     }
   };
 
@@ -458,6 +489,79 @@ const ReportsPage: React.FC<Props> = ({
             {generatingBySite ? 'Generating...' : 'Generate Site Report'}
           </button>
         </div>
+        {/* Batch Certificate of Inspection */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 rounded-lg" style={{ backgroundColor: `${primaryColor}20` }}>
+              <FileText size={24} style={{ color: primaryColor }} />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">Certificate of Inspection</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Batch certificate for multiple extinguishers</p>
+            </div>
+          </div>
+
+          <p className="text-gray-600 mb-4 text-sm">
+            Generate a single inspection certificate listing all extinguishers matching your selected filters, in the same style as individual certificates.
+          </p>
+
+          <div className="space-y-3 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
+              <select
+                title="Filter by site"
+                value={certSiteFilter}
+                onChange={(e) => setCertSiteFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-sm"
+              >
+                <option value="all">All Sites</option>
+                {sites.map(site => (
+                  <option key={site.id} value={site.id}>{site.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Building</label>
+              <select
+                title="Filter by building"
+                value={certBuildingFilter}
+                onChange={(e) => setCertBuildingFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-sm"
+              >
+                <option value="all">All Buildings</option>
+                {buildings.map(b => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <select
+                title="Filter by type"
+                value={certTypeFilter}
+                onChange={(e) => setCertTypeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 text-sm"
+              >
+                <option value="all">All Types</option>
+                {extinguisherTypes.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={generateBatchCertificate}
+            disabled={generatingCert}
+            className="w-full px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-60 transition-opacity flex items-center justify-center gap-2"
+            style={{ backgroundColor: primaryColor }}
+          >
+            <FileText size={16} />
+            {generatingCert ? 'Generating...' : 'Generate Batch Certificate'}
+          </button>
+        </div>
+
         {/* Fire Alarm Reports — unified card */}
         {fireAlarmEnabled && (
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">

@@ -1798,6 +1798,129 @@ export class ReportsService {
     return this.renderPdf(html);
   }
 
+  // ─── Batch Inspection Certificate ────────────────────────────────────────
+
+  async buildBatchCertificate(params: {
+    tenant: { name: string; logoUrl?: string };
+    extinguishers: any[];
+    filterSiteName?: string;
+    filterBuilding?: string;
+    filterType?: string;
+  }): Promise<Buffer> {
+    const { tenant, extinguishers, filterSiteName, filterBuilding, filterType } = params;
+
+    const issuedDate = new Date().toLocaleDateString('en-GB');
+
+    const filterParts = [
+      filterSiteName ? `Site: ${escapeHtml(filterSiteName)}` : null,
+      filterBuilding ? `Building: ${escapeHtml(filterBuilding)}` : null,
+      filterType ? `Type: ${escapeHtml(filterType)}` : null,
+    ].filter(Boolean);
+    const filterLabel = filterParts.length > 0 ? filterParts.join(' &nbsp;|&nbsp; ') : 'All Extinguishers';
+
+    const conditionColour = (c: string) => {
+      const l = (c || '').toLowerCase();
+      if (l === 'excellent' || l === 'good') return '#10b981';
+      if (l === 'fair') return '#f59e0b';
+      return '#ef4444';
+    };
+
+    const rows = extinguishers.map((ext, i) => `
+      <tr>
+        <td style="text-align:center;color:#9ca3af;font-size:10px;">${i + 1}</td>
+        <td>${escapeHtml(ext.serialNumber || '—')}</td>
+        <td>${escapeHtml(ext.type)}</td>
+        <td>${escapeHtml(ext.capacity || '—')}</td>
+        <td>${escapeHtml(ext.building)} – ${escapeHtml(ext.location)}</td>
+        <td>${ext.lastInspection ? new Date(ext.lastInspection).toLocaleDateString('en-GB') : ext.lastMaintenance ? new Date(ext.lastMaintenance).toLocaleDateString('en-GB') : '—'}</td>
+        <td>${escapeHtml(ext.inspector || '—')}</td>
+        <td style="font-weight:600;color:${conditionColour(ext.condition || '')};">${escapeHtml(ext.condition || '—')}</td>
+        <td>${ext.nextInspection ? new Date(ext.nextInspection).toLocaleDateString('en-GB') : ext.nextMaintenance ? new Date(ext.nextMaintenance).toLocaleDateString('en-GB') : '—'}</td>
+      </tr>
+    `).join('');
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: Arial, sans-serif; padding: 32px; }
+  .certificate { border: 4px solid #7c3aed; padding: 32px; }
+  .header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #7c3aed; padding-bottom: 20px; }
+  .title { font-size: 26px; font-weight: bold; color: #7c3aed; margin: 10px 0 4px; letter-spacing: 2px; }
+  .company { font-size: 17px; color: #333; margin: 4px 0; }
+  .issued { font-size: 12px; color: #888; margin: 4px 0; }
+  .filter-bar { background: #f5f3ff; border: 1px solid #ddd8fe; border-radius: 6px; padding: 9px 16px; margin: 0 0 18px; font-size: 12px; color: #5b21b6; text-align: center; }
+  .intro { font-size: 13px; color: #444; margin: 0 0 16px; text-align: center; line-height: 1.6; }
+  .count-badge { display: inline-block; background: #7c3aed; color: white; border-radius: 20px; padding: 3px 14px; font-size: 12px; font-weight: bold; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
+  thead tr { background: #7c3aed; color: white; }
+  th { padding: 9px 7px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 7px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
+  tr:nth-child(even) td { background: #faf7ff; }
+  .footer-block { margin-top: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .signature { border-top: 2px solid #333; padding-top: 6px; width: 240px; }
+  .stamp { border: 2px solid #7c3aed; border-radius: 50%; width: 80px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #7c3aed; font-weight: bold; }
+  .cert-footer { margin-top: 16px; font-size: 10px; color: #bbb; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+</style>
+</head>
+<body>
+  <div class="certificate">
+    <div class="header">
+      ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height:70px;margin-bottom:10px;"/>` : ''}
+      <div class="title">BATCH INSPECTION CERTIFICATE</div>
+      <div class="company">${escapeHtml(tenant.name)}</div>
+      <div class="issued">Issued: ${issuedDate}</div>
+    </div>
+
+    <div class="filter-bar">${filterLabel}</div>
+
+    <p class="intro">
+      This certifies that the fire extinguishers listed below have been inspected and tested
+      in accordance with applicable regulations and British Standards (BS 5306).
+    </p>
+
+    <div style="text-align:center;">
+      <span class="count-badge">${extinguishers.length} Extinguisher${extinguishers.length !== 1 ? 's' : ''}</span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Serial No.</th>
+          <th>Type</th>
+          <th>Capacity</th>
+          <th>Location</th>
+          <th>Last Inspected</th>
+          <th>Inspector</th>
+          <th>Condition</th>
+          <th>Next Service</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+
+    <div class="footer-block">
+      <div class="signature">
+        <div style="font-weight:bold;font-size:13px;">${escapeHtml(tenant.name)}</div>
+        <div style="font-size:11px;color:#666;margin-top:2px;">Authorised Fire Safety Provider</div>
+      </div>
+      <div class="stamp">
+        <div style="font-size:12px;">INSPECTED</div>
+        <div style="font-size:9px;margin-top:2px;">${issuedDate}</div>
+      </div>
+    </div>
+
+    <div class="cert-footer">
+      Certificate ID: BATCH-${Date.now()} &nbsp;|&nbsp; Generated: ${new Date().toISOString()} &nbsp;|&nbsp; Firexcheck.com
+    </div>
+  </div>
+</body>
+</html>`;
+
+    return this.renderPdf(html);
+  }
+
   // ─── Shared PDF renderer ──────────────────────────────────────────────────
 
   private async renderPdf(html: string): Promise<Buffer> {

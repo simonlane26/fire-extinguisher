@@ -672,6 +672,57 @@ export class ReportsController {
     res.send(pdfBuffer);
   }
 
+  // Batch Certificate of Inspection
+  @Get('extinguishers/batch-certificate')
+  async generateBatchCertificate(
+    @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
+    @Query('siteId') siteId?: string,
+    @Query('building') building?: string,
+    @Query('type') type?: string,
+    @Query('status') status?: string,
+  ) {
+    const tenantId = user.tenantId;
+
+    const tenant = await this.prisma.tenant.findUniqueOrThrow({
+      where: { id: tenantId },
+    });
+
+    const whereClause: any = { tenantId };
+    if (siteId && siteId !== 'all') whereClause.siteId = siteId;
+    if (building && building !== 'all') whereClause.building = building;
+    if (type && type !== 'all') whereClause.type = type;
+    if (status && status !== 'all') whereClause.status = status;
+
+    const extinguishers = await this.prisma.extinguisher.findMany({
+      where: whereClause,
+      include: { site: true },
+      orderBy: [{ building: 'asc' }, { location: 'asc' }],
+    });
+
+    let filterSiteName: string | undefined;
+    if (siteId && siteId !== 'all') {
+      const site = await this.prisma.site.findFirst({
+        where: { id: siteId, tenantId },
+        select: { name: true },
+      });
+      filterSiteName = site?.name;
+    }
+
+    const pdfBuffer = await this.reports.buildBatchCertificate({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      extinguishers,
+      filterSiteName,
+      filterBuilding: building && building !== 'all' ? building : undefined,
+      filterType: type && type !== 'all' ? type : undefined,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="batch-certificate-${new Date().toISOString().slice(0, 10)}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  }
+
   // Extinguishers by Type Report
   @Get('extinguishers/by-type')
   async generateExtinguishersByTypeReport(
