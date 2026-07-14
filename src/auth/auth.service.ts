@@ -101,6 +101,11 @@ export class AuthService {
       throw new UnauthorizedException('User account is not active');
     }
 
+    // Require email verification before allowing login
+    if (!user.emailVerified) {
+      throw new UnauthorizedException('Please verify your email address before logging in. Check your inbox for the verification link.');
+    }
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 

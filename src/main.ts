@@ -65,9 +65,9 @@ async function bootstrap() {
   // We use a custom middleware to capture raw body before JSON parsing
   app.use('/api/v1/billing/webhook', bodyParser.raw({ type: 'application/json' }));
 
-  // JSON body parser for all other routes
-  app.use(bodyParser.json({ limit: '10mb' }));
-  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+  // JSON body parser — 1 MB cap to prevent JSON DoS; file uploads use multipart
+  app.use(bodyParser.json({ limit: '1mb' }));
+  app.use(bodyParser.urlencoded({ limit: '1mb', extended: true }));
 
   // API Versioning - all routes prefixed with /api/v1
   // Exclude static asset paths from the prefix

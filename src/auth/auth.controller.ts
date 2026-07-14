@@ -39,10 +39,22 @@ export class AuthController {
     private readonly s3: S3Service,
   ) {}
 
-  @Public()
-  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 registrations per hour per IP
+  @UseGuards(JwtAuthGuard)
   @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
+  async register(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Body() registerDto: RegisterDto,
+  ) {
+    // Only admins/super_admins may register users
+    if (!['admin', 'super_admin'].includes(currentUser.role)) {
+      throw new ForbiddenException('Insufficient permissions to register users');
+    }
+    // Prevent privilege escalation: nobody below super_admin can create super_admins
+    if (registerDto.role === 'super_admin' && currentUser.role !== 'super_admin') {
+      throw new ForbiddenException('Only super_admins can assign the super_admin role');
+    }
+    // Force tenantId to the caller's tenant — body value is ignored
+    registerDto.tenantId = currentUser.tenantId;
     return this.authService.register(registerDto);
   }
 
@@ -96,7 +108,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 resends per minute
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 resends per hour per IP
   @Post('resend-verification')
   async resendVerification(@Body('email') email: string) {
     return this.authService.resendVerificationEmail(email);
@@ -105,14 +117,14 @@ export class AuthController {
   // ==================== PASSWORD RESET ====================
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 resets per minute
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 per hour per IP — prevents email enumeration DoS
   @Post('forgot-password')
   async forgotPassword(@Body('email') email: string) {
     return this.authService.requestPasswordReset(email);
   }
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 per hour per IP
   @Post('reset-password')
   async resetPassword(@Body() body: { token: string; newPassword: string }) {
     return this.authService.resetPassword(body.token, body.newPassword);
