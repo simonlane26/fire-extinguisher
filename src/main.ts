@@ -57,6 +57,10 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
+  // Trust Railway's proxy so the throttler sees the real client IP,
+  // not the load balancer's internal IP.
+  app.set('trust proxy', 1);
+
   // Stripe webhook needs raw body for signature verification
   // We use a custom middleware to capture raw body before JSON parsing
   app.use('/api/v1/billing/webhook', bodyParser.raw({ type: 'application/json' }));

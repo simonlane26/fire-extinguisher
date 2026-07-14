@@ -40,6 +40,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 registrations per hour per IP
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -74,7 +75,7 @@ export class AuthController {
   // ==================== PUBLIC SIGNUP ====================
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 signups per minute
+  @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 signups per hour per IP
   @Post('signup')
   async signup(@Body() body: {
     companyName: string;
