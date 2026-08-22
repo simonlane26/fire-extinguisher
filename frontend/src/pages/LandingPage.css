@@ -19,9 +19,9 @@
 
 /* ---- Header ---- */
 .fxc-landing header{border-bottom:1px solid var(--line); background:rgba(247,244,238,0.9); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); position:sticky; top:0; z-index:50;}
-.fxc-landing .header-inner{display:flex; align-items:center; justify-content:space-between; padding:8px 0;}
+.fxc-landing .header-inner{display:flex; align-items:center; justify-content:space-between; padding:12px 0;}
 .fxc-landing .logo{display:flex; align-items:center;}
-.fxc-landing .logo img{height:64px; width:auto; display:block; border-radius:8px;}
+.fxc-landing .logo img{height:46px; width:auto; display:block;}
 .fxc-landing nav{display:flex; align-items:center; gap:30px;}
 .fxc-landing nav a.nav-link{font-size:14px; color:var(--ink-muted); font-weight:500;}
 .fxc-landing nav a.nav-link:hover{color:var(--ink);}
@@ -146,6 +146,7 @@
 .fxc-landing .module-panel p{font-size:15px; color:var(--ink-muted); max-width:420px;}
 .fxc-landing .module-icon{width:88px; height:88px; margin-bottom:22px; object-fit:contain; display:block;}
 .fxc-landing .module-icon.is-photo{width:72px; height:112px; object-fit:contain;}
+.fxc-landing .module-icon.is-wide{width:160px; height:88px; object-fit:contain;}
 
 .fxc-landing .also-included{padding:26px 0; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:0; justify-content:center;}
 .fxc-landing .also-included span{font-family:var(--font-mono); font-size:12px; color:var(--ink-muted); padding:0 18px; border-right:1px solid var(--line);}

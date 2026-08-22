@@ -570,7 +570,7 @@ export default function LandingPage() {
               <p>Luminaire register with daily, monthly, annual, and 3-yearly test logs and compliance tracking.</p>
             </div>
             <div className="module-panel">
-              <img className="module-icon" src="/images/landing/pat-testing.png" alt="PAT testing" />
+              <img className="module-icon is-wide" src="/images/landing/pat-testing.png" alt="PAT testing" />
               <div className="mnum">04</div>
               <h3>PAT Testing</h3>
               <div className="mstd">IET COP</div>
