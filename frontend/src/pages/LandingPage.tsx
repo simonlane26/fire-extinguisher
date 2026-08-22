@@ -563,7 +563,7 @@ export default function LandingPage() {
               <p>Digital logbook for inspections, faults, engineer visits, and weekly/quarterly/annual records.</p>
             </div>
             <div className="module-panel">
-              <img className="module-icon" src="/images/landing/emergency-lighting.png" alt="Emergency lighting" />
+              <img className="module-icon is-wide" src="/images/landing/emergency-lighting.png" alt="Emergency lighting" />
               <div className="mnum">03</div>
               <h3>Emergency Lighting</h3>
               <div className="mstd">BS 5266-1</div>
