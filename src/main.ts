@@ -117,7 +117,8 @@ async function bootstrap() {
       directives: {
         defaultSrc:    ["'self'"],
         scriptSrc:     ["'self'", 'https://js.stripe.com'],
-        styleSrc:      ["'self'", "'unsafe-inline'"],   // Tailwind inline styles
+        styleSrc:      ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],   // Tailwind inline styles + landing page fonts
+        fontSrc:       ["'self'", 'https://fonts.gstatic.com'],
         imgSrc:        ["'self'", 'data:', 'blob:', 'https:'],
         connectSrc:    ["'self'", 'https://api.stripe.com', 'https://js.stripe.com', 'https://*.amazonaws.com'],
         frameSrc:      ['https://js.stripe.com', 'https://hooks.stripe.com'],
