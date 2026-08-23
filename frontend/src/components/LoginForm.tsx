@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LogIn, UserPlus, Flame, AlertCircle, X } from 'lucide-react';
+import '../pages/AuthPages.css';
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
   onRegister: (email: string, password: string, name: string) => Promise<void>;
 }
+
+const BrandMark = () => (
+  <svg viewBox="0 0 26 26" fill="none">
+    <rect x="9" y="3" width="8" height="18" rx="2.5" stroke="#B8121F" strokeWidth="1.6" />
+    <rect x="7" y="1.5" width="12" height="3" rx="1" fill="#B8121F" />
+    <line x1="13" y1="9" x2="20" y2="6" stroke="#B8121F" strokeWidth="1.6" />
+  </svg>
+);
 
 export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   const [isRegister, setIsRegister] = useState(false);
@@ -39,122 +47,92 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-violet-600 to-purple-700">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-2xl">
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-violet-100">
-            <Flame className="w-8 h-8 text-violet-600" />
+    <div className="fxc-auth">
+      <div className="card">
+        <div className="card-band"></div>
+        <div className="card-inner">
+          <div className="brand">
+            <BrandMark />
+            <span>FirexCheck</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Fire Extinguisher Manager</h1>
-          <p className="mt-2 text-gray-600">
-            {isRegister ? 'Create your account' : 'Sign in to your account'}
-          </p>
-          <p className="mt-1 text-sm font-medium text-violet-600">Firexcheck.com</p>
-        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isRegister && (
-            <div>
-              <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-700">
-                Full Name
-              </label>
+          <div className="eyebrow">Register Access</div>
+          <h1>{isRegister ? 'Create your account' : 'Sign in'}</h1>
+          <p className="subtitle subtitle-only">
+            {isRegister ? 'Start managing your fire safety equipment' : 'Welcome back to your compliance register'}
+          </p>
+
+          <form onSubmit={handleSubmit}>
+            {isRegister && (
+              <div className="field">
+                <label htmlFor="name">Full Name <span className="req">*</span></label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="John Doe"
+                  required={isRegister}
+                />
+              </div>
+            )}
+
+            <div className="field">
+              <label htmlFor="email">Email Address</label>
               <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                placeholder="John Doe"
-                required={isRegister}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="john@acmefire.com"
+                required
               />
             </div>
-          )}
 
-          <div>
-            <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              {!isRegister && (
-                <Link
-                  to="/forgot-password"
-                  className="text-xs font-medium text-violet-600 hover:text-violet-700"
-                >
-                  Forgot password?
-                </Link>
+            <div className="field">
+              <div className="field-top">
+                <label htmlFor="password">Password</label>
+                {!isRegister && (
+                  <Link to="/forgot-password">Forgot password?</Link>
+                )}
+              </div>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                minLength={6}
+                required
+              />
+              {isRegister && (
+                <div className="field-hint">Must be at least 6 characters</div>
               )}
             </div>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-              placeholder="••••••••"
-              minLength={6}
-              required
-            />
-            {isRegister && (
-              <p className="mt-1 text-xs text-gray-500">Must be at least 6 characters</p>
-            )}
-          </div>
 
-          {error && (
-            <div className="flex items-start gap-3 p-4 border-l-4 border-red-500 rounded-lg shadow-sm bg-red-50 animate-shake">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-red-800">Authentication Failed</p>
-                <p className="mt-1 text-sm text-red-700">{error}</p>
+            {error && (
+              <div className="error-box">
+                <p>
+                  <strong>Authentication failed</strong>
+                  {error}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setError('')}
+                  className="error-dismiss"
+                  aria-label="Dismiss error"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setError('')}
-                className="flex-shrink-0 text-red-400 transition-colors hover:text-red-600"
-                aria-label="Dismiss error"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              'Please wait...'
-            ) : isRegister ? (
-              <>
-                <UserPlus className="w-5 h-5" />
-                Create Account
-              </>
-            ) : (
-              <>
-                <LogIn className="w-5 h-5" />
-                Sign In
-              </>
             )}
-          </button>
-        </form>
 
-        <div className="mt-6 text-center space-y-2">
-          <p className="text-sm text-gray-600">
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Please wait...' : isRegister ? 'Create Account' : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="switch-row">
             {isRegister ? (
               <>
                 Already have an account?{' '}
@@ -164,27 +142,22 @@ export default function LoginForm({ onLogin, onRegister }: LoginFormProps) {
                     setIsRegister(false);
                     setError('');
                   }}
-                  className="font-medium text-violet-600 hover:text-violet-700"
                 >
                   Sign in
                 </button>
               </>
             ) : (
               <>
-                New to Fire Extinguisher Manager?{' '}
-                <Link
-                  to="/signup"
-                  className="font-medium text-violet-600 hover:text-violet-700"
-                >
-                  Create an account
-                </Link>
+                New to FirexCheck?{' '}
+                <Link to="/signup">Create an account</Link>
               </>
             )}
-          </p>
-          <p className="text-sm text-gray-600">
-            <Link to="/" className="text-gray-600 hover:text-gray-900">
-              ← Back to Home
-            </Link>
+          </div>
+          <div className="back-row"><Link to="/">← Back to Home</Link></div>
+
+          <div className="divider"></div>
+          <p className="legal">
+            By {isRegister ? 'creating an account' : 'signing in'}, you agree to our Terms of Service and Privacy Policy.
           </p>
         </div>
       </div>
