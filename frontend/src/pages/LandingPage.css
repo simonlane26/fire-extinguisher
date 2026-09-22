@@ -163,8 +163,9 @@
 .fxc-landing .module-icon.is-wide{width:160px; height:88px; object-fit:contain;}
 
 .fxc-landing .also-included{padding:26px 0; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:0; justify-content:center;}
-.fxc-landing .also-included span{font-family:var(--font-mono); font-size:12px; color:var(--ink-muted); padding:0 18px; border-right:1px solid var(--line);}
-.fxc-landing .also-included span:last-child{border-right:none;}
+.fxc-landing .also-included span, .fxc-landing .also-included a{font-family:var(--font-mono); font-size:12px; color:var(--ink-muted); padding:0 18px; border-right:1px solid var(--line);}
+.fxc-landing .also-included span:last-child, .fxc-landing .also-included a:last-child{border-right:none;}
+.fxc-landing .also-included a:hover{color:var(--red);}
 
 /* ---- Add-on pricing modules ---- */
 .fxc-landing .addon-section{padding:70px 0;}

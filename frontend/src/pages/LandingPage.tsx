@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './LandingPage.css';
@@ -367,6 +367,7 @@ export default function LandingPage() {
             <a className="nav-link" href="#modules2">Features</a>
             <a className="nav-link" href="#pricing">Pricing</a>
             <a className="nav-link" href="#about">About</a>
+            <Link className="nav-link" to="/compare/joblogic">Compare</Link>
             <button type="button" className="signin" onClick={goToSignup}>Sign In</button>
             <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
           </nav>
@@ -670,6 +671,9 @@ export default function LandingPage() {
               <div className="footer-sub">Talk to us about your sites, asset counts, and which modules you need — we&apos;ll set up your first register together.</div>
             </div>
             <button type="button" className="footer-cta" onClick={goToSignup}>Book a demo →</button>
+          </div>
+          <div className="also-included">
+            <Link to="/compare/joblogic">Compare · FirexCheck vs Joblogic</Link>
           </div>
           <div className="rev">
             <span>© {new Date().getFullYear()} FirexCheck — a product of IgnisTech Ltd.</span>
