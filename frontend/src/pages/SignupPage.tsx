@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { signup } from '../lib/api';
 import './AuthPages.css';
 
@@ -13,10 +13,11 @@ const BrandMark = () => (
 
 export default function SignupPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     companyName: '',
     name: '',
-    email: '',
+    email: searchParams.get('email') || '',
     password: '',
     subdomain: '',
   });

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -27,8 +27,13 @@ const STD_DATA = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const rootRef = useRef<HTMLDivElement>(null);
+  const [heroEmail, setHeroEmail] = useState('');
 
   const goToSignup = () => navigate('/signup');
+  const handleHeroSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate(heroEmail ? `/signup?email=${encodeURIComponent(heroEmail)}` : '/signup');
+  };
 
   useEffect(() => {
     const root = rootRef.current;
@@ -78,7 +83,7 @@ export default function LandingPage() {
         heroTl
           .from('.h1-line', { yPercent: 110, duration: 0.9, stagger: 0.12 })
           .from(
-            '.hero-sub, .hero-actions, .trust-line, .std-row',
+            '.hero-sub, .hero-capture, .hero-capture-sub, .hero-secondary-link, .trust-line, .std-row',
             { opacity: 0, y: 14, duration: 0.6, stagger: 0.08 },
             '-=0.5',
           )
@@ -370,17 +375,27 @@ export default function LandingPage() {
 
       <section className="hero" id="hero">
         <div>
-          <div className="eyebrow">BS 5306-3 · Live Asset Register</div>
+          <div className="eyebrow">For fire safety inspectors &amp; facilities teams</div>
           <h1>
-            <span className="line-mask"><span className="h1-line">Know the status of every extinguisher.</span></span>
-            <span className="line-mask"><span className="h1-line">Before it&apos;s ever asked for.</span></span>
+            <span className="line-mask"><span className="h1-line">Stop chasing paper logs</span></span>
+            <span className="line-mask"><span className="h1-line">for extinguisher inspections.</span></span>
           </h1>
-          <p className="hero-sub">FirexCheck replaces paper tags and spreadsheets with a live compliance register — QR-tagged assets, scheduled inspections, and audit-ready reports across every site you manage.</p>
-          <div className="hero-actions">
-            <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
-            <button type="button" className="btn-outline magnetic" onClick={goToSignup}>Book a Demo</button>
-          </div>
-          <div className="trust-line">No credit card required · 14-day free trial</div>
+          <p className="hero-sub">FirexCheck lets you scan a QR code on every extinguisher, log the inspection in seconds, and see every site&apos;s compliance status from one dashboard — no spreadsheets, no missed tags, no audit panic.</p>
+          <form className="hero-capture" onSubmit={handleHeroSubmit}>
+            <input
+              type="email"
+              className="hero-capture-input"
+              placeholder="you@company.com"
+              value={heroEmail}
+              onChange={(e) => setHeroEmail(e.target.value)}
+              aria-label="Email address"
+              required
+            />
+            <button type="submit" className="btn-primary magnetic hero-capture-btn">Start Free Trial</button>
+          </form>
+          <div className="hero-capture-sub">No credit card. Takes 20 seconds.</div>
+          <a className="hero-secondary-link" href="#story">See how it works ↓</a>
+          <div className="trust-line">Built for teams managing extinguishers across any number of sites.</div>
           <div className="std-row">
             <span className="std-badge">BS 5306</span>
             <span className="std-badge">BS 5839-1</span>
