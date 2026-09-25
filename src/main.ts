@@ -116,12 +116,12 @@ async function bootstrap() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc:    ["'self'"],
-        scriptSrc:     ["'self'", 'https://js.stripe.com'],
+        scriptSrc:     ["'self'", "'unsafe-inline'", 'https://js.stripe.com', 'https://www.googletagmanager.com'],   // 'unsafe-inline' needed for the GTM/gtag bootstrap snippets in index.html (static SPA, no per-request nonce)
         styleSrc:      ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],   // Tailwind inline styles + landing page fonts
         fontSrc:       ["'self'", 'https://fonts.gstatic.com'],
         imgSrc:        ["'self'", 'data:', 'blob:', 'https:'],
-        connectSrc:    ["'self'", 'https://api.stripe.com', 'https://js.stripe.com', 'https://*.amazonaws.com'],
-        frameSrc:      ['https://js.stripe.com', 'https://hooks.stripe.com'],
+        connectSrc:    ["'self'", 'https://api.stripe.com', 'https://js.stripe.com', 'https://*.amazonaws.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://*.g.doubleclick.net', 'https://www.googleadservices.com'],
+        frameSrc:      ['https://js.stripe.com', 'https://hooks.stripe.com', 'https://www.googletagmanager.com'],
         objectSrc:     ["'none'"],
         baseUri:       ["'self'"],
         formAction:    ["'self'"],
