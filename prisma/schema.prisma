@@ -127,6 +127,16 @@ model PasswordResetToken {
   @@map("PasswordResetToken")
 }
 
+model ChecklistLead {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("homepage")
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("ChecklistLead")
+}
+
 model Extinguisher {
   id              String       @id @default(cuid())
   tenantId        String

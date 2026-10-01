@@ -174,6 +174,27 @@ export async function forgotPassword(email: string): Promise<{ message: string }
   return res.json();
 }
 
+export async function requestComplianceChecklist(email: string): Promise<{ message: string }> {
+  const res = await fetch(`${API_BASE}/leads/checklist-signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!res.ok) {
+    let message = 'Something went wrong. Please try again.';
+    try {
+      const errorData = await res.json();
+      if (errorData?.message) message = errorData.message;
+    } catch {
+      // response wasn't JSON — fall back to the default message
+    }
+    throw new Error(message);
+  }
+
+  return res.json();
+}
+
 export async function resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
   const res = await fetch(`${API_BASE}/auth/reset-password`, {
     method: 'POST',

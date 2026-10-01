@@ -667,6 +667,99 @@ export class EmailService {
     });
   }
 
+  // ==================== LEAD MAGNET: COMPLIANCE CHECKLIST ====================
+
+  async sendComplianceChecklistEmail(email: string): Promise<boolean> {
+    const appUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const subject = 'Your fire extinguisher compliance checklist';
+
+    const section = (title: string, items: string[]) => `
+      <div style="margin: 0 0 28px 0;">
+        <p style="margin: 0 0 12px 0; font-family: Georgia, 'Times New Roman', serif; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: #B8121F; font-weight: 700;">${title}</p>
+        <table style="width: 100%; border-collapse: collapse;">
+          ${items.map(item => `
+            <tr>
+              <td style="padding: 8px 0; vertical-align: top; width: 22px;">
+                <span style="display: inline-block; width: 16px; height: 16px; border: 1.5px solid #1E7A4C; border-radius: 50%;"></span>
+              </td>
+              <td style="padding: 8px 0; color: #1C1B18; font-size: 14.5px; line-height: 1.5;">${item}</td>
+            </tr>
+          `).join('')}
+        </table>
+      </div>
+    `;
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fire Extinguisher Compliance Checklist</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color: #F7F4EE;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 32px 20px;">
+    <div style="background: #ffffff; border: 1px solid #E3DDD1; border-radius: 8px; overflow: hidden;">
+
+      <div style="background: #B8121F; color: #ffffff; padding: 28px 32px;">
+        <p style="margin: 0; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.85;">FirexCheck</p>
+        <h1 style="margin: 8px 0 0 0; font-size: 22px; font-weight: 700;">Fire Extinguisher Compliance Checklist</h1>
+      </div>
+
+      <div style="padding: 32px;">
+        <p style="margin: 0 0 20px 0; font-size: 15px; color: #1C1B18; line-height: 1.6;">
+          Here's a practical, BS 5306-based checklist you can use on-site today — no software required.
+          Print it, laminate it, or just work through it on your phone.
+        </p>
+
+        ${section('Monthly visual check — anyone on site can do this', [
+          'Extinguisher is in its designated location, visible and unobstructed',
+          'Pressure gauge needle sits in the green zone (or correct weight for CO2 units)',
+          'Safety pin and tamper seal are intact and unbroken',
+          'Hose/horn is free from cracks, blockages or damage',
+          'Body is free from corrosion, dents or damage',
+          'Operating instructions label is legible and facing outward',
+          'Inspection tag/record is present and up to date',
+          'Nothing is stored in front of or on top of the extinguisher',
+        ])}
+
+        ${section('Annual service (BS 5306-3) — competent person required', [
+          'Basic service carried out by a qualified engineer',
+          'Extended service (5-yearly, or 10-yearly for CO2) discharge test completed where due',
+          'Extinguisher re-commissioned or refilled if discharged or out of specification',
+          'New service tag attached with date and engineer details',
+          'Any defects logged with remedial action scheduled',
+          'Fire action notices and extinguisher signage checked for visibility',
+        ])}
+
+        ${section('Record-keeping', [
+          'Every inspection logged against the specific extinguisher, not just the site',
+          'Records retained and ready to produce for an AHJ or insurer audit at any time',
+          'Reminders set for the next due date on every unit',
+        ])}
+
+        <div style="background: #FBF9F4; border: 1px solid #E3DDD1; border-radius: 6px; padding: 20px 24px; margin: 28px 0 8px 0; text-align: center;">
+          <p style="margin: 0 0 14px 0; font-size: 14px; color: #6E675E;">
+            Want this tracked automatically instead of on paper — QR-tagged, scheduled, and audit-ready?
+          </p>
+          <a href="${appUrl}/signup" style="display: inline-block; background: #B8121F; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 4px; font-size: 14.5px; font-weight: 600;">
+            Start Free Trial
+          </a>
+        </div>
+      </div>
+
+      <div style="background: #FBF9F4; padding: 18px 32px; border-top: 1px solid #E3DDD1; text-align: center;">
+        <p style="margin: 0; font-size: 12px; color: #A79E90;">© ${new Date().getFullYear()} FirexCheck — a product of IgnisTech Ltd. · Cheshire, UK</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    return this.sendEmail({ to: email, subject, html });
+  }
+
   getConfigurationStatus(): { configured: boolean; message: string; provider: string } {
     if (this.isConfigured) {
       return { configured: true, message: `Email service is configured and ready (${this.provider})`, provider: this.provider };

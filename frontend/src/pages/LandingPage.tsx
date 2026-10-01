@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { requestComplianceChecklist } from '../lib/api';
 import './LandingPage.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -28,11 +29,27 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const rootRef = useRef<HTMLDivElement>(null);
   const [heroEmail, setHeroEmail] = useState('');
+  const [checklistEmail, setChecklistEmail] = useState('');
+  const [checklistStatus, setChecklistStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [checklistError, setChecklistError] = useState('');
 
   const goToSignup = () => navigate('/signup');
   const handleHeroSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(heroEmail ? `/signup?email=${encodeURIComponent(heroEmail)}` : '/signup');
+  };
+
+  const handleChecklistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChecklistStatus('submitting');
+    setChecklistError('');
+    try {
+      await requestComplianceChecklist(checklistEmail);
+      setChecklistStatus('success');
+    } catch (err: any) {
+      setChecklistStatus('error');
+      setChecklistError(err?.message || 'Something went wrong. Please try again.');
+    }
   };
 
   useEffect(() => {
@@ -620,6 +637,36 @@ export default function LandingPage() {
           <div className="stat reveal"><div className="num" data-value="3">0</div><div className="lbl">British Standards covered end-to-end</div></div>
           <div className="stat reveal"><div className="num" data-value="0">0</div><div className="lbl">Paper tags required on-site</div></div>
           <div className="stat reveal"><div className="num" data-value="100" data-suffix="%">0%</div><div className="lbl">Inspections completed from a phone</div></div>
+        </div>
+      </div>
+
+      <div className="checklist-band">
+        <div className="wrap checklist-inner reveal">
+          <div className="checklist-copy">
+            <div className="eyebrow">Free Download</div>
+            <h2>Never miss a fire extinguisher inspection deadline again.</h2>
+            <p>Get our free site compliance checklist — practical, BS 5306-based, and ready to use today.</p>
+          </div>
+          {checklistStatus === 'success' ? (
+            <div className="checklist-success">Check your inbox — your checklist is on its way.</div>
+          ) : (
+            <form className="checklist-capture" onSubmit={handleChecklistSubmit}>
+              <input
+                type="email"
+                className="checklist-capture-input"
+                placeholder="you@company.com"
+                value={checklistEmail}
+                onChange={(e) => setChecklistEmail(e.target.value)}
+                aria-label="Email address"
+                required
+                disabled={checklistStatus === 'submitting'}
+              />
+              <button type="submit" className="btn-primary checklist-capture-btn" disabled={checklistStatus === 'submitting'}>
+                {checklistStatus === 'submitting' ? 'Sending…' : 'Send Me the Checklist'}
+              </button>
+            </form>
+          )}
+          {checklistStatus === 'error' && <div className="checklist-error">{checklistError}</div>}
         </div>
       </div>
 
