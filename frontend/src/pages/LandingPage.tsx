@@ -485,6 +485,19 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="problem-band">
+        <div className="wrap problem-inner">
+          <div className="eyebrow">The Problem</div>
+          <h2>Paper logs and spreadsheets don&apos;t scale.</h2>
+          <p>
+            If you&apos;re managing extinguisher inspections across multiple sites, you already know the pain:
+            missed inspection dates, lost paper tags, no record when an auditor asks for proof, and zero
+            visibility into which locations are overdue.
+          </p>
+          <p className="problem-emphasis">One missed inspection isn&apos;t just a compliance risk — it&apos;s a liability.</p>
+        </div>
+      </section>
+
       <section className="story" id="story">
         <div className="story-pin">
           <div className="wrap story-grid">
@@ -716,8 +729,12 @@ export default function LandingPage() {
             <div>
               <div className="footer-title">Get the register set up</div>
               <div className="footer-sub">Talk to us about your sites, asset counts, and which modules you need — we&apos;ll set up your first register together.</div>
+              <div className="footer-trust">No credit card. No contracts. Cancel anytime.</div>
             </div>
-            <button type="button" className="footer-cta" onClick={goToSignup}>Book a demo →</button>
+            <div className="footer-actions">
+              <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
+              <button type="button" className="footer-cta" onClick={goToSignup}>Book a demo →</button>
+            </div>
           </div>
           <div className="also-included">
             <Link to="/compare/joblogic">Compare · FirexCheck vs Joblogic</Link>
