@@ -40,14 +40,24 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function complianceStatus(nextDue: string | null | undefined, warnDays: number) {
+function complianceStatus(nextDue: string | null | undefined, warnDays: number, toleranceDays: number = 0) {
   if (!nextDue) return { label: 'Not recorded', cls: 'bg-gray-100 text-gray-500' };
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const due = new Date(nextDue); due.setHours(0, 0, 0, 0);
   const diff = Math.ceil((due.getTime() - today.getTime()) / 86400000);
-  if (diff < 0)         return { label: 'Overdue', cls: 'bg-red-100 text-red-700' };
-  if (diff <= warnDays) return { label: 'Due Soon', cls: 'bg-amber-100 text-amber-700' };
+  // Past due, but still inside the BS 5839-1-informed tolerance window — not a real breach yet
+  if (diff < 0 && diff >= -toleranceDays) return { label: 'Within Tolerance', cls: 'bg-amber-100 text-amber-700' };
+  if (diff < -toleranceDays)              return { label: 'Overdue', cls: 'bg-red-100 text-red-700' };
+  if (diff <= warnDays)                   return { label: 'Due Soon', cls: 'bg-amber-100 text-amber-700' };
   return { label: 'Compliant', cls: 'bg-green-100 text-green-700' };
+}
+
+function toleranceWindow(nextDue: string | null | undefined, toleranceDays: number) {
+  if (!nextDue) return null;
+  const due = new Date(nextDue);
+  const start = new Date(due.getTime() - toleranceDays * 86400000);
+  const end = new Date(due.getTime() + toleranceDays * 86400000);
+  return { start, end };
 }
 
 // ─── Modal base ───────────────────────────────────────────────────────────────
@@ -68,11 +78,11 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
 
 const ComplianceCard: React.FC<{ system: FireAlarmSystem }> = ({ system }) => {
   const items = [
-    { label: 'Weekly',      field: system.nextWeeklyDue,      warnDays: 3 },
-    { label: 'Monthly',     field: system.nextMonthlyDue,     warnDays: 7 },
-    { label: 'Quarterly',   field: system.nextQuarterlyDue,   warnDays: 14 },
-    { label: 'Six-Monthly', field: system.nextSixMonthlyDue,  warnDays: 21 },
-    { label: 'Annual',      field: system.nextAnnualDue,       warnDays: 30 },
+    { label: 'Weekly',      field: system.nextWeeklyDue,      warnDays: 3,  toleranceDays: system.weeklyToleranceDays ?? 2 },
+    { label: 'Monthly',     field: system.nextMonthlyDue,     warnDays: 7,  toleranceDays: system.monthlyToleranceDays ?? 5 },
+    { label: 'Quarterly',   field: system.nextQuarterlyDue,   warnDays: 14, toleranceDays: system.quarterlyToleranceDays ?? 15 },
+    { label: 'Six-Monthly', field: system.nextSixMonthlyDue,  warnDays: 21, toleranceDays: system.sixMonthlyToleranceDays ?? 30 },
+    { label: 'Annual',      field: system.nextAnnualDue,      warnDays: 30, toleranceDays: system.annualToleranceDays ?? 60 },
   ];
   return (
     <div className="bg-white rounded-xl border shadow-sm px-5 py-4 mb-4">
@@ -81,9 +91,13 @@ const ComplianceCard: React.FC<{ system: FireAlarmSystem }> = ({ system }) => {
       </h3>
       <div className="grid grid-cols-5 gap-2">
         {items.map(item => {
-          const status = complianceStatus(item.field, item.warnDays);
+          const status = complianceStatus(item.field, item.warnDays, item.toleranceDays);
+          const window = item.field ? toleranceWindow(item.field, item.toleranceDays) : null;
+          const title = window
+            ? `Acceptable window: ${fmtDate(window.start.toISOString())} – ${fmtDate(window.end.toISOString())}`
+            : undefined;
           return (
-            <div key={item.label} className="text-center p-2 bg-gray-50 rounded-lg">
+            <div key={item.label} className="text-center p-2 bg-gray-50 rounded-lg" title={title}>
               <div className="text-xs font-semibold text-gray-500 mb-1.5">{item.label}</div>
               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${status.cls}`}>
                 {status.label}
@@ -91,6 +105,9 @@ const ComplianceCard: React.FC<{ system: FireAlarmSystem }> = ({ system }) => {
               {item.field ? (
                 <div className="text-xs text-gray-400 mt-1 leading-tight">
                   Next<br />{fmtDate(item.field)}
+                  {status.label === 'Within Tolerance' && window && (
+                    <><br /><span className="text-amber-600">until {fmtDate(window.end.toISOString())}</span></>
+                  )}
                 </div>
               ) : (
                 <div className="text-xs text-gray-300 mt-1">—</div>
@@ -1021,11 +1038,24 @@ const FireAlarmLogbookPage: React.FC = () => {
                         </button>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mt-2">
-                        {selectedSystem.nextWeeklyDue && new Date(selectedSystem.nextWeeklyDue) < new Date() && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                            <AlertTriangle size={11} /> Weekly test overdue
-                          </span>
-                        )}
+                        {selectedSystem.nextWeeklyDue && (() => {
+                          const weeklyStatus = complianceStatus(selectedSystem.nextWeeklyDue, 3, selectedSystem.weeklyToleranceDays ?? 2);
+                          if (weeklyStatus.label === 'Overdue') {
+                            return (
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                                <AlertTriangle size={11} /> Weekly test overdue
+                              </span>
+                            );
+                          }
+                          if (weeklyStatus.label === 'Within Tolerance') {
+                            return (
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                                <AlertTriangle size={11} /> Weekly test due — within tolerance
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                         {selectedSystem.nextWeeklyDue && (
                           <span className="text-xs text-gray-500">
                             Next test due: <span className="font-medium text-gray-700">{fmtDate(selectedSystem.nextWeeklyDue)}</span>

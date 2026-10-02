@@ -190,6 +190,11 @@ export type FireAlarmSystem = {
   nextQuarterlyDue?: string | null;
   nextSixMonthlyDue?: string | null;
   nextAnnualDue?: string | null;
+  weeklyToleranceDays?: number;
+  monthlyToleranceDays?: number;
+  quarterlyToleranceDays?: number;
+  sixMonthlyToleranceDays?: number;
+  annualToleranceDays?: number;
   createdAt: string;
   _count?: { callPoints: number; logEntries: number };
 };

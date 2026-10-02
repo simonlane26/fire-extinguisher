@@ -435,6 +435,15 @@ model FireAlarmSystem {
   nextQuarterlyDue  DateTime?
   nextSixMonthlyDue DateTime?
   nextAnnualDue     DateTime?
+  // Tolerance windows (days either side of the due date that still count as
+  // compliant). sixMonthlyToleranceDays=30 reflects BS 5839-1 guidance that a
+  // six-monthly service visit is acceptable 5-7 months after the previous one;
+  // the others are practical scheduling grace, not cited BS clauses.
+  weeklyToleranceDays     Int @default(2)
+  monthlyToleranceDays    Int @default(5)
+  quarterlyToleranceDays  Int @default(15)
+  sixMonthlyToleranceDays Int @default(30)
+  annualToleranceDays     Int @default(60)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 

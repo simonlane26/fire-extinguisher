@@ -225,18 +225,19 @@ export class ReminderScheduler {
     try {
       const today = new Date();
 
-      // Fields and their human-readable labels
-      const testTypes: { field: string; label: string }[] = [
-        { field: 'nextWeeklyDue', label: 'weekly' },
-        { field: 'nextMonthlyDue', label: 'monthly' },
-        { field: 'nextQuarterlyDue', label: 'quarterly' },
-        { field: 'nextSixMonthlyDue', label: 'six_monthly' },
-        { field: 'nextAnnualDue', label: 'annual' },
+      // Fields and their human-readable labels, with the matching BS 5839-1
+      // tolerance-window column (days past due that still count as compliant)
+      const testTypes: { field: string; toleranceField: string; label: string }[] = [
+        { field: 'nextWeeklyDue', toleranceField: 'weeklyToleranceDays', label: 'weekly' },
+        { field: 'nextMonthlyDue', toleranceField: 'monthlyToleranceDays', label: 'monthly' },
+        { field: 'nextQuarterlyDue', toleranceField: 'quarterlyToleranceDays', label: 'quarterly' },
+        { field: 'nextSixMonthlyDue', toleranceField: 'sixMonthlyToleranceDays', label: 'six_monthly' },
+        { field: 'nextAnnualDue', toleranceField: 'annualToleranceDays', label: 'annual' },
       ];
 
       let alertsSent = 0;
 
-      for (const { field, label } of testTypes) {
+      for (const { field, toleranceField, label } of testTypes) {
         const overdueSystems = await (this.prisma.fireAlarmSystem as any).findMany({
           where: {
             [field]: { lt: today },
@@ -254,13 +255,19 @@ export class ReminderScheduler {
           },
         });
 
-        this.logger.log(`🔔 [${label}] Found ${overdueSystems.length} overdue fire alarm system(s)`);
+        this.logger.log(`🔔 [${label}] Found ${overdueSystems.length} fire alarm system(s) past due date`);
 
         for (const system of overdueSystems) {
           const dueDate: Date = system[field];
-          const daysOverdue = Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+          const toleranceDays: number = system[toleranceField] ?? 0;
+          const toleranceEnd = new Date(dueDate.getTime() + toleranceDays * 86_400_000);
 
-          // Only alert on day 1, 3, 7 overdue to avoid flooding
+          // Still within the BS 5839-1 acceptable window — not a real compliance breach yet
+          if (today < toleranceEnd) continue;
+
+          const daysOverdue = Math.ceil((today.getTime() - toleranceEnd.getTime()) / (1000 * 60 * 60 * 24));
+
+          // Only alert on day 1, 3, 7 past the tolerance window, to avoid flooding
           if (![1, 3, 7].includes(daysOverdue)) continue;
 
           const users = system.tenant?.users ?? [];
@@ -273,7 +280,7 @@ export class ReminderScheduler {
               panelMake: system.panelMake,
               panelModel: system.panelModel,
               testType: label,
-              overdueSince: dueDate,
+              overdueSince: toleranceEnd,
               daysOverdue,
               recipientEmail: user.email,
               recipientName: user.name,
