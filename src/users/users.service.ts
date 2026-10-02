@@ -219,14 +219,17 @@ export class UsersService {
   }
 
   /**
-   * Check if a user has access to a specific site
+   * Check if a user has access to a specific site.
+   * tenantId must be the caller's own tenant (from the authenticated request,
+   * never client input) — without this check, a caller could pass a userId
+   * from a different tenant and learn whether that user/site pairing exists.
    */
-  async hasAccessToSite(userId: string, siteId: string): Promise<boolean> {
+  async hasAccessToSite(tenantId: string, userId: string, siteId: string): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
-    if (!user) {
+    if (!user || user.tenantId !== tenantId) {
       return false;
     }
 
