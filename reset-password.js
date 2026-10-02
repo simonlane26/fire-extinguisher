@@ -1,9 +1,15 @@
 // Reset user password directly in the database
+require('dotenv').config({ path: '.env.production' });
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 
-// Use production database
-const databaseUrl = "postgresql://neondb_owner:npg_SQ0PaCqIzhM9@ep-flat-pond-aba4029j.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+// DATABASE_URL must be set in the environment (e.g. via .env.production or
+// `DATABASE_URL="..." node reset-password.js ...`) — never hardcode it here.
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error('❌ DATABASE_URL is not set. Set it in .env.production or pass it inline.');
+  process.exit(1);
+}
 
 const prisma = new PrismaClient({
   datasources: {
@@ -51,7 +57,6 @@ async function resetPassword() {
 
     console.log('\n✅ Password reset successfully!');
     console.log(`User: ${user.name} (${user.email})`);
-    console.log(`New Password: ${newPassword}`);
     console.log('\n💡 You can now log in with the new password!\n');
   } catch (error) {
     console.error('❌ Error resetting password:', error.message);
