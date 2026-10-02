@@ -7,32 +7,21 @@ import {
   CheckCircle,
   Eye,
   QrCode,
-  Users as UsersIcon,
   Building2,
   Crown,
   Shield,
   Flame,
-  Settings as SettingsIcon,
   Download,
   Upload,
-  Package,
-  HelpCircle,
   Search,
   Filter,
   X,
-  LogOut,
   FileText,
-  TrendingUp,
-  Cloud,
-  CloudOff,
-  CalendarDays,
-  BellRing,
-  ShieldCheck,
-  Plug,
-  Lightbulb,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
+import Sidebar, { type ActiveTab } from './components/Sidebar';
+import TopHeader from './components/TopHeader';
 import HintTooltip from './components/HintTooltip';
 import GettingStartedPanel from './components/GettingStartedPanel';
 import AddExtinguisherModal from './components/AddExtinguisherModal';
@@ -61,7 +50,6 @@ import QuotesListPage from './pages/QuotesListPage';
 import QuoteCreatePage from './pages/QuoteCreatePage';
 import QuoteDetailPage from './pages/QuoteDetailPage';
 import RoleSwitcherModal from './components/RoleSwitcher';
-import TabButton from './components/TabButton';
 import Footer from './components/Footer';
 import { addExtinguisher, updateExtinguisher, fetchExtinguishers, fetchExtinguisherById, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers, fetchSites, fetchMonthlyInspectionCount } from './lib/api';
 import { addExtinguisherOffline } from './lib/offline/offlineApi';
@@ -282,8 +270,7 @@ const FireExtinguisherApp: React.FC = () => {
   const { tenant, updateTenant } = tctx;
   const { currentUser, setCurrentUser, hasPermission, logout } = actx;
 
-  const [activeTab, setActiveTab] =
-    useState<'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing' | 'compliance' | 'calendar' | 'reports' | 'help' | 'quotes' | 'fire-alarm' | 'pat-testing' | 'emergency-lighting' | 'platform-admin'>('calendar');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('calendar');
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<{ id: string; name: string } | null>(null);
   const [patPendingId, setPATPendingId] = useState<string | undefined>(undefined);
   const [elPendingId, setELPendingId] = useState<string | undefined>(undefined);
@@ -586,6 +573,7 @@ useEffect(() => {
   const [conditionFilter, setConditionFilter] = useState<string>('all');
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [pillFilter, setPillFilter] = useState<'all' | 'compliant' | 'dueSoon' | 'overdue' | 'outOfService'>('all');
 
   // CSV Export handler
   const handleExport = async () => {
@@ -639,6 +627,26 @@ useEffect(() => {
   const statuses = Array.from(new Set(extinguishers.map(e => e.status).filter(Boolean)));
   const conditions = Array.from(new Set(extinguishers.map(e => e.condition).filter(Boolean)));
 
+  // Compliance bucket for the status-pill filter row — mirrors the thresholds
+  // used in ComplianceDashboard so "Due Soon"/"Overdue" mean the same thing everywhere.
+  const getComplianceBucket = (ext: Extinguisher): 'compliant' | 'dueSoon' | 'overdue' | 'outOfService' => {
+    if (ext.status !== 'Active' || ext.condition === 'Out of Service') return 'outOfService';
+    if (!ext.nextInspection) return 'compliant';
+    const diffDays = Math.ceil((new Date(ext.nextInspection).getTime() - Date.now()) / 86_400_000);
+    if (diffDays < 0) return 'overdue';
+    if (diffDays <= 30) return 'dueSoon';
+    return 'compliant';
+  };
+
+  const pillCounts = extinguishers.reduce(
+    (acc, ext) => {
+      const bucket = getComplianceBucket(ext);
+      acc[bucket] += 1;
+      return acc;
+    },
+    { compliant: 0, dueSoon: 0, overdue: 0, outOfService: 0 } as Record<'compliant' | 'dueSoon' | 'overdue' | 'outOfService', number>,
+  );
+
   // Filter extinguishers
   const filteredExtinguishers = extinguishers.filter(item => {
     // Search filter
@@ -667,6 +675,9 @@ useEffect(() => {
 
     // Condition filter
     if (conditionFilter !== 'all' && item.condition !== conditionFilter) return false;
+
+    // Status-pill filter
+    if (pillFilter !== 'all' && getComplianceBucket(item) !== pillFilter) return false;
 
     return true;
   });
@@ -838,95 +849,36 @@ useEffect(() => {
   const canEditUsers = hasPermission('EDIT_USERS');
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header
-  className="p-4 text-white"
-  style={{
-    backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' && tenant.primaryColor !== 'white' ? tenant.primaryColor : '#7c3aed'
-  }}
->
-  <div className="flex items-center justify-between mx-auto max-w-7xl">
-    {/* Left: Logo + Titles */}
-    <div className="flex items-center space-x-3">
-  <img
-    src={tenant?.logoUrl || '/logo.png'}
-    alt={`${tenant?.companyName || 'Company'} logo`}
-    className="object-contain w-auto h-10"
-    onError={(e) => {
-      const fallback = '/logo.png';
-      if (e.currentTarget.src !== window.location.origin + fallback) {
-        e.currentTarget.src = fallback;
-      }
-    }}
-  />
-  <div>
-    <h1 className="text-xl font-bold">{tenant.companyName}</h1>
-    <div className="flex items-center gap-2 text-sm opacity-75">
-      <span>Fire Safety Management System</span>
-      <span className="opacity-50">•</span>
-      <span className="font-medium">Firexcheck.com</span>
-    </div>
-  </div>
-</div>
-
-
-    {/* Right: Plan + Current User */}
-    <div className="flex items-center space-x-2 md:space-x-4">
-      <div className="hidden lg:flex items-center px-3 py-1 space-x-2 rounded-lg bg-white/20">
-        <Crown size={16} />
-        <span className="text-sm font-medium">
-          {SUBSCRIPTION_PLANS[tenant.subscriptionPlan]?.name}
-        </span>
-      </div>
-      <div className="hidden md:flex items-center px-2 py-1 space-x-1 rounded-lg bg-white/20">
-        <Shield size={14} />
-        <span className="text-xs font-medium">
-          {currentUser.name}
-        </span>
-      </div>
-      {/* Offline Status & Download Button */}
-      <div className="flex items-center gap-1 sm:gap-2">
-        <div className={`flex items-center px-2 py-1 space-x-1 rounded-lg ${isOnline ? 'bg-green-500/30' : 'bg-orange-500/30'}`}>
-          {isOnline ? <Cloud size={14} /> : <CloudOff size={14} />}
-          <span className="hidden sm:inline text-xs font-medium">{isOnline ? 'Online' : 'Offline'}</span>
-        </div>
-        {isOnline && (
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await syncManager.downloadExtinguishersForOffline();
-                alert('Data downloaded for offline use!');
-              } catch (error: any) {
-                alert(`Download failed: ${error.message}`);
-              }
-            }}
-            className="flex items-center px-2 py-1 space-x-1 text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30"
-            title="Download data for offline use"
-          >
-            <Download size={14} />
-            <span className="hidden sm:inline text-xs font-medium">Download</span>
-          </button>
-        )}
-      </div>
-      <button
-        type="button"
-        onClick={logout}
-        className="flex items-center px-2 py-1 space-x-1 text-white transition-colors rounded-lg bg-white/20 hover:bg-white/30"
-        title="Log out"
-      >
-        <LogOut size={14} />
-        <span className="hidden sm:inline text-xs font-medium">Log Out</span>
-      </button>
-    </div>
-  </div>
-</header>
-{/* Sync Status Badge - Fixed position in bottom-right */}
-      <SyncStatusBadge />
-      <FeedbackButton currentTab={activeTab} />
-      <div className="p-3 sm:p-4 md:p-6 mx-auto space-y-4 sm:space-y-6 max-w-7xl">
-        {/* KPI cards */}
+    <div className="min-h-screen bg-brand-bg flex">
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        tenant={tenant}
+        hasPermission={hasPermission}
+        isPlatformAdmin={currentUser.isPlatformAdmin}
+      />
+      <div className="flex-1 min-w-0 flex flex-col">
+        <TopHeader
+          activeTab={activeTab}
+          userName={currentUser.name}
+          userRole={USER_ROLES[currentUser.role]?.name ?? currentUser.role}
+          isOnline={isOnline}
+          onDownload={async () => {
+            try {
+              await syncManager.downloadExtinguishersForOffline();
+              alert('Data downloaded for offline use!');
+            } catch (error: any) {
+              alert(`Download failed: ${error.message}`);
+            }
+          }}
+          onLogout={logout}
+        />
+        {/* Sync Status Badge - Fixed position in bottom-right */}
+        <SyncStatusBadge />
+        <FeedbackButton currentTab={activeTab} />
+      <div className="flex-1 p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+        {/* KPI cards — only on the Extinguishers overview, not every tab */}
+        {activeTab === 'overview' && (
         <section className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-4">
           <KpiCard
             label="Total Extinguishers"
@@ -969,183 +921,7 @@ useEffect(() => {
             }
           />
         </section>
-
-        {/* Module cards — Extinguishers, Fire Alarm, PAT Testing, Emergency Lighting */}
-        <div className="flex justify-center gap-3 flex-wrap">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-all border-2 shadow-sm ${
-              activeTab === 'overview'
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400 hover:text-indigo-600'
-            }`}
-          >
-            <Flame size={18} />
-            Extinguishers
-          </button>
-          {tenant.fireAlarmEnabled && (
-            <button
-              onClick={() => setActiveTab('fire-alarm')}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-all border-2 shadow-sm ${
-                activeTab === 'fire-alarm'
-                  ? 'bg-red-600 text-white border-red-600 shadow-md'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-red-400 hover:text-red-600'
-              }`}
-            >
-              <BellRing size={18} />
-              Fire Alarm
-            </button>
-          )}
-          {tenant.patTestingEnabled && (
-            <button
-              onClick={() => setActiveTab('pat-testing')}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-all border-2 shadow-sm ${
-                activeTab === 'pat-testing'
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-blue-400 hover:text-blue-600'
-              }`}
-            >
-              <Plug size={18} />
-              PAT Testing
-            </button>
-          )}
-          {tenant.emergencyLightingEnabled && (
-            <button
-              onClick={() => setActiveTab('emergency-lighting')}
-              className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium text-sm transition-all border-2 shadow-sm ${
-                activeTab === 'emergency-lighting'
-                  ? 'bg-amber-500 text-white border-amber-500 shadow-md'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-amber-400 hover:text-amber-600'
-              }`}
-            >
-              <Lightbulb size={18} />
-              Emergency Lighting
-            </button>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <TabButton
-              active={activeTab === 'sites'}
-              onClick={() => setActiveTab('sites')}
-              primaryColor={tenant.primaryColor}
-            >
-              <Building2 size={16} />
-              <span>Sites</span>
-            </TabButton>
-
-            {tenant.stockManagementEnabled !== false && (
-              <TabButton
-                active={activeTab === 'stock'}
-                onClick={() => setActiveTab('stock')}
-                primaryColor={tenant.primaryColor}
-              >
-                <Package size={16} />
-                <span>Stock</span>
-              </TabButton>
-            )}
-
-            <TabButton
-              active={activeTab === 'quotes'}
-              onClick={() => setActiveTab('quotes')}
-              primaryColor={tenant.primaryColor}
-            >
-              <FileText size={16} />
-              <span>Quotes</span>
-            </TabButton>
-
-            {hasPermission('VIEW_USERS') && (
-              <TabButton
-                active={activeTab === 'users'}
-                onClick={() => setActiveTab('users')}
-                primaryColor={tenant.primaryColor}
-              >
-                <UsersIcon size={16} />
-                <span>Users</span>
-              </TabButton>
-            )}
-
-            <TabButton
-              active={activeTab === 'qr-codes'}
-              onClick={() => setActiveTab('qr-codes')}
-              primaryColor={tenant.primaryColor}
-            >
-              <QrCode size={16} />
-              <span>QR Codes</span>
-            </TabButton>
-
-            {hasPermission('VIEW_BILLING') && (
-              <TabButton
-                active={activeTab === 'billing'}
-                onClick={() => setActiveTab('billing')}
-                primaryColor={tenant.primaryColor}
-              >
-                <Crown size={16} />
-                <span>Billing</span>
-              </TabButton>
-            )}
-
-            {hasPermission('MANAGE_SETTINGS') && (
-              <TabButton
-                active={activeTab === 'settings'}
-                onClick={() => setActiveTab('settings')}
-                primaryColor={tenant.primaryColor}
-              >
-                <SettingsIcon size={16} />
-                <span>Settings</span>
-              </TabButton>
-            )}
-
-            <TabButton
-              active={activeTab === 'compliance'}
-              onClick={() => setActiveTab('compliance')}
-              primaryColor={tenant.primaryColor}
-            >
-              <TrendingUp size={16} />
-              <span>Compliance</span>
-            </TabButton>
-
-            <TabButton
-              active={activeTab === 'calendar'}
-              onClick={() => setActiveTab('calendar')}
-              primaryColor={tenant.primaryColor}
-            >
-              <CalendarDays size={16} />
-              <span>Calendar</span>
-            </TabButton>
-
-            <TabButton
-              active={activeTab === 'reports'}
-              onClick={() => setActiveTab('reports')}
-              primaryColor={tenant.primaryColor}
-            >
-              <FileText size={16} />
-              <span>Reports</span>
-            </TabButton>
-
-            <TabButton
-              active={activeTab === 'help'}
-              onClick={() => setActiveTab('help')}
-              primaryColor={tenant.primaryColor}
-            >
-              <HelpCircle size={16} />
-              <span>Help</span>
-            </TabButton>
-
-            {currentUser.isPlatformAdmin && (
-              <TabButton
-                active={activeTab === 'platform-admin'}
-                onClick={() => setActiveTab('platform-admin')}
-                primaryColor={tenant.primaryColor}
-              >
-                <ShieldCheck size={16} />
-                <span>Platform</span>
-              </TabButton>
-            )}
-          </div>
-        </div>
+        )}
         {/* Sites tab */}
         {activeTab === 'sites' && (
           <SitesPage
@@ -1212,54 +988,59 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Search and Filter Bar */}
-            <div className="flex flex-col gap-4 p-4 bg-white rounded-lg shadow">
+            {/* Toolbar: search + filters + primary action */}
+            <div className="flex flex-col gap-4 p-4 bg-white rounded-xl border border-brand-line">
               <div className="flex flex-wrap items-center gap-3">
-                {/* Search Input */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute text-gray-400 transform -translate-y-1/2 left-3 top-1/2" size={18} />
+                  <Search className="absolute text-brand-inkFaint transform -translate-y-1/2 left-3 top-1/2" size={18} />
                   <input
                     type="text"
                     placeholder="Search by location, building, type, serial number..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full py-2 pl-10 pr-4 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-gray-600"
+                      className="absolute text-brand-inkFaint transform -translate-y-1/2 right-3 top-1/2 hover:text-brand-ink"
                     >
                       <X size={18} />
                     </button>
                   )}
                 </div>
 
-                {/* Filter Toggle Button */}
                 <button
                   type="button"
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                     showFilters
-                      ? 'bg-blue-50 border-blue-500 text-blue-700'
-                      : 'bg-white border-gray-300 hover:bg-gray-50'
+                      ? 'bg-brand-redTint border-brand-red text-brand-redDark'
+                      : 'bg-white border-brand-line text-brand-ink hover:border-brand-inkFaint'
                   }`}
                 >
                   <Filter size={16} />
                   Filters
                   {activeFilterCount > 0 && (
-                    <span className="ml-1 px-2 py-0.5 text-xs font-semibold bg-blue-600 text-white rounded-full">
+                    <span className="ml-1 px-2 py-0.5 text-xs font-semibold bg-brand-red text-white rounded-full">
                       {activeFilterCount}
                     </span>
                   )}
+                </button>
+
+                <button
+                  onClick={() => setOpenAdd(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-brand-red text-white hover:bg-brand-redDark transition-colors"
+                >
+                  <Plus size={16} /> Add Extinguisher
                 </button>
               </div>
 
               {/* Filter Dropdowns */}
               {showFilters && (
-                <div className="grid grid-cols-1 gap-3 pt-3 border-t md:grid-cols-2 lg:grid-cols-5">
+                <div className="grid grid-cols-1 gap-3 pt-3 border-t border-brand-line md:grid-cols-2 lg:grid-cols-5">
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Site</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Site</label>
                     <select
                       value={siteFilter}
                       onChange={(e) => {
@@ -1268,7 +1049,7 @@ useEffect(() => {
                           setSelectedSiteFilter(null);
                         }
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Sites</option>
                       {sites.map(s => (
@@ -1278,11 +1059,11 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Building</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Building</label>
                     <select
                       value={buildingFilter}
                       onChange={(e) => setBuildingFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Buildings</option>
                       {buildings.map(b => (
@@ -1292,11 +1073,11 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Type</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Type</label>
                     <select
                       value={typeFilter}
                       onChange={(e) => setTypeFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Types</option>
                       {types.map(t => (
@@ -1306,11 +1087,11 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Status</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Status</label>
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Statuses</option>
                       {statuses.map(s => (
@@ -1320,11 +1101,11 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-gray-700">Condition</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Condition</label>
                     <select
                       value={conditionFilter}
                       onChange={(e) => setConditionFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Conditions</option>
                       {conditions.map(c => (
@@ -1336,34 +1117,57 @@ useEffect(() => {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {/* Status pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              {([
+                { key: 'all', label: 'All', count: extinguishers.length, dot: null },
+                { key: 'compliant', label: 'Compliant', count: pillCounts.compliant, dot: 'bg-brand-green' },
+                { key: 'dueSoon', label: 'Due Soon', count: pillCounts.dueSoon, dot: 'bg-brand-amber' },
+                { key: 'overdue', label: 'Overdue', count: pillCounts.overdue, dot: 'bg-brand-red' },
+                { key: 'outOfService', label: 'Out of Service', count: pillCounts.outOfService, dot: 'bg-gray-400' },
+              ] as const).map((pill) => {
+                const active = pillFilter === pill.key;
+                return (
+                  <button
+                    key={pill.key}
+                    type="button"
+                    onClick={() => setPillFilter(pill.key)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                      active
+                        ? 'bg-brand-ink text-white border-brand-ink'
+                        : 'bg-white text-brand-inkMuted border-brand-line hover:border-brand-inkFaint'
+                    }`}
+                  >
+                    {pill.dot && <span className={`w-1.5 h-1.5 rounded-full ${pill.dot}`} />}
+                    {pill.label} ({pill.count})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Secondary actions */}
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setShowQrScanner(true)}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium rounded-lg shadow-sm hover:opacity-90"
-                style={{
-                  backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' ? tenant.primaryColor : '#7c3aed',
-                  color: '#ffffff'
-                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-ink hover:border-brand-inkFaint transition-colors"
               >
-                <QrCode size={16} /> <span className="hidden sm:inline">Scan</span> QR
+                <QrCode size={15} /> Scan QR
               </button>
 
               <button
                 onClick={handleExport}
                 disabled={exporting || extinguishers.length === 0}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#16a34a', color: '#ffffff' }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-ink hover:border-brand-inkFaint transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Download size={16} /> {exporting ? '...' : <><span className="hidden sm:inline">Export</span> CSV</>}
+                <Download size={15} /> {exporting ? '...' : 'Export CSV'}
               </button>
 
               <button
                 onClick={handleImportClick}
                 disabled={importing}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#9333ea', color: '#ffffff' }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-ink hover:border-brand-inkFaint transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Upload size={16} /> {importing ? '...' : <><span className="hidden sm:inline">Import</span> CSV</>}
+                <Upload size={15} /> {importing ? '...' : 'Import CSV'}
               </button>
 
               <input
@@ -1375,81 +1179,65 @@ useEffect(() => {
               />
 
               <button
-                onClick={() => setOpenAdd(true)}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base font-medium rounded-lg shadow-sm hover:opacity-90"
-                style={{
-                  backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' ? tenant.primaryColor : '#7c3aed',
-                  color: '#ffffff'
-                }}
-              >
-                <Plus size={16} /> <span className="hidden sm:inline">Add</span> <span className="sm:hidden">+</span><span className="hidden sm:inline"> Extinguisher</span><span className="sm:hidden">Ext</span>
-              </button>
-
-              <button
                 onClick={() => setShowSimpleForm(true)}
-                className="hidden md:flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm hover:opacity-90"
-                style={{
-                  backgroundColor: tenant.primaryColor && tenant.primaryColor !== '#ffffff' && tenant.primaryColor !== '#fff' ? tenant.primaryColor : '#7c3aed',
-                  color: '#ffffff'
-                }}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-ink hover:border-brand-inkFaint transition-colors"
               >
-                <FileText size={16} /> Simple Form
+                <FileText size={15} /> Simple Form
               </button>
 
               <button
                 onClick={() => setShowRoleSwitcher(true)}
-                className="hidden lg:flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-sm"
-                style={{ backgroundColor: '#374151', color: '#ffffff' }}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-inkMuted hover:border-brand-inkFaint transition-colors"
               >
-                <Shield size={16} /> Switch Role
+                <Shield size={15} /> Switch Role
               </button>
             </div>
 
             {importResult && (
-              <div className={`p-4 rounded-lg ${importResult.errors > 0 ? 'bg-yellow-50 text-yellow-800' : 'bg-green-50 text-green-800'}`}>
+              <div className={`p-4 rounded-lg text-sm ${importResult.errors > 0 ? 'bg-amber-50 text-brand-amber' : 'bg-brand-green/10 text-brand-green'}`}>
                 Import complete: {importResult.imported} extinguishers imported
                 {importResult.errors > 0 && `, ${importResult.errors} errors occurred (check console)`}
               </div>
             )}
 
-            <div className="overflow-x-auto bg-white shadow rounded-2xl">
+            <div className="overflow-x-auto bg-white border border-brand-line rounded-xl">
               <table className="min-w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-brand-bg">
                   <tr>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
-                      ID
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
+                      ID / Serial
                     </th>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
                       Location
                     </th>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
                       Type
                     </th>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
                       Status
                     </th>
-                    <th className="hidden px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase sm:table-cell md:px-6">
+                    <th className="hidden px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide sm:table-cell md:px-6">
                       Condition
                     </th>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-gray-500 uppercase md:px-6">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-brand-line">
                   {filteredExtinguishers.map((ext) => (
-                    <tr key={ext.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-3 text-sm md:px-6 md:py-4">{ext.id}</td>
+                    <tr key={ext.id} className="hover:bg-brand-bg/60">
+                      <td className="px-3 py-3 text-sm font-mono text-brand-inkMuted md:px-6">{ext.id}</td>
                       <td className="px-3 py-3 md:px-6 md:py-4">
-                        <div className="text-sm text-gray-900 md:text-base">{ext.location}</div>
-                        <div className="text-xs text-gray-500 md:text-sm">
+                        <div className="text-sm text-brand-ink md:text-base">{ext.location}</div>
+                        <div className="text-xs text-brand-inkMuted md:text-sm">
                           {ext.building}
                           {ext.floor ? `, ${ext.floor}` : ''}
                         </div>
                       </td>
                       <td className="px-3 py-3 md:px-6 md:py-4">
-                        <div className="text-sm text-gray-900 md:text-base">{ext.type}</div>
-                        <div className="text-xs text-gray-500 md:text-sm">{ext.capacity}</div>
+                        <div className="text-sm text-brand-ink md:text-base">{ext.type}</div>
+                        <div className="text-xs text-brand-inkMuted md:text-sm">{ext.capacity}</div>
                       </td>
                       <td className="px-3 py-3 md:px-6 md:py-4">
                         <span className={getStatusColor(ext.status)}>{ext.status}</span>
@@ -1460,7 +1248,7 @@ useEffect(() => {
                       <td className="px-3 py-3 md:px-6 md:py-4">
                         <button
                           onClick={() => openDetails(ext)}
-                          className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg"
+                          className="p-2 text-brand-inkMuted hover:text-brand-red hover:bg-brand-redTint rounded-lg transition-colors"
                           title="View details"
                           aria-label={`View ${ext.id}`}
                         >
@@ -1471,9 +1259,9 @@ useEffect(() => {
                   ))}
                   {filteredExtinguishers.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                      <td colSpan={6} className="px-6 py-10 text-center text-brand-inkMuted">
                         No extinguishers yet. Click{' '}
-                        <span className="font-medium">Add Extinguisher</span> to get
+                        <span className="font-medium text-brand-ink">Add Extinguisher</span> to get
                         started.
                       </td>
                     </tr>
@@ -1559,6 +1347,10 @@ useEffect(() => {
 
         {/* Platform Admin tab */}
         {activeTab === 'platform-admin' && currentUser.isPlatformAdmin && <PlatformAdminPage />}
+      </div>
+
+        {/* Footer */}
+        <Footer primaryColor={tenant.primaryColor} />
       </div>
 
       {/* Modals / overlays */}
@@ -1670,9 +1462,6 @@ useEffect(() => {
           siteName={selectedSiteFilter?.name}
         />
       )}
-
-      {/* Footer */}
-      <Footer primaryColor={tenant.primaryColor} />
     </div>
   );
 };

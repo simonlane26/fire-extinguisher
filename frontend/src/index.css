@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-ink: #1C1B18;
+  --color-brand-ink-muted: #6E675E;
+  --color-brand-ink-faint: #A79E90;
+  --color-brand-bg: #F7F4EE;
+  --color-brand-bg-alt: #FBF9F4;
+  --color-brand-panel: #FFFFFF;
+  --color-brand-line: #E3DDD1;
+  --color-brand-red: #B8121F;
+  --color-brand-red-dark: #8A0D17;
+  --color-brand-red-tint: #FBEAEA;
+  --color-brand-green: #1E7A4C;
+  --color-brand-amber: #B97A1E;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --animate-shake: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
 /* optional global defaults; v4 likes these inside a layer */
 @layer base {
   body { @apply text-gray-900 bg-gray-50; }

@@ -1,8 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertTriangle, XCircle, TrendingUp, Calendar, Flame, Building2, Wrench, ArrowRight, BellRing, Plug, Lightbulb } from 'lucide-react';
-import HintTooltip from '../components/HintTooltip';
+import { CheckCircle, AlertTriangle, XCircle, Flame, Building2, Wrench, ArrowRight, BellRing, Plug, Lightbulb } from 'lucide-react';
 import { fetchExtinguishers, faGetSystems, faGetLogEntries, patGetAppliances, elGetLuminaires } from '../lib/api';
 import type { Extinguisher, FireAlarmSystem, FireAlarmLogEntry, PATAppliance, EmergencyLuminaire } from '../types';
+
+// ─── Donut chart (hand-rolled — no charting library in this project) ──────────
+const DonutChart: React.FC<{ segments: { value: number; color: string }[]; total: number; label: string }> = ({ segments, total, label }) => {
+  const size = 136;
+  const strokeWidth = 16;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  let offsetSoFar = 0;
+
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E3DDD1" strokeWidth={strokeWidth} />
+        {total > 0 && segments.map((seg, i) => {
+          if (seg.value === 0) return null;
+          const fraction = seg.value / total;
+          const segLength = fraction * circumference;
+          const circle = (
+            <circle
+              key={i}
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke={seg.color}
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${segLength} ${circumference - segLength}`}
+              strokeDashoffset={-offsetSoFar}
+            />
+          );
+          offsetSoFar += segLength;
+          return circle;
+        })}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className="text-2xl font-bold text-brand-ink">{total}</div>
+        <div className="text-[10px] text-brand-inkMuted text-center leading-tight">{label}</div>
+      </div>
+    </div>
+  );
+};
 
 type FireAlarmSystemStatus = {
   system: FireAlarmSystem;
@@ -216,152 +256,125 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#7c3aed', onNavi
     );
   }
 
+  // "Recent Inspections" list — most recently inspected extinguishers, with a status badge
+  const recentInspections = [...extinguishers]
+    .filter((e) => !!e.lastInspection)
+    .sort((a, b) => new Date(b.lastInspection!).getTime() - new Date(a.lastInspection!).getTime())
+    .slice(0, 5);
+
+  const extStatusBadge = (ext: Extinguisher) => {
+    const today = new Date();
+    const next = ext.nextInspection ? new Date(ext.nextInspection) : null;
+    if (ext.status !== 'Active' || ext.condition === 'Out of Service') {
+      return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Out of Service</span>;
+    }
+    if (next && next < today) {
+      return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-brand-redTint text-brand-redDark">Overdue</span>;
+    }
+    if (next && (next.getTime() - today.getTime()) <= 30 * 86_400_000) {
+      return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-brand-amber">Due Soon</span>;
+    }
+    return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-brand-green/10 text-brand-green">Compliant</span>;
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Compliance Dashboard</h1>
-        <p className="text-sm text-gray-600">Real-time fire safety compliance monitoring</p>
-      </div>
-
-      {/* Overall Compliance Score */}
-      <div className="relative overflow-hidden bg-white rounded-2xl shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 inline-flex items-center gap-1">
-            Overall Compliance Rate
-            <HintTooltip
-              storageKey="compliance_rate"
-              content="Based on inspection status across all active extinguishers."
-            />
-          </h2>
-          <TrendingUp className="text-green-600" size={24} />
-        </div>
-        <div className="flex items-end gap-2">
-          <div className="text-5xl font-bold" style={{ color: primaryColor }}>
-            {stats.complianceRate.toFixed(1)}%
+      {/* KPI row */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="bg-white border border-brand-line rounded-xl p-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-brand-inkMuted">Total Extinguishers</span>
+            <Flame size={16} className="text-brand-inkFaint" />
           </div>
-          <div className="pb-2 text-sm text-gray-600">
-            {stats.compliant} of {stats.total} compliant
-          </div>
+          <div className="text-2xl font-bold text-brand-ink">{stats.total}</div>
         </div>
-
-        {/* Progress bar */}
-        <div className="mt-4 h-3 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="h-full transition-all duration-500"
-            style={{
-              width: `${stats.complianceRate}%`,
-              backgroundColor: primaryColor
-            }}
-          />
+        <div className="bg-white border border-brand-line rounded-xl p-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-brand-inkMuted">Compliant</span>
+            <CheckCircle size={16} className="text-brand-green" />
+          </div>
+          <div className="text-2xl font-bold text-brand-green">{stats.compliant}</div>
+        </div>
+        <div className="bg-white border border-brand-line rounded-xl p-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-brand-inkMuted">Due Soon</span>
+            <AlertTriangle size={16} className="text-brand-amber" />
+          </div>
+          <div className="text-2xl font-bold text-brand-amber">{stats.dueWithin30Days}</div>
+        </div>
+        <div className="bg-white border border-brand-line rounded-xl p-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-brand-inkMuted">Overdue</span>
+            <XCircle size={16} className="text-brand-red" />
+          </div>
+          <div className="text-2xl font-bold text-brand-red">{stats.overdue}</div>
         </div>
       </div>
 
-      {/* Status Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="bg-green-50 border border-green-200 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-green-900">Compliant</h3>
-            <CheckCircle className="text-green-600" size={20} />
-          </div>
-          <div className="text-3xl font-bold text-green-700">{stats.compliant}</div>
-          <p className="text-xs text-green-600 mt-1">
-            Next inspection &gt; 30 days away
-          </p>
-        </div>
-
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-orange-900">Due Soon</h3>
-            <AlertTriangle className="text-orange-600" size={20} />
-          </div>
-          <div className="text-3xl font-bold text-orange-700">{stats.dueWithin30Days}</div>
-          <p className="text-xs text-orange-600 mt-1">
-            Inspection due within 30 days
-          </p>
-        </div>
-
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-red-900">Overdue</h3>
-            <XCircle className="text-red-600" size={20} />
-          </div>
-          <div className="text-3xl font-bold text-red-700">{stats.overdue}</div>
-          <p className="text-xs text-red-600 mt-1">
-            Inspection overdue - action required
-          </p>
-        </div>
-      </div>
-
-      {/* Compliance by Type */}
-      <div className="bg-white rounded-2xl shadow">
-        <div className="p-6 border-b">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Flame size={20} />
-            Compliance by Extinguisher Type
-          </h2>
-        </div>
-        <div className="p-6">
-          <div className="space-y-4">
+      {/* Compliance by Type | Inspection Due Dates | Recent Inspections */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Compliance by Type */}
+        <div className="bg-white border border-brand-line rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-brand-ink mb-4">Compliance by Type</h2>
+          <div className="space-y-3">
             {Object.entries(typeBreakdown)
               .sort((a, b) => b[1].total - a[1].total)
               .map(([type, data]) => {
-                const compliancePercent = data.total > 0
-                  ? ((data.compliant / data.total) * 100).toFixed(1)
-                  : 0;
-
+                const compliancePercent = data.total > 0 ? (data.compliant / data.total) * 100 : 0;
                 return (
-                  <div key={type} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Flame className="text-blue-600" size={24} />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{type}</h3>
-                          <p className="text-sm text-gray-600">
-                            {data.total} total extinguisher{data.total !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold" style={{ color: primaryColor }}>
-                          {compliancePercent}%
-                        </div>
-                        <p className="text-xs text-gray-600">compliance</p>
-                      </div>
+                  <div key={type}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="font-medium text-brand-ink">{type}</span>
+                      <span className="text-brand-inkMuted">{compliancePercent.toFixed(0)}% · {data.compliant}/{data.total}</span>
                     </div>
-
-                    {/* Progress bar */}
-                    <div className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full transition-all duration-500"
-                        style={{
-                          width: `${compliancePercent}%`,
-                          backgroundColor: primaryColor
-                        }}
-                      />
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between text-sm">
-                      <span className="text-green-600">
-                        ✓ {data.compliant} compliant
-                      </span>
-                      {data.overdue > 0 && (
-                        <span className="text-red-600">
-                          ✗ {data.overdue} overdue
-                        </span>
-                      )}
+                    <div className="h-1.5 bg-brand-bg rounded-full overflow-hidden">
+                      <div className="h-full bg-brand-red transition-all duration-500" style={{ width: `${compliancePercent}%` }} />
                     </div>
                   </div>
                 );
               })}
+            {Object.keys(typeBreakdown).length === 0 && (
+              <div className="text-center py-6 text-sm text-brand-inkMuted">No extinguishers found yet.</div>
+            )}
           </div>
+        </div>
 
-          {Object.keys(typeBreakdown).length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              No extinguishers found. Add some to see compliance data.
-            </div>
-          )}
+        {/* Inspection Due Dates donut */}
+        <div className="bg-white border border-brand-line rounded-xl p-5 flex flex-col items-center">
+          <h2 className="text-sm font-semibold text-brand-ink self-start mb-4">Inspection Due Dates</h2>
+          <DonutChart
+            total={stats.total}
+            label="Total"
+            segments={[
+              { value: stats.compliant, color: '#1E7A4C' },
+              { value: stats.dueWithin30Days, color: '#B97A1E' },
+              { value: stats.overdue, color: '#B8121F' },
+            ]}
+          />
+          <div className="flex flex-col gap-1.5 mt-4 w-full text-xs">
+            <div className="flex items-center justify-between"><span className="flex items-center gap-1.5 text-brand-inkMuted"><span className="w-2 h-2 rounded-full bg-brand-green" />Compliant</span><span className="font-medium text-brand-ink">{stats.compliant}</span></div>
+            <div className="flex items-center justify-between"><span className="flex items-center gap-1.5 text-brand-inkMuted"><span className="w-2 h-2 rounded-full bg-brand-amber" />Due Soon</span><span className="font-medium text-brand-ink">{stats.dueWithin30Days}</span></div>
+            <div className="flex items-center justify-between"><span className="flex items-center gap-1.5 text-brand-inkMuted"><span className="w-2 h-2 rounded-full bg-brand-red" />Overdue</span><span className="font-medium text-brand-ink">{stats.overdue}</span></div>
+          </div>
+        </div>
+
+        {/* Recent Inspections */}
+        <div className="bg-white border border-brand-line rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-brand-ink mb-4">Recent Inspections</h2>
+          <div className="space-y-3">
+            {recentInspections.map((ext) => (
+              <div key={ext.id} className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-brand-ink truncate">{ext.id} · {ext.location}</div>
+                  <div className="text-xs text-brand-inkMuted">{new Date(ext.lastInspection!).toLocaleDateString('en-GB')}</div>
+                </div>
+                {extStatusBadge(ext)}
+              </div>
+            ))}
+            {recentInspections.length === 0 && (
+              <div className="text-center py-6 text-sm text-brand-inkMuted">No inspections logged yet.</div>
+            )}
+          </div>
         </div>
       </div>
 
