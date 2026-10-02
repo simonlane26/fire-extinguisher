@@ -99,6 +99,9 @@ ENV NODE_ENV=production
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 # Push notifications configured via Railway environment variables
 
+# Prerender public marketing pages for SEO (crawlers that don't execute JS)
+RUN node scripts/prerender.js
+
 # Expose port
 EXPOSE 3000
 

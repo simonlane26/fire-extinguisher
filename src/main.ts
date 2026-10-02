@@ -6,6 +6,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import * as bodyParser from 'body-parser';
 import helmet from 'helmet';
 
@@ -184,6 +185,11 @@ async function bootstrap() {
       },
     });
 
+    // Prerendered snapshots of public marketing pages (see scripts/prerender.js)
+    // — served to everyone, not just bots, so there's one code path to reason
+    // about; React mounts over the snapshot immediately for real browsers.
+    const prerenderPath = join(frontendPath, 'prerendered');
+
     // SPA fallback: serve index.html for all non-API, non-static routes
     app.use((req: any, res: any, next: any) => {
       // Skip API routes, uploads, and static assets
@@ -198,10 +204,17 @@ async function bootstrap() {
         return next();
       }
 
-      // For all other routes (SPA fallback): serve index.html with no-store
       res.setHeader('Cache-Control', 'no-store, max-age=0');
       res.setHeader('Pragma', 'no-cache');
       res.removeHeader('ETag');
+
+      const normalizedPath = req.path === '/' ? 'index' : req.path.replace(/^\/+|\/+$/g, '');
+      const snapshotFile = join(prerenderPath, `${normalizedPath}.html`);
+      if (existsSync(snapshotFile)) {
+        return res.sendFile(snapshotFile);
+      }
+
+      // Everything else (app routes, auth pages, unrecognized paths): the normal SPA shell
       return res.sendFile(join(frontendPath, 'index.html'));
     });
   }

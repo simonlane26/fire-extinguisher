@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "cd frontend && vite",
     "build": "cd frontend && vite build",
+    "prerender": "node scripts/prerender.js",
     "build:backend": "nest build",
     "preview": "vite preview --config frontend/vite.config.ts",
     "backend": "nest start --watch",
