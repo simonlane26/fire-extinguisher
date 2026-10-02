@@ -24,8 +24,8 @@ This document outlines security best practices and requirements for the Fire Ext
 1. **Replace Test Stripe Keys with Live Keys**
    ```bash
    # Current (TEST mode):
-   STRIPE_SECRET_KEY=sk_test_51SEZojGwSAqTgcz4...
-   STRIPE_PUBLISHABLE_KEY=pk_test_51SEZojGwSAqTgcz49...
+   STRIPE_SECRET_KEY=sk_test_your_test_secret_key
+   STRIPE_PUBLISHABLE_KEY=pk_test_your_test_publishable_key
 
    # Required for PRODUCTION:
    STRIPE_SECRET_KEY=sk_live_your_live_key_here
