@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppWithAuth from './AppWithAuth';
 import LandingPage from './pages/LandingPage';
 import CompareJoblogicPage from './pages/CompareJoblogicPage';
+import CompareUptickEzPage from './pages/CompareUptickEzPage';
+import CompareIndexPage from './pages/CompareIndexPage';
 import PublicVerificationPage from './pages/PublicVerificationPage';
 import SignupPage from './pages/SignupPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
@@ -21,7 +23,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes>
         {/* Public landing page */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/compare" element={<CompareIndexPage />} />
         <Route path="/compare/joblogic" element={<CompareJoblogicPage />} />
+        <Route path="/compare/uptick-ezmanagement" element={<CompareUptickEzPage />} />
 
         {/* Public routes */}
         <Route path="/verify/:id" element={<PublicVerificationPage />} />

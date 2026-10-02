@@ -48,6 +48,20 @@
 
 .fxc-landing .compare-back{font-family:var(--font-mono); font-size:13px; color:var(--ink-muted); display:inline-block; margin-bottom:20px;}
 
+.fxc-landing .compare-index-list{display:grid; grid-template-columns:repeat(2,1fr); gap:20px;}
+.fxc-landing .compare-index-card{
+  display:block; border:1px solid var(--line); border-radius:6px; padding:26px; background:var(--panel);
+  transition:transform .2s, border-color .2s;
+}
+.fxc-landing .compare-index-card:hover{transform:translateY(-3px); border-color:var(--red);}
+.fxc-landing .compare-index-title{font-family:var(--font-display); font-weight:600; font-size:19px; margin-bottom:10px; color:var(--ink);}
+.fxc-landing .compare-index-card p{font-size:14px; color:var(--ink-muted); margin-bottom:16px;}
+.fxc-landing .compare-index-arrow{font-family:var(--font-mono); font-size:12.5px; color:var(--red);}
+
+@media (max-width:640px){
+  .fxc-landing .compare-index-list{grid-template-columns:1fr;}
+}
+
 @media (max-width:640px){
   .fxc-landing .compare-hero h1{font-size:28px;}
 }

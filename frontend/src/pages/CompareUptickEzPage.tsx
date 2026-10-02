@@ -4,8 +4,8 @@ import './ComparePage.css';
 
 const FAQ = [
   {
-    q: 'Is FirexCheck a replacement for Joblogic?',
-    a: 'It depends what you need. If fire safety compliance — extinguishers, fire alarms, emergency lighting and PAT testing — is the job, FirexCheck gives you that out of the box, built around BS 5306, BS 5839-1 and BS 5266-1, with no forms to configure. If you’re already running engineers across HVAC, gas, door entry and fire & security in Joblogic and want one system for every trade, its breadth may suit you better than a fire-specific tool.',
+    q: 'Is FirexCheck a replacement for Uptick or EZ Management?',
+    a: 'For a team focused on extinguishers, fire alarms, emergency lighting and PAT, yes — FirexCheck covers that out of the box around BS 5306, BS 5839-1 and BS 5266-1, with no minimum team size. If you’re a larger fire inspection, testing and maintenance business (Uptick’s stated sweet spot is 3–50 technicians) or you need one system covering fire AND security assets like intruder panels and CCTV (EZ Management’s ezServiceHUB), their broader scope may suit you better.',
   },
   {
     q: 'Does FirexCheck support BS 5306 compliance reporting?',
@@ -17,7 +17,7 @@ const FAQ = [
   },
 ];
 
-export default function CompareJoblogicPage() {
+export default function CompareUptickEzPage() {
   const navigate = useNavigate();
   const goToSignup = () => navigate('/signup');
 
@@ -41,27 +41,28 @@ export default function CompareJoblogicPage() {
       <div className="wrap compare-hero">
         <Link className="compare-back" to="/compare">← All comparisons</Link>
         <div className="eyebrow">Compare</div>
-        <h1>FirexCheck vs Joblogic: which fits a fire safety compliance team?</h1>
+        <h1>FirexCheck vs Uptick vs EZ Management</h1>
         <p className="lede">
-          Joblogic is a well-established, general field service management platform used across trades
-          including fire &amp; security, HVAC, gas and door maintenance. FirexCheck is built for one thing:
-          fire safety compliance. Here&apos;s an honest, fact-checked look at where each one fits.
+          Uptick and EZ Management&apos;s ezServiceHUB are both real, established UK fire &amp; security compliance
+          platforms. Here&apos;s an honest, fact-checked look at how FirexCheck compares.
         </p>
       </div>
 
       <div className="wrap compare-section">
         <h2>The short version</h2>
         <p>
-          Joblogic is a broad field service management platform — job scheduling, engineer tracking,
-          invoicing and asset registers across many trades, with fire &amp; security as one of several
-          verticals it supports. FirexCheck is purpose-built specifically for UK fire safety compliance:
-          extinguishers, fire alarms, emergency lighting and PAT testing, mapped directly to BS 5306,
-          BS 5839-1 and BS 5266-1 from day one.
+          Uptick is built for fire inspection, testing and maintenance businesses running teams of 3–50
+          technicians — it explicitly isn&apos;t designed for one-person operations. EZ Management&apos;s
+          ezServiceHUB covers fire <em>and</em> security compliance together (fire alarms, intruder panels,
+          CCTV) against NSI, SSAIB and BAFE standards, with a 3-user minimum. FirexCheck is built specifically
+          around BS 5306, BS 5839-1 and BS 5266-1, works for a single-site operator or a large portfolio, and
+          has no minimum team size.
         </p>
         <p>
-          If you need one platform to run engineers across many different trades, Joblogic&apos;s breadth is
-          a real strength. If fire safety compliance is the whole job, FirexCheck gets you there without
-          configuring generic forms into a fire-specific workflow.
+          If you need fire and security handled in one system, or you&apos;re a larger technician team that
+          wants a mature, established platform, Uptick or EZ Management are reasonable choices. If you want a
+          fire-safety-specific register that scales down to a solo inspector as easily as it scales up, that&apos;s
+          where FirexCheck fits.
         </p>
       </div>
 
@@ -73,70 +74,71 @@ export default function CompareJoblogicPage() {
               <tr>
                 <th></th>
                 <th className="fxc-col">FirexCheck</th>
-                <th>Joblogic</th>
+                <th>Uptick</th>
+                <th>EZ Management (ezServiceHUB)</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>Built for</td>
-                <td className="fxc-col">Fire safety compliance specifically (BS 5306, BS 5839-1, BS 5266-1)</td>
-                <td>General field service management across many trades (HVAC, gas, door entry, fire &amp; security and more)</td>
+                <td className="fxc-col">UK fire safety compliance (BS 5306, BS 5839-1, BS 5266-1)</td>
+                <td>Fire inspection, testing &amp; maintenance businesses</td>
+                <td>Fire &amp; security compliance (NSI, SSAIB, BAFE) — alarms, intruder panels, CCTV</td>
               </tr>
               <tr>
                 <td>Pricing model</td>
                 <td className="fxc-col">Flat per-site plans from £19/month</td>
-                <td>Per-user, from £45/user/month on the Standard plan (billed annually); Premium and Enterprise are quote-based</td>
+                <td>Per-user monthly pricing</td>
+                <td>Per-user — ezLITE from €39/user/mo, ezPro from €49/user/mo (15% off with an annual contract)</td>
+              </tr>
+              <tr>
+                <td>Contract terms</td>
+                <td className="fxc-col">Month-to-month, no minimum</td>
+                <td>No lock-in contracts — monthly, cancel anytime</td>
+                <td>Monthly available; annual contract offers a discount</td>
+              </tr>
+              <tr>
+                <td>Minimum team size</td>
+                <td className="fxc-col">None — works for a solo operator</td>
+                <td>Built for 3–50 technicians; not designed for one-person operations</td>
+                <td>Minimum 3 users</td>
               </tr>
               <tr>
                 <td>Setup</td>
                 <td className="fxc-col">Self-serve signup, live the same day</td>
-                <td>Standard plan is self-serve; Premium/Enterprise get guided onboarding, which Joblogic notes may carry a fee depending on the project</td>
+                <td>Guided onboarding with data migration and training — teams typically operational within ~2 months</td>
+                <td>Not publicly specified</td>
               </tr>
               <tr>
                 <td>Mobile inspections</td>
                 <td className="fxc-col">Included, offline-capable</td>
-                <td>Included, offline-capable — both platforms offer an offline mobile app</td>
+                <td>Included (iOS/Android/iPad), offline mode</td>
+                <td>Included, supports online and offline use</td>
               </tr>
               <tr>
                 <td>QR/barcode tagging</td>
                 <td className="fxc-col">Included as standard on every extinguisher record</td>
-                <td>Included as part of its asset management tools</td>
-              </tr>
-              <tr>
-                <td>Compliance reporting</td>
-                <td className="fxc-col">One-click reports mapped directly to BS 5306 / BS 5839-1 / BS 5266-1</td>
-                <td>Configurable compliance forms — industry-standard or bespoke, built to suit whichever trade you set them up for</td>
-              </tr>
-              <tr>
-                <td>Multi-site management</td>
-                <td className="fxc-col">Built in on every plan</td>
-                <td>Site asset registers and maintenance planning across multiple customer sites</td>
-              </tr>
-              <tr>
-                <td>Support</td>
-                <td className="fxc-col">Direct email support</td>
-                <td>Phone and email support</td>
+                <td>Not publicly specified</td>
+                <td>Not publicly specified</td>
               </tr>
             </tbody>
           </table>
         </div>
         <p className="compare-source">
-          Joblogic figures and features sourced from <a href="https://www.joblogic.com/pricing/" target="_blank" rel="noopener noreferrer">joblogic.com/pricing</a> and{' '}
-          <a href="https://www.joblogic.com/en-us/features" target="_blank" rel="noopener noreferrer">joblogic.com/features</a> (September 2026). Confirm current terms directly with Joblogic before relying on them.
+          Uptick figures sourced from <a href="https://www.uptickhq.com/uk" target="_blank" rel="noopener noreferrer">uptickhq.com/uk</a>.
+          EZ Management figures sourced from third-party listings (GetApp, Capterra) referencing ezServiceHUB, plus{' '}
+          <a href="https://ezmanagement.com/asset-tracking-and-maintenance-management-software/" target="_blank" rel="noopener noreferrer">ezmanagement.com</a> (September 2026).
+          Confirm current terms directly with each vendor before relying on them.
         </p>
       </div>
 
       <div className="wrap compare-section">
-        <h2>Why teams choose FirexCheck for fire safety specifically</h2>
+        <h2>Where they might win</h2>
         <p>
-          Joblogic is a solid, capable platform if you&apos;re running a multi-trade field service operation
-          and want fire &amp; security handled inside the same system as everything else. But general-purpose
-          tools mean general-purpose forms — you configure fire compliance into it rather than getting it
-          built in.
-        </p>
-        <p>
-          FirexCheck starts from BS 5306, BS 5839-1 and BS 5266-1, not a blank form builder. If fire safety
-          compliance is the job — not one of ten trades you manage — that&apos;s the difference.
+          To be fair: if you&apos;re already a larger fire inspection and testing business, Uptick&apos;s platform
+          is built around exactly that scale, with structured onboarding to match. And if you need one system
+          covering fire safety alongside intruder alarms and CCTV rather than a fire-only tool, EZ Management&apos;s
+          broader fire-and-security scope is a genuine advantage FirexCheck doesn&apos;t try to match.
         </p>
       </div>
 
@@ -169,7 +171,6 @@ export default function CompareJoblogicPage() {
             <div>
               <div className="footer-title">Get the register set up</div>
               <div className="footer-sub">Talk to us about your sites, asset counts, and which modules you need — we&apos;ll set up your first register together.</div>
-              <div className="footer-trust">No credit card. No contracts. Cancel anytime.</div>
             </div>
             <div className="footer-actions">
               <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
@@ -177,7 +178,7 @@ export default function CompareJoblogicPage() {
             </div>
           </div>
           <div className="also-included">
-            <Link to="/compare/uptick-ezmanagement">Compare · FirexCheck vs Uptick vs EZ Management</Link>
+            <Link to="/compare/joblogic">Compare · FirexCheck vs Joblogic</Link>
           </div>
           <div className="rev">
             <span>© {new Date().getFullYear()} FirexCheck — a product of IgnisTech Ltd.</span>

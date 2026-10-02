@@ -384,7 +384,7 @@ export default function LandingPage() {
             <a className="nav-link" href="#modules2">Features</a>
             <a className="nav-link" href="#pricing">Pricing</a>
             <a className="nav-link" href="#about">About</a>
-            <Link className="nav-link" to="/compare/joblogic">Compare</Link>
+            <Link className="nav-link" to="/compare">Compare</Link>
             <button type="button" className="signin" onClick={goToSignup}>Sign In</button>
             <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
           </nav>
@@ -737,7 +737,8 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="also-included">
-            <Link to="/compare/joblogic">Compare · FirexCheck vs Joblogic</Link>
+            <Link to="/compare/joblogic">Compare · vs Joblogic</Link>
+            <Link to="/compare/uptick-ezmanagement">Compare · vs Uptick &amp; EZ Management</Link>
           </div>
           <div className="rev">
             <span>© {new Date().getFullYear()} FirexCheck — a product of IgnisTech Ltd.</span>
