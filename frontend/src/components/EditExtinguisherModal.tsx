@@ -66,7 +66,7 @@ const EditExtinguisherModal: React.FC<Props> = ({
   onClose,
   extinguisher,
   onUpdate,
-  primaryColor = '#7c3aed',
+  primaryColor = '#B8121F',
 }) => {
   const [form, setForm] = useState<Partial<Extinguisher>>({});
   const [submitting, setSubmitting] = useState(false);

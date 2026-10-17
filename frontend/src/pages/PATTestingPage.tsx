@@ -72,7 +72,7 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({ sites, onClose, o
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Plug size={18} className="text-violet-600" /> Add Appliance
+            <Plug size={18} className="text-brand-red" /> Add Appliance
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
@@ -117,7 +117,7 @@ const AddApplianceModal: React.FC<AddApplianceModalProps> = ({ sites, onClose, o
           </div>
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 border rounded-lg px-4 py-2 text-sm hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 bg-violet-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-violet-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex-1 bg-brand-red text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-brand-red-dark disabled:opacity-50">
               {saving ? 'Saving…' : 'Add Appliance'}
             </button>
           </div>
@@ -257,7 +257,7 @@ const LogTestModal: React.FC<LogTestModalProps> = ({ appliance, onClose, onSave 
 
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 border rounded-lg px-4 py-2 text-sm hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 bg-violet-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-violet-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex-1 bg-brand-red text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-brand-red-dark disabled:opacity-50">
               {saving ? 'Saving…' : 'Save Test Record'}
             </button>
           </div>
@@ -289,7 +289,7 @@ const PATComplianceCard: React.FC<{ appliances: PATAppliance[] }> = ({ appliance
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
-            <CheckCircle size={14} className="text-violet-600" /> PAT Compliance
+            <CheckCircle size={14} className="text-brand-red" /> PAT Compliance
           </h3>
           <div className="flex flex-wrap gap-3 text-sm">
             <div className="text-gray-500">Total appliances: <span className="font-semibold text-gray-800">{appliances.length}</span></div>
@@ -441,20 +441,20 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Plug size={16} className="text-violet-600" /> Appliances
+              <Plug size={16} className="text-brand-red" /> Appliances
             </h2>
             <button
               onClick={() => setShowAddAppliance(true)}
-              className="flex items-center gap-1 text-xs bg-violet-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-violet-700"
+              className="flex items-center gap-1 text-xs bg-brand-red text-white px-2.5 py-1.5 rounded-lg hover:bg-brand-red-dark"
             >
               <Plus size={13} /> Add
             </button>
           </div>
           <div className="flex items-center gap-2 mb-3">
-            <a href="/pat-import-template.csv" download className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-violet-600 border border-violet-300 rounded-lg hover:bg-violet-50">
+            <a href="/pat-import-template.csv" download className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-brand-red border border-red-300 rounded-lg hover:bg-red-50">
               <Download size={12} /> Template
             </a>
-            <button onClick={() => patImportRef.current?.click()} disabled={importing} className="flex-1 flex items-center justify-center gap-1 text-xs bg-violet-100 text-violet-700 border border-violet-300 px-2 py-1.5 rounded-lg hover:bg-violet-200 disabled:opacity-50">
+            <button onClick={() => patImportRef.current?.click()} disabled={importing} className="flex-1 flex items-center justify-center gap-1 text-xs bg-red-100 text-brand-red-dark border border-red-300 px-2 py-1.5 rounded-lg hover:bg-red-200 disabled:opacity-50">
               <Upload size={12} /> {importing ? 'Importing…' : 'Import CSV'}
             </button>
           </div>
@@ -490,14 +490,14 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
               <button
                 key={a.id}
                 onClick={() => setSelectedId(a.id)}
-                className={`w-full text-left px-4 py-3 border-b hover:bg-gray-50 flex items-start justify-between gap-2 ${selectedId === a.id ? 'bg-violet-50 border-l-2 border-l-violet-600' : ''}`}
+                className={`w-full text-left px-4 py-3 border-b hover:bg-gray-50 flex items-start justify-between gap-2 ${selectedId === a.id ? 'bg-red-50 border-l-2 border-l-brand-red' : ''}`}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={`flex-shrink-0 text-gray-400 ${selectedId === a.id ? 'text-violet-500' : ''}`}>
+                    <span className={`flex-shrink-0 text-gray-400 ${selectedId === a.id ? 'text-brand-red' : ''}`}>
                       {applianceIcon(a.description)}
                     </span>
-                    <span className="text-xs font-mono font-semibold text-violet-700">{a.applianceRef}</span>
+                    <span className="text-xs font-mono font-semibold text-brand-red-dark">{a.applianceRef}</span>
                     {a.applianceClass && <span className="text-xs text-gray-400">Class {a.applianceClass}</span>}
                   </div>
                   <p className="text-sm font-medium text-gray-900 truncate mt-0.5">{a.description}</p>
@@ -533,7 +533,7 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded">
+                  <span className="font-mono text-sm font-bold text-brand-red-dark bg-red-50 px-2 py-0.5 rounded">
                     {selectedAppliance.applianceRef}
                   </span>
                   {selectedAppliance.applianceClass && (
@@ -560,7 +560,7 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
                 {tab === 'history' && (
                   <button
                     onClick={() => setShowLogTest(true)}
-                    className="flex items-center gap-1.5 bg-violet-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-violet-700"
+                    className="flex items-center gap-1.5 bg-brand-red text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-brand-red-dark"
                   >
                     <Plus size={15} /> Log Test
                   </button>
@@ -586,7 +586,7 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
                   onClick={() => setTab(key)}
                   className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                     tab === key
-                      ? 'border-violet-600 text-violet-700'
+                      ? 'border-brand-red text-brand-red-dark'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -678,7 +678,7 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
                   <button
                     onClick={handleSaveDetails}
                     disabled={editSaving}
-                    className="bg-violet-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50"
+                    className="bg-brand-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-red-dark disabled:opacity-50"
                   >
                     {editSaving ? 'Saving…' : 'Save Changes'}
                   </button>

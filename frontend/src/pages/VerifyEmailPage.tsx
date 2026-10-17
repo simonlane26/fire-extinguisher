@@ -60,19 +60,19 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-brand-ink via-brand-red-dark to-brand-ink flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center mb-4">
-            <Flame className="text-violet-600" size={48} />
+            <Flame className="text-brand-red" size={48} />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Email Verification</h1>
-          <p className="text-sm text-violet-600 font-medium">Firexcheck.com</p>
+          <p className="text-sm text-brand-red font-medium">Firexcheck.com</p>
         </div>
 
         {status === 'verifying' && (
           <div className="text-center py-8">
-            <Loader2 className="animate-spin text-violet-600 mx-auto mb-4" size={48} />
+            <Loader2 className="animate-spin text-brand-red mx-auto mb-4" size={48} />
             <p className="text-gray-600">Verifying your email address...</p>
           </div>
         )}
@@ -85,7 +85,7 @@ export default function VerifyEmailPage() {
             <p className="text-sm text-gray-500 mb-6">Redirecting to login...</p>
             <Link
               to="/login"
-              className="inline-block bg-violet-600 text-white px-6 py-2 rounded-lg hover:bg-violet-700 transition-colors"
+              className="inline-block bg-brand-red text-white px-6 py-2 rounded-lg hover:bg-brand-red-dark transition-colors"
             >
               Go to Login
             </Link>
@@ -106,12 +106,12 @@ export default function VerifyEmailPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-600 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
                 />
                 <button
                   onClick={handleResendVerification}
                   disabled={resending || !email}
-                  className="w-full bg-violet-600 text-white py-2 rounded-lg font-medium hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-brand-red text-white py-2 rounded-lg font-medium hover:bg-brand-red-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {resending ? 'Sending...' : 'Resend Verification Email'}
                 </button>
@@ -125,7 +125,7 @@ export default function VerifyEmailPage() {
 
             <Link
               to="/login"
-              className="inline-block text-violet-600 hover:text-violet-700 font-medium"
+              className="inline-block text-brand-red hover:text-brand-red-dark font-medium"
             >
               Back to Login
             </Link>

@@ -696,7 +696,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
             disabled={isGenerating}
             className="px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50"
             style={{
-              backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#7c3aed',
+              backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#B8121F',
               color: '#ffffff'
             }}
           >
@@ -775,7 +775,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
             disabled={isGenerating || selectedExtinguishers.length === 0}
             className="px-4 py-2 text-white rounded-lg hover:opacity-90 disabled:opacity-50"
             style={{
-              backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#7c3aed',
+              backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#B8121F',
               color: '#ffffff'
             }}
           >
@@ -791,7 +791,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
                 className="h-full transition-all duration-200"
                 style={{
                   width: `${progress}%`,
-                  backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#7c3aed',
+                  backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#B8121F',
                 }}
               />
             </div>
@@ -813,7 +813,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
               </button>
               <button
                 onClick={handleDownloadPrintSheets}
-                className="flex items-center gap-2 px-4 py-2 text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+                className="flex items-center gap-2 px-4 py-2 text-white bg-brand-red rounded-lg hover:bg-brand-red-dark"
               >
                 <FileImage size={18} /> Print Sheets (A4)
               </button>
@@ -841,7 +841,7 @@ const QrCodesPage: React.FC<QrCodesPageProps> = ({ primaryColor, buildingFilter 
                   onClick={() => handleDownloadSingle(qr)}
                   className="w-full px-3 py-1 text-sm text-white rounded hover:opacity-90"
                   style={{
-                    backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#7c3aed',
+                    backgroundColor: primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#B8121F',
                     color: '#ffffff'
                   }}
                 >

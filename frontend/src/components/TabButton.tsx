@@ -8,10 +8,10 @@ interface TabButtonProps {
 }
 
 const TabButton: React.FC<TabButtonProps> = ({ active, onClick, children, primaryColor }) => {
-  // Fallback to purple if primaryColor is white or invalid
+  // Fallback to brand red if primaryColor is white or invalid
   const safeColor = primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white'
     ? primaryColor
-    : '#7c3aed';
+    : '#B8121F';
 
   return (
     <button

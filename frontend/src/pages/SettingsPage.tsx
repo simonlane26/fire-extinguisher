@@ -51,7 +51,7 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant, userRole }) => {
   // track last blob URL so we can revoke it
   const lastBlobUrlRef = useRef<string | null>(null);
 
-  const headerPreviewBg = useMemo(() => primary || '#7c3aed', [primary]);
+  const headerPreviewBg = useMemo(() => primary || '#B8121F', [primary]);
 
   useEffect(() => {
     // cleanup old blob URL when logo changes
@@ -318,7 +318,7 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant, userRole }) => {
                 value={primary}
                 onChange={(e) => setPrimary(e.target.value)}
                 className="px-2 py-1 font-mono text-sm border border-gray-300 rounded-lg w-36"
-                placeholder="#7c3aed"
+                placeholder="#B8121F"
               />
             </div>
             <input
@@ -339,7 +339,7 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant, userRole }) => {
                 value={secondary}
                 onChange={(e) => setSecondary(e.target.value)}
                 className="px-2 py-1 font-mono text-sm border border-gray-300 rounded-lg w-36"
-                placeholder="#5b21b6"
+                placeholder="#8A0D17"
               />
             </div>
             <input

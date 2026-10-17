@@ -65,7 +65,7 @@ const PlatformAdminPage: React.FC = () => {
       trial: 'bg-gray-100 text-gray-700',
       starter: 'bg-blue-100 text-blue-700',
       professional: 'bg-indigo-100 text-indigo-700',
-      enterprise: 'bg-purple-100 text-purple-700',
+      enterprise: 'bg-red-100 text-brand-red-dark',
     };
     return colours[plan] ?? 'bg-gray-100 text-gray-700';
   };

@@ -329,14 +329,14 @@ const BulkQuoteCreatePage: React.FC = () => {
                   <div className="flex flex-wrap gap-2 mb-4">
                     <button
                       onClick={() => addLine(group.extinguisher.id, false)}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-white bg-violet-600 rounded-lg hover:bg-violet-700"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-white bg-brand-red rounded-lg hover:bg-brand-red-dark"
                     >
                       <Plus size={16} />
                       Add Part
                     </button>
                     <button
                       onClick={() => addLine(group.extinguisher.id, true)}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-violet-700 bg-violet-100 rounded-lg hover:bg-violet-200"
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-brand-red-dark bg-red-100 rounded-lg hover:bg-red-200"
                     >
                       <Plus size={16} />
                       Add Labour
@@ -565,7 +565,7 @@ const BulkQuoteCreatePage: React.FC = () => {
                 </div>
                 <div className="flex justify-between pt-3 border-t">
                   <span className="font-semibold">Total</span>
-                  <span className="text-xl font-bold text-violet-600">£{totalAmount.toFixed(2)}</span>
+                  <span className="text-xl font-bold text-brand-red">£{totalAmount.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -576,7 +576,7 @@ const BulkQuoteCreatePage: React.FC = () => {
                 <button
                   onClick={() => handleSave(false)}
                   disabled={saving || allLines.length === 0}
-                  className="flex items-center justify-center w-full gap-2 px-4 py-3 text-white bg-violet-600 rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center w-full gap-2 px-4 py-3 text-white bg-brand-red rounded-lg hover:bg-brand-red-dark disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save size={18} />
                   {saving ? 'Saving...' : 'Save as Draft'}
@@ -584,7 +584,7 @@ const BulkQuoteCreatePage: React.FC = () => {
                 <button
                   onClick={() => handleSave(true)}
                   disabled={saving || allLines.length === 0}
-                  className="flex items-center justify-center w-full gap-2 px-4 py-3 text-violet-700 bg-violet-100 rounded-lg hover:bg-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center w-full gap-2 px-4 py-3 text-brand-red-dark bg-red-100 rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send size={18} />
                   Save & Send to Customer

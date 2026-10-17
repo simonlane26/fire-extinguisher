@@ -88,7 +88,7 @@ function typeBg(t: ExtType): string {
     Water:          'bg-blue-100 text-blue-700',
     Foam:           'bg-teal-100 text-teal-700',
     Powder:         'bg-yellow-100 text-yellow-700',
-    'Wet Chemical': 'bg-purple-100 text-purple-700',
+    'Wet Chemical': 'bg-red-100 text-brand-red-dark',
   };
   return m[t] || 'bg-gray-100 text-gray-600';
 }
@@ -223,7 +223,7 @@ const WelcomeStep: React.FC<{ onStart: () => void; onDemo: () => void }> = ({ on
       {[
         { icon: Building2, title: 'Add Sites',      desc: 'Set up your locations',        color: 'text-blue-600 bg-blue-50'   },
         { icon: Shield,    title: 'Track Assets',   desc: 'Manage all extinguishers',     color: 'text-green-600 bg-green-50' },
-        { icon: QrCode,    title: 'Generate QR',    desc: 'Print & scan codes',           color: 'text-violet-600 bg-violet-50'},
+        { icon: QrCode,    title: 'Generate QR',    desc: 'Print & scan codes',           color: 'text-brand-red bg-red-50'},
       ].map(f => (
         <div key={f.title} className="p-5 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <div className={`w-10 h-10 rounded-lg ${f.color} flex items-center justify-center mx-auto mb-3`}>
@@ -571,8 +571,8 @@ const QRCodesStep: React.FC<{ count: number; generated: boolean; onGenerate: () 
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-          <QrCode className="w-5 h-5 text-violet-600" />
+        <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+          <QrCode className="w-5 h-5 text-brand-red" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-gray-900 tracking-tight">Generate QR Codes</h2>
@@ -623,7 +623,7 @@ const QRCodesStep: React.FC<{ count: number; generated: boolean; onGenerate: () 
             <h3 className="text-lg font-bold text-gray-900 mb-1">{count} QR Codes Ready!</h3>
             <p className="text-sm text-gray-500 mb-6">Find them in the QR Codes tab after completing setup</p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <span className="inline-flex items-center gap-2 px-6 py-2.5 bg-violet-100 text-violet-700 rounded-xl text-sm font-semibold">
+              <span className="inline-flex items-center gap-2 px-6 py-2.5 bg-red-100 text-brand-red-dark rounded-xl text-sm font-semibold">
                 <QrCode className="w-4 h-4" /> Available in QR Codes tab
               </span>
             </div>

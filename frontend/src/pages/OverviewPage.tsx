@@ -328,7 +328,7 @@ const OverviewPage: React.FC = () => {
             type="button"
             onClick={handleImportClick}
             disabled={importing}
-            className="flex items-center gap-2 px-4 py-2 text-white bg-purple-600 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 text-white bg-brand-red rounded hover:bg-brand-red-dark disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Upload size={16} />
             {importing ? 'Importing...' : 'Import CSV'}

@@ -239,7 +239,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
     return 'bg-gray-100 text-gray-800';
   };
 
-  const safeColor = primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#7c3aed';
+  const safeColor = primaryColor && primaryColor !== '#ffffff' && primaryColor !== '#fff' && primaryColor !== 'white' ? primaryColor : '#B8121F';
 
   return (
     <div className="space-y-6">

@@ -58,7 +58,7 @@ const Section: React.FC<{ title: string; className?: string; children?: React.Re
   </section>
 );
 
-const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColor = '#7c3aed', onEdit, onDelete }) => {
+const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColor = '#B8121F', onEdit, onDelete }) => {
   const [loadingReport, setLoadingReport] = useState<string | null>(null);
   const [photos, setPhotos] = useState<InspectionPhoto[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -161,7 +161,7 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
     primaryColor === '#FFF' ||
     primaryColor.match(/^rgba?\(255,\s*255,\s*255/);
 
-  const effectiveColor = isWhitePrimary ? '#7c3aed' : primaryColor;
+  const effectiveColor = isWhitePrimary ? '#B8121F' : primaryColor;
 
   const handleAuthError = (error: any) => {
     const msg = error?.message || '';
@@ -354,7 +354,7 @@ const ExtinguisherDetails: React.FC<Props> = ({ open, onClose, data, primaryColo
           </Section>
 
           {/* Reports */}
-          <Section title="Generate Reports" className="bg-purple-50">
+          <Section title="Generate Reports" className="bg-red-50">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <button
                 onClick={handleGenerateHistory}

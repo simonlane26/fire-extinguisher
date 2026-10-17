@@ -111,8 +111,8 @@ export function BulkQuoteDialog({ isOpen, onClose, onCreateQuote }: BulkQuoteDia
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-violet-100 rounded-lg">
-              <FileText className="w-5 h-5 text-violet-600" />
+            <div className="p-2 bg-red-100 rounded-lg">
+              <FileText className="w-5 h-5 text-brand-red" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Generate Bulk Quote</h2>
@@ -133,7 +133,7 @@ export function BulkQuoteDialog({ isOpen, onClose, onCreateQuote }: BulkQuoteDia
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-brand-red" />
               <span className="ml-3 text-gray-600">Loading filter options...</span>
             </div>
           ) : error && !showPreview ? (
@@ -183,7 +183,7 @@ export function BulkQuoteDialog({ isOpen, onClose, onCreateQuote }: BulkQuoteDia
                     <select
                       value={selectedSite}
                       onChange={(e) => setSelectedSite(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-red focus:border-brand-red"
                     >
                       <option value="">All Sites</option>
                       {availableSites.map(site => (
@@ -202,7 +202,7 @@ export function BulkQuoteDialog({ isOpen, onClose, onCreateQuote }: BulkQuoteDia
                     <select
                       value={selectedBuilding}
                       onChange={(e) => setSelectedBuilding(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-red focus:border-brand-red"
                     >
                       <option value="">All Buildings</option>
                       {availableBuildings.map(building => (
@@ -245,7 +245,7 @@ export function BulkQuoteDialog({ isOpen, onClose, onCreateQuote }: BulkQuoteDia
                 </h3>
                 <button
                   onClick={() => setShowPreview(false)}
-                  className="text-sm text-violet-600 hover:text-violet-700"
+                  className="text-sm text-brand-red hover:text-brand-red-dark"
                 >
                   Back to Filters
                 </button>
@@ -312,7 +312,7 @@ export function BulkQuoteDialog({ isOpen, onClose, onCreateQuote }: BulkQuoteDia
             <button
               onClick={loadPreview}
               disabled={loading || totalAvailable === 0 || selectedConditions.length === 0 || loadingPreview}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-brand-red text-white rounded-lg hover:bg-brand-red-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loadingPreview ? (
                 <>
@@ -330,7 +330,7 @@ export function BulkQuoteDialog({ isOpen, onClose, onCreateQuote }: BulkQuoteDia
             <button
               onClick={handleCreateQuote}
               disabled={previewExtinguishers.length === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-brand-red text-white rounded-lg hover:bg-brand-red-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FileText className="w-4 h-4" />
               Create Quote ({previewExtinguishers.length} items)

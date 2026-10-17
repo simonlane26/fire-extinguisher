@@ -40,10 +40,10 @@ function chipStyle(type: EventType, dateStr: string): string {
   if (diff <= 7) return 'bg-orange-100 text-orange-700 hover:bg-orange-200';
   if (diff <= 30) return 'bg-amber-100 text-amber-700 hover:bg-amber-200';
   if (type === 'fire_alarm')  return 'bg-rose-100 text-rose-700 hover:bg-rose-200';
-  if (type === 'pat_test')    return 'bg-violet-100 text-violet-700 hover:bg-violet-200';
+  if (type === 'pat_test')    return 'bg-red-100 text-brand-red-dark hover:bg-red-200';
   if (type === 'el_test')     return 'bg-amber-100 text-amber-700 hover:bg-amber-200';
   if (type === 'inspection')  return 'bg-blue-100 text-blue-700 hover:bg-blue-200';
-  if (type === 'maintenance') return 'bg-purple-100 text-purple-700 hover:bg-purple-200';
+  if (type === 'maintenance') return 'bg-teal-100 text-teal-700 hover:bg-teal-200';
   return 'bg-gray-100 text-gray-600 hover:bg-gray-200';
 }
 
@@ -56,10 +56,10 @@ function badgeStyle(type: EventType, dateStr: string): string {
   if (diff <= 7) return 'bg-orange-100 text-orange-700';
   if (diff <= 30) return 'bg-amber-100 text-amber-700';
   if (type === 'fire_alarm')  return 'bg-rose-100 text-rose-700';
-  if (type === 'pat_test')    return 'bg-violet-100 text-violet-700';
+  if (type === 'pat_test')    return 'bg-red-100 text-brand-red-dark';
   if (type === 'el_test')     return 'bg-amber-100 text-amber-700';
   if (type === 'inspection')  return 'bg-blue-100 text-blue-700';
-  if (type === 'maintenance') return 'bg-purple-100 text-purple-700';
+  if (type === 'maintenance') return 'bg-teal-100 text-teal-700';
   return 'bg-gray-100 text-gray-600';
 }
 
@@ -416,9 +416,9 @@ const CalendarPage: React.FC<{
           { label: 'Due ≤ 7 days',      cls: 'bg-orange-100 border-orange-300' },
           { label: 'Due ≤ 30 days',     cls: 'bg-amber-100 border-amber-300' },
           { label: 'Inspection',        cls: 'bg-blue-100 border-blue-300' },
-          { label: 'Maintenance',       cls: 'bg-purple-100 border-purple-300' },
+          { label: 'Maintenance',       cls: 'bg-teal-100 border-teal-300' },
           ...(fireAlarmEnabled ? [{ label: 'Fire Alarm Test', cls: 'bg-rose-100 border-rose-300' }] : []),
-          ...(patTestingEnabled ? [{ label: 'PAT Test Due', cls: 'bg-violet-100 border-violet-300' }] : []),
+          ...(patTestingEnabled ? [{ label: 'PAT Test Due', cls: 'bg-red-100 border-red-300' }] : []),
           ...(emergencyLightingEnabled ? [{ label: 'EL Test Due', cls: 'bg-amber-100 border-amber-300' }] : []),
         ].map(({ label, cls }) => (
           <div key={label} className="flex items-center gap-1.5">

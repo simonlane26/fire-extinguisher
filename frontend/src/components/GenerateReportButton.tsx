@@ -12,7 +12,7 @@ type Props = {
 
 const GenerateReportButton: React.FC<Props> = ({
   tenantId,
-  primaryColor = '#7c3aed',
+  primaryColor = '#B8121F',
   jobIds = [],
   photoIds = [],
   technicianName,

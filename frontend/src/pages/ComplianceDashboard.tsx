@@ -92,7 +92,7 @@ type BuildingBreakdown = {
   };
 };
 
-const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#7c3aed', onNavigate, fireAlarmEnabled = false, onNavigateFireAlarm, patTestingEnabled = false, onNavigatePATTesting, emergencyLightingEnabled = false, onNavigateEmergencyLighting }) => {
+const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavigate, fireAlarmEnabled = false, onNavigateFireAlarm, patTestingEnabled = false, onNavigatePATTesting, emergencyLightingEnabled = false, onNavigateEmergencyLighting }) => {
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([]);
   const [loading, setLoading] = useState(true);
   const [faSystemStatuses, setFaSystemStatuses] = useState<FireAlarmSystemStatus[]>([]);
@@ -397,8 +397,8 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#7c3aed', onNavi
                   <div key={building} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Building2 className="text-purple-600" size={24} />
+                        <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                          <Building2 className="text-brand-red" size={24} />
                         </div>
                         <div>
                           <h3 className="font-semibold text-gray-900">{building}</h3>
@@ -711,7 +711,7 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#7c3aed', onNavi
                       <tbody>
                         {attention.map(a => (
                           <tr key={a.id} className="border-b last:border-0 hover:bg-gray-50">
-                            <td className="px-4 py-2 font-mono text-xs text-violet-700 font-semibold">{a.applianceRef}</td>
+                            <td className="px-4 py-2 font-mono text-xs text-brand-red-dark font-semibold">{a.applianceRef}</td>
                             <td className="px-4 py-2">{a.description}</td>
                             <td className="px-4 py-2 text-gray-500">{a.location}</td>
                             <td className="px-4 py-2 text-gray-500">{a.site?.name ?? '—'}</td>

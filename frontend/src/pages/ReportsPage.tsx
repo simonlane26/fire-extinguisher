@@ -44,7 +44,7 @@ const FIRE_ALARM_DATE_RANGES = [
 ];
 
 const ReportsPage: React.FC<Props> = ({
-  primaryColor = '#7c3aed',
+  primaryColor = '#B8121F',
   buildingFilter = 'all',
   typeFilter = 'all',
   statusFilter = 'all',

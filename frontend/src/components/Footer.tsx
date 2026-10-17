@@ -4,7 +4,7 @@ interface FooterProps {
   primaryColor?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ primaryColor = '#7c3aed' }) => {
+const Footer: React.FC<FooterProps> = ({ primaryColor = '#B8121F' }) => {
   const currentYear = new Date().getFullYear();
 
   return (

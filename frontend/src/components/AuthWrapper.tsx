@@ -106,7 +106,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-violet-500 border-t-transparent"></div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-brand-red border-t-transparent"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>

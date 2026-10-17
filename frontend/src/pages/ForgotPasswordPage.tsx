@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-brand-ink via-brand-red-dark to-brand-ink flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
           </p>
           <Link
             to="/login"
-            className="inline-block bg-violet-600 text-white px-6 py-2 rounded-lg hover:bg-violet-700 transition-colors"
+            className="inline-block bg-brand-red text-white px-6 py-2 rounded-lg hover:bg-brand-red-dark transition-colors"
           >
             Back to Login
           </Link>
@@ -52,15 +52,15 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-brand-ink via-brand-red-dark to-brand-ink flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <Flame className="text-violet-600" size={48} />
+            <Flame className="text-brand-red" size={48} />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Reset Password</h1>
           <p className="text-gray-600">Enter your email to receive reset instructions</p>
-          <p className="text-sm text-violet-600 font-medium mt-1">Firexcheck.com</p>
+          <p className="text-sm text-brand-red font-medium mt-1">Firexcheck.com</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-600 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
               placeholder="your.email@company.com"
             />
           </div>
@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-violet-600 text-white py-3 rounded-lg font-medium hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-brand-red text-white py-3 rounded-lg font-medium hover:bg-brand-red-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Sending...' : 'Send Reset Link'}
           </button>
@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
         <div className="mt-6 text-center">
           <Link
             to="/login"
-            className="inline-flex items-center text-violet-600 hover:text-violet-700 font-medium text-sm"
+            className="inline-flex items-center text-brand-red hover:text-brand-red-dark font-medium text-sm"
           >
             <ArrowLeft size={16} className="mr-1" />
             Back to Login
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
         <div className="mt-6 pt-6 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-violet-600 hover:text-violet-700 font-medium">
+            <Link to="/signup" className="text-brand-red hover:text-brand-red-dark font-medium">
               Sign up
             </Link>
           </p>

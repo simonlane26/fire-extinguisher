@@ -70,7 +70,7 @@ const SERVICE_TYPES = [
 const SimpleInspectionForm: React.FC<Props> = ({
   onClose,
   onSave,
-  primaryColor = '#7c3aed',
+  primaryColor = '#B8121F',
   siteId,
   siteName,
 }) => {

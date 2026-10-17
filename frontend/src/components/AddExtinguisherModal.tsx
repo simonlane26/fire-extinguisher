@@ -76,7 +76,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
   open,
   onClose,
   onCreate,
-  primaryColor = '#7c3aed',
+  primaryColor = '#B8121F',
 }) => {
   const today = useMemo(() => new Date(), []);
   const todayISO = useMemo(() => iso(today), [today]);

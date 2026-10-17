@@ -87,7 +87,7 @@ export default function HelpPage() {
     },
     {
       title: 'Sites & Locations',
-      icon: <Building2 className="w-6 h-6 text-purple-500" />,
+      icon: <Building2 className="w-6 h-6 text-brand-red" />,
       description: 'Organize extinguishers by sites and buildings.',
       features: [
         'Create multiple sites (client locations)',
@@ -277,7 +277,7 @@ export default function HelpPage() {
               },
               {
                 role: 'Inspector',
-                badge: 'bg-purple-100 text-purple-700',
+                badge: 'bg-indigo-100 text-indigo-700',
                 desc: 'Can view assets, perform inspections, and log test results. Cannot access reports, billing, settings, or users.',
               },
               {
@@ -868,8 +868,8 @@ export default function HelpPage() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <Settings className="w-6 h-6 text-purple-600" />
+                <div className="p-3 bg-indigo-100 rounded-lg">
+                  <Settings className="w-6 h-6 text-indigo-600" />
                 </div>
                 <div>
                   <h3 className="mb-1 font-semibold text-gray-900">Account Issues</h3>

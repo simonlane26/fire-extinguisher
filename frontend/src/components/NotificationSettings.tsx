@@ -111,7 +111,7 @@ export default function NotificationSettings() {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           {subscribed ? (
-            <Bell className="h-6 w-6 text-purple-600" />
+            <Bell className="h-6 w-6 text-brand-red" />
           ) : (
             <BellOff className="h-6 w-6 text-gray-400" />
           )}
@@ -210,7 +210,7 @@ export default function NotificationSettings() {
           <button
             onClick={handleEnableNotifications}
             disabled={loading || permission === 'denied'}
-            className="flex-1 flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 flex items-center justify-center px-4 py-2 bg-brand-red text-white rounded-lg hover:bg-brand-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Bell className="h-5 w-5 mr-2" />
             {loading ? 'Enabling...' : 'Enable Notifications'}

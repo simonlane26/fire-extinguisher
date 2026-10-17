@@ -93,8 +93,8 @@ const MOCK_TENANTS: Record<string, Tenant> = {
     companyName: 'Demo Company',
     subdomain: 'demo',
     logoUrl: null,
-    primaryColor: '#7c3aed',
-    secondaryColor: '#5b21b6',
+    primaryColor: '#B8121F',
+    secondaryColor: '#8A0D17',
     subscriptionPlan: 'trial',
     subscriptionStatus: 'trial',
     createdAt: '2024-12-01',
@@ -912,7 +912,7 @@ useEffect(() => {
               </span>
             }
             icon={<Crown className="size-6" />}
-            bg={planLimit.used >= planLimit.limit ? 'bg-gradient-to-br from-red-600 to-red-500' : planLimit.used >= planLimit.limit * 0.8 ? 'bg-gradient-to-br from-amber-600 to-amber-500' : 'bg-gradient-to-br from-violet-600 to-violet-500'}
+            bg={planLimit.used >= planLimit.limit ? 'bg-gradient-to-br from-red-600 to-red-500' : planLimit.used >= planLimit.limit * 0.8 ? 'bg-gradient-to-br from-amber-600 to-amber-500' : 'bg-gradient-to-br from-sky-600 to-sky-500'}
             hint={
               <HintTooltip
                 storageKey="kpi_monthly_inspections"

@@ -119,7 +119,7 @@ export default function AddUserModal({
                 primaryColor !== '#FFF' &&
                 !primaryColor.match(/^rgba?\(255,\s*255,\s*255/)
                   ? primaryColor
-                  : '#7c3aed',
+                  : '#B8121F',
               color: '#ffffff'
             }}
           >

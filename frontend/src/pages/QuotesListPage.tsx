@@ -157,7 +157,7 @@ const QuotesListPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowBulkQuoteDialog(true)}
-            className="flex items-center gap-2 px-4 py-2 text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-white bg-brand-red rounded-lg hover:bg-brand-red-dark transition-colors"
           >
             <Layers size={18} />
             Generate Bulk Quote
@@ -224,7 +224,7 @@ const QuotesListPage: React.FC = () => {
                       {quote.isBulkQuote ? (
                         <div>
                           <div className="font-medium text-gray-900 flex items-center gap-2">
-                            <Layers size={16} className="text-violet-500" />
+                            <Layers size={16} className="text-brand-red" />
                             Bulk Quote
                           </div>
                           <div className="text-sm text-gray-500">

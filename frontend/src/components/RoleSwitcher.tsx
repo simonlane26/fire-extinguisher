@@ -43,7 +43,7 @@ const RoleSwitcher: React.FC<Props> = ({ open, onClose, currentRole, roles, onSe
                 key={roleKey}
                 onClick={() => onSelect(roleKey)}
                 className={`w-full rounded-lg border p-4 text-left transition-colors ${
-                  isCurrent ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:bg-gray-50'
+                  isCurrent ? 'border-brand-red bg-red-50' : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -51,7 +51,7 @@ const RoleSwitcher: React.FC<Props> = ({ open, onClose, currentRole, roles, onSe
                     <div className="font-medium">{role?.name ?? roleKey}</div>
                     <div className="text-sm text-gray-500">{role?.description ?? '—'}</div>
                   </div>
-                  {isCurrent && <span className="text-sm font-medium text-violet-600">Current</span>}
+                  {isCurrent && <span className="text-sm font-medium text-brand-red">Current</span>}
                 </div>
               </button>
             );
