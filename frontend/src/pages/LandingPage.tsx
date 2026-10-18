@@ -811,6 +811,14 @@ export default function LandingPage() {
           </div>
           <div className="rev">
             <span>© {new Date().getFullYear()} FirexCheck — a product of IgnisTech Ltd.</span>
+            <a
+              className="rev-badge"
+              href="https://www.vibecheck.it.com/verified/cmurcnja90004gsrkon1jufl7"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img src="/vibechecked-badge.png" alt="Vibechecked — verified by vibecheck.it.com" width="110" height="40" />
+            </a>
             <span>Rev {new Date().getFullYear()}.{String(new Date().getMonth() + 1).padStart(2, '0')} · Cheshire, UK</span>
           </div>
         </div>
