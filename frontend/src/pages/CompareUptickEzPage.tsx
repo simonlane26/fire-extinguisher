@@ -158,7 +158,7 @@ export default function CompareUptickEzPage() {
         <div className="compare-faq">
           {FAQ.map((item) => (
             <div className="faq-item" key={item.q}>
-              <div className="faq-q">{item.q}</div>
+              <h3 className="faq-q">{item.q}</h3>
               <div className="faq-a">{item.a}</div>
             </div>
           ))}

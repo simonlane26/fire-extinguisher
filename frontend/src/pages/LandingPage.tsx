@@ -673,9 +673,9 @@ export default function LandingPage() {
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: 600, marginBottom: '8px' }}>Extend the register as your sites grow</h2>
         <p style={{ color: 'var(--ink-muted)', fontSize: '14px' }}>Add specialist modules to your plan — each priced and built to meet its own standard.</p>
         <div className="module-row">
-          <div className="module-tag reveal"><div className="module-std">BS 5839-1</div><h4>Fire Alarm Logbook</h4><div className="module-price">+£12<span>/mo excl. VAT</span></div></div>
-          <div className="module-tag reveal"><div className="module-std">BS 5266-1</div><h4>Emergency Lighting</h4><div className="module-price">+£12<span>/mo excl. VAT</span></div></div>
-          <div className="module-tag reveal"><div className="module-std">IET COP</div><h4>PAT Testing</h4><div className="module-price">+£15<span>/mo excl. VAT</span></div></div>
+          <div className="module-tag reveal"><div className="module-std">BS 5839-1</div><h3>Fire Alarm Logbook</h3><div className="module-price">+£12<span>/mo excl. VAT</span></div></div>
+          <div className="module-tag reveal"><div className="module-std">BS 5266-1</div><h3>Emergency Lighting</h3><div className="module-price">+£12<span>/mo excl. VAT</span></div></div>
+          <div className="module-tag reveal"><div className="module-std">IET COP</div><h3>PAT Testing</h3><div className="module-price">+£15<span>/mo excl. VAT</span></div></div>
         </div>
       </div>
 
@@ -724,9 +724,9 @@ export default function LandingPage() {
           <h2>Fire safety professionals, not generalists</h2>
         </div>
         <div className="persona-row">
-          <div className="persona reveal"><div className="pnum">01</div><h4>Facilities Managers</h4><p>Manage fire safety compliance across all your buildings and asset types with ease.</p></div>
-          <div className="persona reveal"><div className="pnum">02</div><h4>Fire Safety Contractors</h4><p>Streamline inspections, generate client reports, and provide a better service.</p></div>
-          <div className="persona reveal"><div className="pnum">03</div><h4>Compliance Teams</h4><p>Maintain audit-ready records across extinguishers, alarms, lighting, and PAT — never miss a deadline.</p></div>
+          <div className="persona reveal"><div className="pnum">01</div><h3>Facilities Managers</h3><p>Manage fire safety compliance across all your buildings and asset types with ease.</p></div>
+          <div className="persona reveal"><div className="pnum">02</div><h3>Fire Safety Contractors</h3><p>Streamline inspections, generate client reports, and provide a better service.</p></div>
+          <div className="persona reveal"><div className="pnum">03</div><h3>Compliance Teams</h3><p>Maintain audit-ready records across extinguishers, alarms, lighting, and PAT — never miss a deadline.</p></div>
         </div>
       </div>
 

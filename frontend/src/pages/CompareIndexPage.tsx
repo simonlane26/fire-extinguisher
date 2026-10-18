@@ -47,7 +47,7 @@ export default function CompareIndexPage() {
         <div className="compare-index-list">
           {COMPARISONS.map((c) => (
             <Link className="compare-index-card" to={c.to} key={c.to}>
-              <div className="compare-index-title">{c.title}</div>
+              <h2 className="compare-index-title">{c.title}</h2>
               <p>{c.desc}</p>
               <span className="compare-index-arrow">Read comparison →</span>
             </Link>
