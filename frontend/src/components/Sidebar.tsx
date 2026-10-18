@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   Flame, TrendingUp, Building2, Package, FileText, CalendarDays, BarChart3,
   BellRing, Plug, Lightbulb, QrCode, Users as UsersIcon, Crown,
-  Settings as SettingsIcon, HelpCircle, ShieldCheck,
+  Settings as SettingsIcon, HelpCircle, ShieldCheck, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import type { Tenant, PermissionKey } from '../types';
+import './Sidebar.css';
 
 export type ActiveTab =
   | 'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing'
@@ -30,7 +31,30 @@ type Props = {
   isPlatformAdmin?: boolean;
 };
 
+const COLLAPSE_KEY = 'fxc_sidebar_collapsed';
+
 const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab, tenant, hasPermission, isPlatformAdmin }) => {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(COLLAPSE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const navId = useId();
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0');
+      } catch {
+        // localStorage unavailable — collapse state just won't persist
+      }
+      return next;
+    });
+  };
+
   const groups: NavGroup[] = [
     {
       label: 'Register',
@@ -70,50 +94,108 @@ const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab, tenant, hasPermissi
     ...(isPlatformAdmin ? [{ tab: 'platform-admin' as ActiveTab, label: 'Platform', icon: ShieldCheck }] : []),
   ];
 
-  const renderItem = (item: NavItem) => {
+  // Flattened in visual order, for arrow-key roving focus across groups + footer
+  const flatItems: NavItem[] = [...groups.flatMap((g) => g.items), ...bottomItems];
+  const activeInFooter = bottomItems.some((i) => i.tab === activeTab);
+
+  const rowRefs = useRef<Map<ActiveTab, HTMLButtonElement>>(new Map());
+  const navBarRef = useRef<HTMLDivElement>(null);
+  const navListRef = useRef<HTMLDivElement>(null);
+  const footerBarRef = useRef<HTMLDivElement>(null);
+  const footerListRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const row = rowRefs.current.get(activeTab);
+    if (!row) return;
+    const target = activeInFooter ? footerBarRef.current : navBarRef.current;
+    if (target) {
+      target.style.setProperty('--y', `${row.offsetTop}px`);
+    }
+  }, [activeTab, collapsed, activeInFooter]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const dir = e.key === 'ArrowDown' ? 1 : -1;
+    const nextIdx = (idx + dir + flatItems.length) % flatItems.length;
+    rowRefs.current.get(flatItems[nextIdx].tab)?.focus();
+  };
+
+  const renderItem = (item: NavItem, idx: number) => {
     const Icon = item.icon;
     const active = activeTab === item.tab;
     return (
       <button
         key={item.tab}
+        ref={(el) => {
+          if (el) rowRefs.current.set(item.tab, el);
+        }}
         type="button"
+        aria-current={active ? 'page' : undefined}
+        title={collapsed ? item.label : undefined}
         onClick={() => setActiveTab(item.tab)}
-        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-          active
-            ? 'bg-brand-red text-white'
-            : 'text-gray-300 hover:bg-white/5 hover:text-white'
-        }`}
+        onKeyDown={(e) => handleKeyDown(e, idx)}
+        className="sb-row"
       >
-        <Icon size={17} className="shrink-0" />
-        <span className="truncate">{item.label}</span>
+        <span className="sb-icon"><Icon size={17} /></span>
+        <span className="sb-label">{item.label}</span>
       </button>
     );
   };
 
+  let flatIdx = -1;
+
   return (
-    <aside className="hidden md:flex md:flex-col w-60 shrink-0 bg-brand-ink h-screen sticky top-0 overflow-y-auto">
-      <div className="flex items-center gap-2 px-5 py-5">
-        <div className="w-8 h-8 rounded-md bg-brand-red flex items-center justify-center shrink-0">
-          <Flame size={18} className="text-white" />
-        </div>
-        <span className="font-display font-semibold text-white text-[15px] tracking-tight">FirexCheck</span>
-      </div>
-
-      <nav className="flex-1 px-3 space-y-5 pb-4">
-        {groups.map((group) => (
-          <div key={group.label}>
-            <div className="px-3 mb-1.5 font-mono text-[10px] uppercase tracking-wider text-gray-500">
-              {group.label}
-            </div>
-            <div className="space-y-0.5">{group.items.map(renderItem)}</div>
+    <div className="sb-wrap hidden md:flex">
+      <aside className="sb" data-collapsed={collapsed}>
+        <div className="flex items-center gap-2 px-5 py-5 sb-header">
+          <div className="w-8 h-8 rounded-md bg-brand-red flex items-center justify-center shrink-0">
+            <Flame size={18} className="text-white" />
           </div>
-        ))}
-      </nav>
+          <span className="sb-title font-display font-semibold text-white text-[15px] tracking-tight">FirexCheck</span>
+        </div>
 
-      <div className="px-3 pb-4 space-y-0.5 border-t border-white/10 pt-3">
-        {bottomItems.map(renderItem)}
-      </div>
-    </aside>
+        <div className="sb-scroll" id={navId}>
+          <div className="sb-list" ref={navListRef}>
+            <div className="sb-bar" ref={navBarRef} style={{ opacity: activeInFooter ? 0 : 1 }} aria-hidden="true" />
+            {groups.map((group) => (
+              <div key={group.label} className="sb-group">
+                <div className="sb-group-label">{group.label}</div>
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    flatIdx++;
+                    return renderItem(item, flatIdx);
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="sb-footer">
+          <div className="sb-list" ref={footerListRef}>
+            <div className="sb-bar" ref={footerBarRef} style={{ opacity: activeInFooter ? 1 : 0 }} aria-hidden="true" />
+            <div className="space-y-0.5">
+              {bottomItems.map((item) => {
+                flatIdx++;
+                return renderItem(item, flatIdx);
+              })}
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <button
+        type="button"
+        className="sb-toggle"
+        aria-expanded={!collapsed}
+        aria-controls={navId}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        onClick={toggleCollapsed}
+      >
+        {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+      </button>
+    </div>
   );
 };
 
