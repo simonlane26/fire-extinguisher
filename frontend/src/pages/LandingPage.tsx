@@ -25,6 +25,41 @@ const STD_DATA = [
   },
 ];
 
+const FAQ_DATA = [
+  {
+    q: 'What is fire extinguisher inspection software?',
+    a: "Fire extinguisher inspection software replaces paper checklists and spreadsheets with a digital system for tracking inspections, maintenance schedules, and compliance records across one site or hundreds. FireXCheck lets inspectors log checks from a phone or tablet, auto-generates reminders before extinguishers fall out of compliance, and keeps a timestamped audit trail ready for fire marshals or insurance audits.",
+  },
+  {
+    q: 'Who needs fire extinguisher inspection software?',
+    a: "Anyone responsible for proving fire equipment is compliant: facilities managers overseeing one or more buildings, fire safety contractors managing inspections across several sites, and compliance teams who need audit-ready records on demand. If you're currently tracking inspections in Excel or on paper tags, you're the target user.",
+  },
+  {
+    q: 'How often should fire extinguishers be inspected?',
+    a: 'Most jurisdictions require a monthly visual inspection and an annual maintenance check per NFPA 10. Some extinguisher types also need hydrostatic testing every 5-12 years depending on the unit. FireXCheck tracks all three cycles automatically per extinguisher, so nothing gets missed because someone forgot a spreadsheet formula.',
+  },
+  {
+    q: "What's the difference between a visual inspection and annual maintenance?",
+    a: 'A visual inspection confirms the extinguisher is present, accessible, charged, and undamaged — fast checks done monthly. Annual maintenance is a deeper mechanical check, often requiring a certified technician to verify internal components. FireXCheck separates these workflows so your team logs the right level of detail for each visit, not a one-size-fits-all checklist.',
+  },
+  {
+    q: 'Can fire extinguisher inspection software replace paper tags?',
+    a: "Digital inspection software doesn't eliminate the physical tag requirement in most jurisdictions, but it does eliminate the paperwork behind it. FireXCheck generates a digital record every time someone logs a check — so if a tag gets lost or a tag-puncher runs dry, you still have proof of compliance.",
+  },
+  {
+    q: 'How does fire extinguisher inspection software help with compliance audits?',
+    a: 'Instead of digging through binders when a fire marshal shows up, you pull a report in seconds. FireXCheck keeps every inspection, deficiency, and repair logged with a date and inspector name attached — so you can hand over a clean audit trail instead of scrambling.',
+  },
+  {
+    q: 'Is fire extinguisher inspection software only for large facilities?',
+    a: 'No — it scales down just as well as up. A single-building facilities manager with 20 extinguishers gets the same reminder-and-record benefits as a larger operation managing thousands of units across dozens of sites. FireXCheck pricing and setup are built to work for both.',
+  },
+  {
+    q: 'How much does fire extinguisher inspection software cost?',
+    a: "Pricing depends on the number of extinguishers and sites you're managing — see the plans above, or start a free trial and set it up for your own sites in minutes.",
+  },
+];
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -722,6 +757,40 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
+
+      <div className="wrap" id="faq">
+        <div className="section-head reveal">
+          <div className="eyebrow">FAQ</div>
+          <h2>Frequently asked questions</h2>
+          <p>Everything you need to know before switching from paper or spreadsheets.</p>
+        </div>
+        <div className="faq-list">
+          {FAQ_DATA.map((item) => (
+            <div className="faq-item reveal" key={item.q}>
+              <h3>{item.q}</h3>
+              <p>{item.a}</p>
+            </div>
+          ))}
+        </div>
+        <div className="faq-cta reveal">
+          <p>Still have questions?</p>
+          <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
+        </div>
+      </div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: FAQ_DATA.map((item) => ({
+              '@type': 'Question',
+              name: item.q,
+              acceptedAnswer: { '@type': 'Answer', text: item.a },
+            })),
+          }),
+        }}
+      />
 
       <footer id="about">
         <div className="wrap">

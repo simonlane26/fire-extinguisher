@@ -241,6 +241,14 @@
 .fxc-landing .price-list li{font-size:13.5px; color:var(--ink); display:flex; gap:8px; align-items:flex-start;}
 .fxc-landing .price-list li::before{content:'✓'; color:var(--ink-faint);}
 
+.fxc-landing .faq-list{display:flex; flex-direction:column; margin:30px 0 50px;}
+.fxc-landing .faq-item{padding:26px 0; border-bottom:1px solid var(--line);}
+.fxc-landing .faq-item:first-child{border-top:1px solid var(--line);}
+.fxc-landing .faq-item h3{font-family:var(--font-display); font-size:17px; font-weight:600; margin-bottom:8px; color:var(--ink);}
+.fxc-landing .faq-item p{font-size:14.5px; color:var(--ink-muted); max-width:720px; line-height:1.6;}
+.fxc-landing .faq-cta{display:flex; align-items:center; gap:16px; margin:0 0 90px; flex-wrap:wrap;}
+.fxc-landing .faq-cta p{font-family:var(--font-display); font-size:16px; font-weight:600; margin:0; color:var(--ink);}
+
 .fxc-landing footer{border-top:1px solid var(--line); padding:44px 0 30px;}
 .fxc-landing .footer-inner{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:20px;}
 .fxc-landing .footer-title{font-family:var(--font-display); font-size:20px; font-weight:600; margin-bottom:6px;}
