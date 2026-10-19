@@ -1645,6 +1645,44 @@ export async function fdDeleteInspection(id: string) {
   return res.json();
 }
 
+export async function fdUploadPhoto(params: {
+  file: File;
+  doorId: string;
+  inspectionId?: string;
+  caption?: string;
+}) {
+  const formData = new FormData();
+  formData.append('file', params.file);
+  if (params.inspectionId) formData.append('inspectionId', params.inspectionId);
+  if (params.caption) formData.append('caption', params.caption);
+
+  const res = await fetch(`${API_BASE}/fire-doors/doors/${params.doorId}/photos`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: formData,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to upload photo (${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+export async function fdGetPhotos(doorId: string) {
+  const res = await fetch(`${API_BASE}/fire-doors/doors/${doorId}/photos`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch photos');
+  return res.json();
+}
+
+export async function fdDeletePhoto(photoId: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE}/fire-doors/photos/${photoId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete photo');
+  return res.json();
+}
+
 export async function importFireDoorsCsv(file: File): Promise<{ success: boolean; imported: number; errors: number; details?: any[] }> {
   const formData = new FormData();
   formData.append('file', file);

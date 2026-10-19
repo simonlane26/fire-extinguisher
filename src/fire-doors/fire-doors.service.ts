@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../storage/s3.service';
+import sharp from 'sharp';
 
 const COMMUNAL_DOOR_TYPES = ['communal_stairway', 'communal_corridor', 'communal_lobby'];
 
@@ -9,7 +11,12 @@ function frequencyForDoorType(doorType: string): number {
 
 @Injectable()
 export class FireDoorsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(FireDoorsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   // ─── Doors ───────────────────────────────────────────────────────────────────
 
@@ -289,6 +296,117 @@ export class FireDoorsService {
     }
     fields.push(current);
     return fields;
+  }
+
+  // ─── Photos ──────────────────────────────────────────────────────────────────
+
+  async uploadPhoto(
+    tenantId: string,
+    userId: string,
+    doorId: string,
+    file: Express.Multer.File,
+    inspectionId?: string,
+    caption?: string,
+  ) {
+    await this.assertDoorOwner(tenantId, doorId);
+
+    const compressedBuffer = await this.compressImage(file.buffer, file.mimetype);
+
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(7);
+    const ext = file.mimetype === 'image/png' ? 'png' : 'jpg';
+    const key = `fire-door-photos/${tenantId}/${doorId}/${timestamp}-${randomString}.${ext}`;
+
+    let imageUrl: string;
+    if (this.s3Service.configured) {
+      imageUrl = await this.s3Service.upload(key, compressedBuffer, `image/${ext}`);
+      this.logger.log('Fire door photo uploaded to S3');
+    } else {
+      imageUrl = `data:image/${ext};base64,${compressedBuffer.toString('base64')}`;
+      this.logger.log('S3 not configured — storing fire door photo as inline data URL');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+
+    const photo = await (this.prisma.fireDoorPhoto as any).create({
+      data: {
+        tenantId,
+        doorId,
+        inspectionId: inspectionId || null,
+        url: imageUrl,
+        caption: caption || null,
+        uploadedBy: user?.name || user?.email || 'Unknown',
+      },
+    });
+
+    if (this.s3Service.configured && !photo.url.startsWith('data:')) {
+      const s3Key = this.s3Service.extractKey(photo.url);
+      if (s3Key) {
+        try {
+          const signedUrl = await this.s3Service.presign(s3Key);
+          return { ...photo, url: signedUrl };
+        } catch {
+          // fall through to return plain URL
+        }
+      }
+    }
+    return photo;
+  }
+
+  async getPhotos(tenantId: string, doorId: string) {
+    await this.assertDoorOwner(tenantId, doorId);
+
+    const photos = await (this.prisma.fireDoorPhoto as any).findMany({
+      where: { tenantId, doorId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (this.s3Service.configured) {
+      return Promise.all(
+        photos.map(async (photo: any) => {
+          if (photo.url.startsWith('data:')) return photo;
+          const s3Key = this.s3Service.extractKey(photo.url);
+          if (!s3Key) return photo;
+          try {
+            const signedUrl = await this.s3Service.presign(s3Key);
+            return { ...photo, url: signedUrl };
+          } catch {
+            return photo;
+          }
+        }),
+      );
+    }
+
+    return photos;
+  }
+
+  async deletePhoto(tenantId: string, photoId: string) {
+    const photo = await (this.prisma.fireDoorPhoto as any).findFirst({ where: { id: photoId, tenantId } });
+    if (!photo) throw new NotFoundException('Photo not found');
+    await (this.prisma.fireDoorPhoto as any).delete({ where: { id: photoId, tenantId } });
+    return { success: true, message: 'Photo deleted successfully' };
+  }
+
+  private async compressImage(buffer: Buffer, mimeType: string): Promise<Buffer> {
+    try {
+      let image = sharp(buffer);
+      const metadata = await image.metadata();
+
+      if (metadata.width && metadata.width > 1920) {
+        image = image.resize(1920, null, { fit: 'inside', withoutEnlargement: true });
+      }
+
+      if (mimeType === 'image/png') {
+        return image.png({ quality: 80, compressionLevel: 9 }).toBuffer();
+      }
+      return image.jpeg({ quality: 85, progressive: true }).toBuffer();
+    } catch (error) {
+      this.logger.error(`Image compression failed: ${error.message}`);
+      return buffer;
+    }
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────

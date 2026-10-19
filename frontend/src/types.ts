@@ -388,3 +388,14 @@ export type FireDoorInspection = {
   nextInspectionDate?: string | null;
   createdAt: string;
 };
+
+export type FireDoorPhoto = {
+  id: string;
+  tenantId: string;
+  doorId: string;
+  inspectionId?: string | null;
+  url: string;
+  caption?: string | null;
+  uploadedBy?: string | null;
+  createdAt: string;
+};

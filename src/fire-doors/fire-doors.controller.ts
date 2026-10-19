@@ -76,4 +76,42 @@ export class FireDoorsController {
   deleteInspection(@CurrentUser() user: CurrentUserData, @Param('id') id: string) {
     return this.service.deleteInspection(user.tenantId, id);
   }
+
+  // ─── Photos ──────────────────────────────────────────────────────────────────
+
+  @Post('doors/:id/photos')
+  @UseInterceptors(FileInterceptor('file', {
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, callback) => {
+      const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        return callback(new BadRequestException('Invalid file type. Only JPEG, PNG, and WebP images are allowed.'), false);
+      }
+      const ext = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+      if (!['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
+        return callback(new BadRequestException('Invalid file extension. Only .jpg, .jpeg, .png, and .webp files are allowed.'), false);
+      }
+      callback(null, true);
+    },
+  }))
+  async uploadPhoto(
+    @CurrentUser() user: CurrentUserData,
+    @Param('id') doorId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('inspectionId') inspectionId?: string,
+    @Body('caption') caption?: string,
+  ) {
+    if (!file) throw new BadRequestException('No file uploaded');
+    return this.service.uploadPhoto(user.tenantId, user.id, doorId, file, inspectionId, caption);
+  }
+
+  @Get('doors/:id/photos')
+  getPhotos(@CurrentUser() user: CurrentUserData, @Param('id') id: string) {
+    return this.service.getPhotos(user.tenantId, id);
+  }
+
+  @Delete('photos/:photoId')
+  deletePhoto(@CurrentUser() user: CurrentUserData, @Param('photoId') photoId: string) {
+    return this.service.deletePhoto(user.tenantId, photoId);
+  }
 }

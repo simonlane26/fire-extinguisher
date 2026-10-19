@@ -50,6 +50,7 @@ model Tenant {
   emergencyLightTests     EmergencyLightTest[]
   fireDoors               FireDoor[]
   fireDoorInspections     FireDoorInspection[]
+  fireDoorPhotos          FireDoorPhoto[]
 
   @@index([subdomain])
   @@index([stripeCustomerId])
@@ -628,6 +629,7 @@ model FireDoor {
   tenant                    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   site                      Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
   inspections                FireDoorInspection[]
+  photos                     FireDoorPhoto[]
 
   @@index([tenantId])
   @@index([siteId])
@@ -669,8 +671,28 @@ model FireDoorInspection {
   createdAt              DateTime  @default(now())
   tenant                 Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   door                   FireDoor  @relation(fields: [doorId], references: [id], onDelete: Cascade)
+  photos                 FireDoorPhoto[]
 
   @@index([tenantId])
   @@index([doorId])
   @@map("FireDoorInspection")
+}
+
+model FireDoorPhoto {
+  id           String              @id @default(cuid())
+  tenantId     String
+  doorId       String
+  inspectionId String?
+  url          String
+  caption      String?
+  uploadedBy   String?
+  createdAt    DateTime            @default(now())
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  door         FireDoor            @relation(fields: [doorId], references: [id], onDelete: Cascade)
+  inspection   FireDoorInspection? @relation(fields: [inspectionId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([doorId])
+  @@index([inspectionId])
+  @@map("FireDoorPhoto")
 }

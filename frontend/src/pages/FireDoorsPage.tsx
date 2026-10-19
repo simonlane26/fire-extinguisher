@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Plus, Trash2, ClipboardList, Settings, AlertTriangle, CheckCircle,
-  Clock, DoorClosed, X, ChevronRight, Upload, Download,
+  Clock, DoorClosed, X, ChevronRight, Upload, Download, Camera,
 } from 'lucide-react';
 import {
   fdGetDoors, fdCreateDoor, fdUpdateDoor, fdDeleteDoor,
-  fdGetInspections, fdCreateInspection, fdDeleteInspection, fetchSites, importFireDoorsCsv,
+  fdGetInspections, fdCreateInspection, fdDeleteInspection,
+  fdGetPhotos, fdUploadPhoto, fetchSites, importFireDoorsCsv,
 } from '../lib/api';
-import type { FireDoor, FireDoorInspection, FireDoorType, Site } from '../types';
+import type { FireDoor, FireDoorInspection, FireDoorPhoto, FireDoorType, Site } from '../types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -220,7 +221,7 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ sites, onClose, onSave }) =
 interface LogInspectionModalProps {
   door: FireDoor;
   onClose: () => void;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<{ id: string }>;
 }
 
 const CORE_CHECKS: { key: keyof typeof CORE_DEFAULTS; label: string; defaultGood: boolean }[] = [
@@ -269,7 +270,26 @@ const LogInspectionModal: React.FC<LogInspectionModalProps> = ({ door, onClose, 
     nextInspectionDate: '',
   });
   const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const accessDenied = form.accessDenied as boolean;
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (photoInputRef.current) photoInputRef.current.value = '';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -298,7 +318,19 @@ const LogInspectionModal: React.FC<LogInspectionModalProps> = ({ door, onClose, 
         if (form.remedialAction) payload.remedialAction = form.remedialAction;
         if (form.outcome !== 'pass') payload.actionPriority = form.actionPriority;
       }
-      await onSave(payload);
+      const inspection = await onSave(payload);
+      if (photoFile) {
+        setUploadingPhoto(true);
+        try {
+          await fdUploadPhoto({ file: photoFile, doorId: door.id, inspectionId: inspection.id });
+        } catch (err) {
+          alert(`Inspection saved, but the photo failed to upload: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        } finally {
+          setUploadingPhoto(false);
+        }
+      }
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
+      onClose();
     } finally { setSaving(false); }
   };
 
@@ -448,10 +480,43 @@ const LogInspectionModal: React.FC<LogInspectionModalProps> = ({ door, onClose, 
               value={form.comments as string} onChange={e => setForm(f => ({ ...f, comments: e.target.value }))} />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePhotoSelect}
+              className="hidden"
+            />
+            {photoPreview ? (
+              <div className="relative inline-block">
+                <img src={photoPreview} alt="Door photo preview" className="w-28 h-28 object-cover rounded-lg border" />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute -top-2 -right-2 bg-white border rounded-full p-0.5 text-gray-500 hover:text-red-600 shadow"
+                  title="Remove photo"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-50"
+              >
+                <Camera size={14} /> Take Photo
+              </button>
+            )}
+          </div>
+
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
             <button type="submit" disabled={saving} className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50">
-              {saving ? 'Saving…' : 'Log Inspection'}
+              {uploadingPhoto ? 'Uploading photo…' : saving ? 'Saving…' : 'Log Inspection'}
             </button>
           </div>
         </form>
@@ -466,6 +531,7 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
   const [sites, setSites] = useState<Site[]>([]);
   const [doors, setDoors] = useState<FireDoor[]>([]);
   const [inspections, setInspections] = useState<FireDoorInspection[]>([]);
+  const [photos, setPhotos] = useState<FireDoorPhoto[]>([]);
   const [selectedDoor, setSelectedDoor] = useState<FireDoor | null>(null);
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'history' | 'details'>('history');
@@ -495,6 +561,7 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
             setDetailForm(match);
             setLoadingInspections(true);
             fdGetInspections(match.id).then(setInspections).catch(() => setInspections([])).finally(() => setLoadingInspections(false));
+            fdGetPhotos(match.id).then(setPhotos).catch(() => setPhotos([]));
           }
         }
       })
@@ -510,6 +577,7 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
     setActiveTab('history');
     setLoadingInspections(true);
     fdGetInspections(door.id).then(setInspections).catch(() => setInspections([])).finally(() => setLoadingInspections(false));
+    fdGetPhotos(door.id).then(setPhotos).catch(() => setPhotos([]));
   };
 
   const handleAddDoor = async (data: Record<string, unknown>) => {
@@ -519,12 +587,18 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
   };
 
   const handleLogInspection = async (data: Record<string, unknown>) => {
-    if (!selectedDoor) return;
-    await fdCreateInspection(selectedDoor.id, data);
-    setShowLogModal(false);
+    if (!selectedDoor) throw new Error('No door selected');
+    const inspection = await fdCreateInspection(selectedDoor.id, data);
     setLoadingInspections(true);
     fdGetInspections(selectedDoor.id).then(setInspections).finally(() => setLoadingInspections(false));
     loadDoors();
+    return inspection;
+  };
+
+  const closeLogModal = () => {
+    setShowLogModal(false);
+    // Re-fetch in case a photo finished uploading after the inspection was saved
+    if (selectedDoor) fdGetPhotos(selectedDoor.id).then(setPhotos).catch(() => {});
   };
 
   const handleDeleteInspection = async (id: string) => {
@@ -758,6 +832,15 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
                                     </>
                                   )}
                                   {insp.comments && <p className="mt-1 text-xs text-gray-400">{insp.comments}</p>}
+                                  {photos.filter(p => p.inspectionId === insp.id).length > 0 && (
+                                    <div className="flex gap-1.5 mt-2">
+                                      {photos.filter(p => p.inspectionId === insp.id).map(p => (
+                                        <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer">
+                                          <img src={p.url} alt="Inspection photo" className="w-12 h-12 object-cover rounded border hover:opacity-80" />
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               <button
@@ -850,7 +933,7 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
         <AddDoorModal sites={sites} onClose={() => setShowAddModal(false)} onSave={handleAddDoor} />
       )}
       {showLogModal && selectedDoor && (
-        <LogInspectionModal door={selectedDoor} onClose={() => setShowLogModal(false)} onSave={handleLogInspection} />
+        <LogInspectionModal door={selectedDoor} onClose={closeLogModal} onSave={handleLogInspection} />
       )}
       </div>
     </div>
