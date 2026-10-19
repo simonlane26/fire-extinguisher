@@ -50,17 +50,14 @@ export const STRIPE_PRICE_IDS = {
   addon_fire_alarm:          'price_1TTkDZGRZTmazyiYbtWgLBXq',
   addon_emergency_lighting:  'price_1TTkEUGRZTmazyiYKgNAdH2R',
   addon_pat_testing:         'price_1TTkFEGRZTmazyiYFj04zTP9',
-  // TODO: replace with a real Stripe Price ID once created in the dashboard —
-  // this placeholder will not work until then.
-  addon_fire_doors:          'price_FIRE_DOORS_PLACEHOLDER',
+  addon_fire_doors:          'price_1USGG6GRZTmazyiYe4lnPC5U',
 };
 
 export const ADDON_PRICE_MODULE_MAP: Record<string, 'fireAlarmEnabled' | 'emergencyLightingEnabled' | 'patTestingEnabled' | 'fireDoorsEnabled'> = {
   'price_1TTkDZGRZTmazyiYbtWgLBXq': 'fireAlarmEnabled',
   'price_1TTkEUGRZTmazyiYKgNAdH2R': 'emergencyLightingEnabled',
   'price_1TTkFEGRZTmazyiYFj04zTP9': 'patTestingEnabled',
-  // TODO: replace with the real Stripe Price ID once created
-  'price_FIRE_DOORS_PLACEHOLDER': 'fireDoorsEnabled',
+  'price_1USGG6GRZTmazyiYe4lnPC5U': 'fireDoorsEnabled',
 };
 
 @Injectable()

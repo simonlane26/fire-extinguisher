@@ -174,8 +174,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
     'fire-alarm':          'price_1TTkDZGRZTmazyiYbtWgLBXq',
     'emergency-lighting':  'price_1TTkEUGRZTmazyiYKgNAdH2R',
     'pat-testing':         'price_1TTkFEGRZTmazyiYFj04zTP9',
-    // TODO: replace with the real Stripe Price ID once created
-    'fire-doors':          'price_FIRE_DOORS_PLACEHOLDER',
+    'fire-doors':          'price_1USGG6GRZTmazyiYe4lnPC5U',
   };
 
   const handleAddOn = async (module: string) => {
