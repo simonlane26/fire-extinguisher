@@ -2,47 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertTriangle, XCircle, Flame, Building2, Wrench, ArrowRight, BellRing, Plug, Lightbulb, DoorClosed } from 'lucide-react';
 import { fetchExtinguishers, faGetSystems, faGetLogEntries, patGetAppliances, elGetLuminaires, fdGetDoors } from '../lib/api';
 import type { Extinguisher, FireAlarmSystem, FireAlarmLogEntry, PATAppliance, EmergencyLuminaire, FireDoor } from '../types';
-
-// ─── Donut chart (hand-rolled — no charting library in this project) ──────────
-const DonutChart: React.FC<{ segments: { value: number; color: string }[]; total: number; label: string }> = ({ segments, total, label }) => {
-  const size = 136;
-  const strokeWidth = 16;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  let offsetSoFar = 0;
-
-  return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#E3DDD1" strokeWidth={strokeWidth} />
-        {total > 0 && segments.map((seg, i) => {
-          if (seg.value === 0) return null;
-          const fraction = seg.value / total;
-          const segLength = fraction * circumference;
-          const circle = (
-            <circle
-              key={i}
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="none"
-              stroke={seg.color}
-              strokeWidth={strokeWidth}
-              strokeDasharray={`${segLength} ${circumference - segLength}`}
-              strokeDashoffset={-offsetSoFar}
-            />
-          );
-          offsetSoFar += segLength;
-          return circle;
-        })}
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-2xl font-bold text-brand-ink">{total}</div>
-        <div className="text-[10px] text-brand-inkMuted text-center leading-tight">{label}</div>
-      </div>
-    </div>
-  );
-};
+import ComplianceRing from '../components/ComplianceRing';
 
 type FireAlarmSystemStatus = {
   system: FireAlarmSystem;
@@ -353,9 +313,9 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavi
         {/* Inspection Due Dates donut */}
         <div className="bg-white border border-brand-line rounded-xl p-5 flex flex-col items-center">
           <h2 className="text-sm font-semibold text-brand-ink self-start mb-4">Inspection Due Dates</h2>
-          <DonutChart
+          <ComplianceRing
             total={stats.total}
-            label="Total"
+            centerLabel={<><div className="text-2xl font-bold">{stats.total}</div><div className="text-[10px] text-brand-inkMuted text-center leading-tight">Total</div></>}
             segments={[
               { value: stats.compliant, color: '#1E7A4C' },
               { value: stats.dueWithin30Days, color: '#B97A1E' },

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Plus, Trash2, ClipboardList, Settings, AlertTriangle, CheckCircle,
-  Clock, DoorClosed, X, ChevronRight, Upload, Download, Camera,
+  Clock, DoorClosed, X, ChevronRight, Upload, Download, Camera, Search,
 } from 'lucide-react';
 import {
   fdGetDoors, fdCreateDoor, fdUpdateDoor, fdDeleteDoor,
@@ -9,6 +9,7 @@ import {
   fdGetPhotos, fdUploadPhoto, fetchSites, importFireDoorsCsv,
 } from '../lib/api';
 import type { FireDoor, FireDoorInspection, FireDoorPhoto, FireDoorType, Site } from '../types';
+import ComplianceRing from '../components/ComplianceRing';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -52,42 +53,61 @@ function fdStatus(door: FireDoor): { label: string; cls: string; icon: React.Rea
   return { label: 'Compliant', cls: 'bg-green-100 text-green-700', icon: <CheckCircle size={12} /> };
 }
 
-// ─── Compliance Card ──────────────────────────────────────────────────────────
+// Simplified 3-way bucket for the list row's left status stripe and the
+// compliance ring segments — collapses the two "needs action" labels
+// (Non Compliant / Requires Attention) into "attention" for that purpose.
+function fdStatusKey(door: FireDoor): 'compliant' | 'attention' | 'overdue' {
+  const label = fdStatus(door).label;
+  if (label === 'Overdue') return 'overdue';
+  if (label === 'Compliant') return 'compliant';
+  return 'attention';
+}
+
+const STRIPE_CLS: Record<string, string> = {
+  compliant: 'bg-green-500',
+  attention: 'bg-amber-500',
+  overdue: 'bg-red-500',
+};
+
+// ─── Compliance strip ─────────────────────────────────────────────────────────
 
 const FDComplianceCard: React.FC<{ doors: FireDoor[] }> = ({ doors }) => {
-  const getStatus = (d: FireDoor) => fdStatus(d).label;
-  const total      = doors.length;
-  const nonCompliant = doors.filter(d => getStatus(d) === 'Non Compliant' || getStatus(d) === 'Requires Attention').length;
-  const compliant  = doors.filter(d => getStatus(d) === 'Compliant').length;
-  const dueSoon    = doors.filter(d => getStatus(d) === 'Due Soon').length;
-  const overdue    = doors.filter(d => getStatus(d) === 'Overdue').length;
-
-  const nextDue = doors
-    .filter(d => d.nextInspectionDue && new Date(d.nextInspectionDue).getTime() > Date.now())
-    .sort((a, b) => new Date(a.nextInspectionDue!).getTime() - new Date(b.nextInspectionDue!).getTime())[0];
+  const total     = doors.length;
+  const compliant = doors.filter(d => fdStatusKey(d) === 'compliant').length;
+  const attention = doors.filter(d => fdStatusKey(d) === 'attention').length;
+  const overdue   = doors.filter(d => fdStatusKey(d) === 'overdue').length;
+  const pct = total > 0 ? Math.round((compliant / total) * 100) : 0;
 
   return (
-    <div className="bg-white border-b px-6 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="flex items-center gap-5 bg-white border border-brand-line rounded-xl px-5 py-4 mb-5">
+      <ComplianceRing
+        size={56}
+        strokeWidth={5}
+        total={total}
+        centerLabel={<span className="text-[15px] font-bold">{pct}%</span>}
+        segments={[
+          { value: compliant, color: '#16A34A' },
+          { value: attention, color: '#D97706' },
+          { value: overdue, color: '#DC2626' },
+        ]}
+      />
+      <div className="flex flex-wrap gap-6">
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
-            <CheckCircle size={14} className="text-amber-600" /> Fire Door Compliance
-          </h3>
-          <div className="flex flex-wrap gap-3 text-sm">
-            <div className="text-gray-500">Total doors: <span className="font-semibold text-gray-800">{total}</span></div>
-            <div className="flex items-center gap-1.5 text-green-700"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />Compliant: <span className="font-semibold">{compliant}</span></div>
-            {dueSoon > 0 && <div className="flex items-center gap-1.5 text-amber-700"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />Due Soon: <span className="font-semibold">{dueSoon}</span></div>}
-            {overdue > 0 && <div className="flex items-center gap-1.5 text-red-700"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />Overdue: <span className="font-semibold">{overdue}</span></div>}
-            {nonCompliant > 0 && <div className="flex items-center gap-1.5 text-orange-800"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />Needs Action: <span className="font-semibold">{nonCompliant}</span></div>}
-          </div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{total}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1">Total doors</div>
         </div>
-        {nextDue && (
-          <div className="text-sm text-gray-500 bg-gray-50 border rounded-lg px-3 py-2 min-w-[150px]">
-            <div className="text-xs text-gray-400 mb-0.5">Next Inspection Due</div>
-            <div className="font-semibold text-gray-800">{fmt(nextDue.nextInspectionDue)}</div>
-            <div className="text-xs text-gray-400 truncate max-w-[140px]">{nextDue.doorRef}</div>
-          </div>
-        )}
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{compliant}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-600 inline-block" />Compliant</div>
+        </div>
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{attention}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-600 inline-block" />Needs attention</div>
+        </div>
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{overdue}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block" />Overdue</div>
+        </div>
       </div>
     </div>
   );
@@ -130,7 +150,7 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ sites, onClose, onSave }) =
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <DoorClosed size={18} className="text-amber-500" /> Add Fire Door
+            <DoorClosed size={18} className="text-brand-red" /> Add Fire Door
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
@@ -206,7 +226,7 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ sites, onClose, onSave }) =
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex-1 px-4 py-2 bg-brand-red text-white rounded-lg text-sm font-medium hover:bg-brand-red-dark disabled:opacity-50">
               {saving ? 'Saving…' : 'Add Door'}
             </button>
           </div>
@@ -339,11 +359,11 @@ const LogInspectionModal: React.FC<LogInspectionModalProps> = ({ door, onClose, 
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <ClipboardList size={18} className="text-amber-600" /> Log Inspection
+            <ClipboardList size={18} className="text-brand-red" /> Log Inspection
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
-        <div className="px-5 py-3 bg-amber-50 border-b text-sm text-amber-800">
+        <div className="px-5 py-3 bg-brand-red-tint border-b border-brand-line text-sm text-brand-red-dark">
           <span className="font-medium">{door.doorRef}</span> — {door.location}
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
@@ -506,7 +526,7 @@ const LogInspectionModal: React.FC<LogInspectionModalProps> = ({ door, onClose, 
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-50"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm text-brand-red border border-brand-line rounded-lg hover:bg-brand-red-tint"
               >
                 <Camera size={14} /> Take Photo
               </button>
@@ -515,7 +535,7 @@ const LogInspectionModal: React.FC<LogInspectionModalProps> = ({ door, onClose, 
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={saving} className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex-1 px-4 py-2 bg-brand-red text-white rounded-lg text-sm font-medium hover:bg-brand-red-dark disabled:opacity-50">
               {uploadingPhoto ? 'Uploading photo…' : saving ? 'Saving…' : 'Log Inspection'}
             </button>
           </div>
@@ -534,6 +554,7 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
   const [photos, setPhotos] = useState<FireDoorPhoto[]>([]);
   const [selectedDoor, setSelectedDoor] = useState<FireDoor | null>(null);
   const [siteFilter, setSiteFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'history' | 'details'>('history');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
@@ -643,31 +664,35 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
     }
   };
 
-  return (
-    <div className="flex flex-col h-full min-h-screen bg-gray-50">
-      {!loading && doors.length > 0 && <FDComplianceCard doors={doors} />}
+  const filteredDoors = doors.filter(d => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    return d.doorRef.toLowerCase().includes(q) || d.location.toLowerCase().includes(q) || (d.site?.name ?? '').toLowerCase().includes(q);
+  });
 
-      <div className="flex flex-1 overflow-hidden">
-      {/* Left panel */}
-      <div className="w-72 shrink-0 border-r bg-white flex flex-col">
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-              <DoorClosed size={16} className="text-amber-500" /> Fire Doors
-            </h1>
+  return (
+    <div className="flex h-full min-h-screen bg-brand-bg">
+      {/* List panel */}
+      <aside className="w-80 shrink-0 border-r border-brand-line bg-white flex flex-col">
+        <div className="p-4 border-b border-brand-line">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <span className="text-[13px] font-semibold text-brand-ink">Fire Doors</span>
+              <span className="text-xs text-brand-ink-muted"> · {doors.length} door{doors.length === 1 ? '' : 's'}</span>
+            </div>
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1 text-xs bg-amber-600 text-white px-2.5 py-1.5 rounded-lg hover:bg-amber-700"
+              className="flex items-center gap-1 text-xs font-medium bg-brand-red text-white px-2.5 py-1.5 rounded-lg hover:bg-brand-red-dark"
               title="Add Door"
             >
               <Plus size={13} /> Add
             </button>
           </div>
           <div className="flex items-center gap-2 mb-3">
-            <a href="/fire-door-import-template.csv" download className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-amber-600 border border-amber-300 rounded-lg hover:bg-amber-50">
+            <a href="/fire-door-import-template.csv" download className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-brand-ink-muted border border-brand-line rounded-lg hover:border-brand-ink-faint">
               <Download size={12} /> Template
             </a>
-            <button onClick={() => fdImportRef.current?.click()} disabled={fdImporting} className="flex-1 flex items-center justify-center gap-1 text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-1.5 rounded-lg hover:bg-amber-200 disabled:opacity-50">
+            <button onClick={() => fdImportRef.current?.click()} disabled={fdImporting} className="flex-1 flex items-center justify-center gap-1 text-xs font-medium text-brand-ink-muted border border-brand-line rounded-lg px-2 py-1.5 hover:border-brand-ink-faint disabled:opacity-50">
               <Upload size={12} /> {fdImporting ? 'Importing…' : 'Import CSV'}
             </button>
           </div>
@@ -681,174 +706,195 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
             title="Site filter"
             value={siteFilter}
             onChange={e => setSiteFilter(e.target.value)}
-            className="w-full border rounded-lg px-2 py-1.5 text-sm text-gray-700"
+            className="w-full border border-brand-line rounded-lg px-2 py-1.5 text-sm text-brand-ink mb-2"
           >
             <option value="all">All Sites</option>
             {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-brand-ink-faint" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search doors…"
+              className="w-full border border-brand-line rounded-lg pl-8 pr-3 py-1.5 text-sm text-brand-ink outline-none focus:border-brand-red"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-4 text-sm text-gray-400 text-center">Loading…</div>
-          ) : doors.length === 0 ? (
-            <div className="p-6 text-center text-sm text-gray-400">
-              <DoorClosed size={32} className="mx-auto mb-2 text-gray-300" />
-              No fire doors registered
+            <div className="p-4 text-sm text-brand-ink-muted text-center">Loading…</div>
+          ) : filteredDoors.length === 0 ? (
+            <div className="p-6 text-center text-sm text-brand-ink-muted">
+              <DoorClosed size={32} className="mx-auto mb-2 text-brand-ink-faint" />
+              {doors.length === 0 ? 'No fire doors registered' : 'No doors match your search'}
             </div>
           ) : (
-            doors.map(door => {
+            filteredDoors.map(door => {
               const isSelected = selectedDoor?.id === door.id;
               const status = fdStatus(door);
+              const stripe = STRIPE_CLS[fdStatusKey(door)];
               return (
                 <button
                   key={door.id}
                   onClick={() => selectDoor(door)}
-                  className={`w-full text-left px-4 py-3 border-b hover:bg-gray-50 transition-colors ${isSelected ? 'bg-amber-50 border-l-2 border-l-amber-500' : ''}`}
+                  className={`w-full flex text-left px-4 py-2.5 border-l-[3px] transition-colors ${isSelected ? 'bg-brand-red-tint border-l-brand-red' : 'border-l-transparent hover:bg-brand-bg'}`}
                 >
-                  <div className="font-medium text-sm text-gray-900 truncate mb-0.5">{door.doorRef}</div>
-                  <div className="text-xs text-gray-500 truncate mb-1.5">{door.location}</div>
-                  <div className={`inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded font-medium ${status.cls}`}>
-                    {status.icon} {status.label}
+                  <span className={`w-1 rounded mr-3 shrink-0 ${stripe}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono text-[13px] font-semibold text-brand-ink truncate">{door.doorRef}</div>
+                    <div className="text-xs text-brand-ink-muted truncate mt-0.5">{door.location}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${status.cls}`}>{status.label}</span>
+                      <span className="text-[11px] text-brand-ink-faint tabular-nums">Due: {fmt(door.nextInspectionDue)}</span>
+                    </div>
                   </div>
                 </button>
               );
             })
           )}
         </div>
-      </div>
+      </aside>
 
-      {/* Right panel */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Detail panel */}
+      <main className="flex-1 overflow-y-auto p-6 min-w-0">
         {!selectedDoor ? (
-          <div className="flex-1 flex items-center justify-center text-gray-400">
+          <div className="h-full flex items-center justify-center text-brand-ink-muted">
             <div className="text-center">
-              <DoorClosed size={48} className="mx-auto mb-3 text-gray-300" />
+              <DoorClosed size={48} className="mx-auto mb-3 text-brand-ink-faint" />
               <p className="text-sm">Select a fire door to view details</p>
             </div>
           </div>
         ) : (
           <>
-            {/* Header */}
-            <div className="bg-white border-b px-6 py-4 flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-lg font-semibold text-gray-900">{selectedDoor.doorRef}</h2>
-                  <ChevronRight size={16} className="text-gray-400" />
-                  <span className="text-gray-600 text-sm">{selectedDoor.location}</span>
+            {!loading && doors.length > 0 && <FDComplianceCard doors={doors} />}
+
+            {/* Detail header */}
+            <div className="bg-white border border-brand-line rounded-xl p-5 mb-5">
+              <div className="flex items-start justify-between gap-4 mb-3.5">
+                <div className="min-w-0">
+                  <div className="font-mono text-xl font-bold text-brand-ink">{selectedDoor.doorRef}</div>
+                  <div className="flex items-center gap-1.5 text-sm text-brand-ink-muted mt-0.5">
+                    {[selectedDoor.site?.name, selectedDoor.location].filter(Boolean).map((part, i, arr) => (
+                      <React.Fragment key={i}>
+                        <span>{part}</span>
+                        {i < arr.length - 1 && <span className="text-brand-ink-faint">›</span>}
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                  <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">
-                    {DOOR_TYPE_LABELS[selectedDoor.doorType] ?? selectedDoor.doorType}
-                  </span>
-                  {selectedDoor.fireRating && <span>{selectedDoor.fireRating}</span>}
-                  {selectedDoor.site && <span>{selectedDoor.site.name}</span>}
-                  <span>{selectedDoor.inspectionFrequencyMonths}-month cycle</span>
-                </div>
-                <div className="mt-1.5 flex gap-3 text-xs text-gray-400">
-                  <span>Last inspected: {fmt(selectedDoor.lastInspectedAt)}</span>
-                  <span>Next due: {fmt(selectedDoor.nextInspectionDue)}</span>
+                <div className="text-right shrink-0">
+                  <div className="text-[11px] text-brand-ink-muted">Next inspection</div>
+                  <div className={`text-base font-bold tabular-nums ${fdStatusKey(selectedDoor) === 'overdue' ? 'text-red-600' : fdStatusKey(selectedDoor) === 'attention' ? 'text-amber-600' : 'text-green-700'}`}>
+                    {fmt(selectedDoor.nextInspectionDue)}
+                  </div>
+                  <button onClick={handleDeleteDoor} className="text-[11px] text-red-400 hover:text-red-600 mt-1 inline-flex items-center gap-1" title="Delete door">
+                    <Trash2 size={11} /> Delete
+                  </button>
                 </div>
               </div>
-              <button
-                onClick={handleDeleteDoor}
-                className="shrink-0 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete door"
-              >
-                <Trash2 size={16} />
-              </button>
+
+              <div className="flex flex-wrap gap-1.5 mb-3.5">
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-teal-50 text-teal-700">{DOOR_TYPE_LABELS[selectedDoor.doorType] ?? selectedDoor.doorType}</span>
+                {selectedDoor.fireRating && <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">{selectedDoor.fireRating}</span>}
+                {selectedDoor.site && <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700">{selectedDoor.site.name}</span>}
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-brand-bg text-brand-ink-muted">{selectedDoor.inspectionFrequencyMonths}-month cycle</span>
+              </div>
+
+              <div className="flex flex-wrap gap-6">
+                <div>
+                  <div className="text-[11px] text-brand-ink-faint">Last inspected</div>
+                  <div className="text-[13px] font-medium text-brand-ink tabular-nums">{fmt(selectedDoor.lastInspectedAt)}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-brand-ink-faint">Installed</div>
+                  <div className="text-[13px] font-medium text-brand-ink tabular-nums">{fmt(selectedDoor.installationDate)}</div>
+                </div>
+                {selectedDoor.manufacturer && (
+                  <div>
+                    <div className="text-[11px] text-brand-ink-faint">Manufacturer</div>
+                    <div className="text-[13px] font-medium text-brand-ink">{selectedDoor.manufacturer}</div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Tabs */}
-            <div className="bg-white border-b px-6 flex gap-1">
+            <div className="flex bg-white border border-brand-line border-b-0 rounded-t-xl overflow-hidden">
               {(['history', 'details'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === tab ? 'border-amber-500 text-amber-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  className={`py-3 px-5 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab ? 'border-brand-red text-brand-red' : 'border-transparent text-brand-ink-muted hover:text-brand-ink'
                   }`}
                 >
-                  {tab === 'history' ? <><ClipboardList size={14} className="inline mr-1.5" />Inspection History</> : <><Settings size={14} className="inline mr-1.5" />Door Details</>}
+                  {tab === 'history' ? <><ClipboardList size={14} className="inline mr-1.5 -mt-0.5" />Inspection History</> : <><Settings size={14} className="inline mr-1.5 -mt-0.5" />Door Details</>}
                 </button>
               ))}
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="bg-white border border-brand-line rounded-b-xl p-5">
               {activeTab === 'history' && (
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-gray-900">Inspection History</h3>
+                  <div className="flex items-center justify-between mb-3.5">
+                    <h3 className="text-sm font-semibold text-brand-ink">{inspections.length} inspection{inspections.length === 1 ? '' : 's'}</h3>
                     <button
                       onClick={() => setShowLogModal(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700"
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-red text-white rounded-lg text-xs font-semibold hover:bg-brand-red-dark"
                     >
                       <Plus size={14} /> Log Inspection
                     </button>
                   </div>
 
                   {loadingInspections ? (
-                    <div className="text-sm text-gray-400">Loading…</div>
+                    <div className="text-sm text-brand-ink-muted">Loading…</div>
                   ) : inspections.length === 0 ? (
-                    <div className="text-center py-10 text-gray-400">
-                      <ClipboardList size={32} className="mx-auto mb-2 text-gray-300" />
+                    <div className="text-center py-10 text-brand-ink-muted">
+                      <ClipboardList size={32} className="mx-auto mb-2 text-brand-ink-faint" />
                       <p className="text-sm">No inspections recorded yet</p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      {inspections.map(insp => {
-                        const outcomeCls = insp.outcome === 'pass' ? 'bg-green-100 text-green-700'
-                          : insp.outcome === 'fail' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700';
+                    <div className="flex flex-col">
+                      {inspections.map((insp, i) => {
+                        const isPass = insp.outcome === 'pass';
                         return (
-                          <div key={insp.id} className="bg-white border rounded-lg p-4">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-start gap-3 min-w-0">
-                                <span className={`shrink-0 mt-0.5 inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${outcomeCls}`}>
-                                  {insp.outcome === 'pass' ? <CheckCircle size={11} /> : <AlertTriangle size={11} />}
-                                  {insp.outcome === 'requires_attention' ? 'ATTENTION' : insp.outcome.toUpperCase()}
-                                </span>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs text-gray-400">{fmt(insp.inspectedAt)}</span>
-                                    <span className="text-xs text-gray-500">by {insp.inspectedBy}</span>
-                                  </div>
-                                  {insp.accessDenied ? (
-                                    <div className="mt-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
-                                      Access denied: {insp.accessDeniedReason}
-                                    </div>
-                                  ) : (
-                                    <>
-                                      {insp.nextInspectionDate && (
-                                        <div className="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
-                                          <span>Next due: {fmt(insp.nextInspectionDate)}</span>
-                                        </div>
-                                      )}
-                                      {insp.defectsFound && (
-                                        <div className="mt-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
-                                          Defects: {insp.defectsFound}
-                                        </div>
-                                      )}
-                                    </>
-                                  )}
-                                  {insp.comments && <p className="mt-1 text-xs text-gray-400">{insp.comments}</p>}
-                                  {photos.filter(p => p.inspectionId === insp.id).length > 0 && (
-                                    <div className="flex gap-1.5 mt-2">
-                                      {photos.filter(p => p.inspectionId === insp.id).map(p => (
-                                        <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer">
-                                          <img src={p.url} alt="Inspection photo" className="w-12 h-12 object-cover rounded border hover:opacity-80" />
-                                        </a>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
+                          <div key={insp.id} className={`flex items-start gap-3 py-2.5 ${i < inspections.length - 1 ? 'border-b border-brand-line/60' : ''}`}>
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isPass ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                              {isPass ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className={`text-[13px] font-semibold ${isPass ? 'text-green-700' : insp.outcome === 'fail' ? 'text-red-700' : 'text-amber-700'}`}>
+                                {insp.outcome === 'requires_attention' ? 'Attention' : insp.outcome === 'pass' ? 'Pass' : 'Fail'}
                               </div>
+                              <div className="text-xs text-brand-ink-muted mt-0.5">
+                                Inspected by {insp.inspectedBy}
+                                {insp.accessDenied && ` · Access denied: ${insp.accessDeniedReason}`}
+                                {insp.defectsFound && ` · ${insp.defectsFound}`}
+                              </div>
+                              {insp.comments && <p className="text-xs text-brand-ink-faint mt-0.5">{insp.comments}</p>}
+                              {photos.filter(p => p.inspectionId === insp.id).length > 0 && (
+                                <div className="flex gap-1.5 mt-2">
+                                  {photos.filter(p => p.inspectionId === insp.id).map(p => (
+                                    <a key={p.id} href={p.url} target="_blank" rel="noopener noreferrer">
+                                      <img src={p.url} alt="Inspection photo" className="w-12 h-12 object-cover rounded border border-brand-line hover:opacity-80" />
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-brand-ink-faint text-right shrink-0 tabular-nums leading-snug">
+                              {fmt(insp.inspectedAt)}
+                              {insp.nextInspectionDate && <><br />Next due: {fmt(insp.nextInspectionDate)}</>}
                               <button
                                 onClick={() => handleDeleteInspection(insp.id)}
-                                className="shrink-0 p-1.5 text-red-300 hover:text-red-500 rounded"
+                                className="block ml-auto mt-1 text-red-300 hover:text-red-500"
                                 title="Delete inspection"
                               >
-                                <Trash2 size={13} />
+                                <Trash2 size={12} />
                               </button>
                             </div>
                           </div>
@@ -861,7 +907,7 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
 
               {activeTab === 'details' && (
                 <form onSubmit={handleSaveDetails} className="max-w-md space-y-4">
-                  <h3 className="font-medium text-gray-900 mb-4">Door Details</h3>
+                  <h3 className="font-medium text-brand-ink mb-4">Door Details</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Door Ref</label>
@@ -919,7 +965,7 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
                     <textarea className="w-full border rounded-lg px-3 py-2 text-sm" rows={3}
                       value={detailForm.notes ?? ''} onChange={e => setDetailForm(f => ({ ...f, notes: e.target.value }))} />
                   </div>
-                  <button type="submit" disabled={savingDetail} className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50">
+                  <button type="submit" disabled={savingDetail} className="px-4 py-2 bg-brand-red text-white rounded-lg text-sm font-medium hover:bg-brand-red-dark disabled:opacity-50">
                     {savingDetail ? 'Saving…' : 'Save Changes'}
                   </button>
                 </form>
@@ -927,7 +973,7 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
             </div>
           </>
         )}
-      </div>
+      </main>
 
       {showAddModal && (
         <AddDoorModal sites={sites} onClose={() => setShowAddModal(false)} onSave={handleAddDoor} />
@@ -935,7 +981,6 @@ const FireDoorsPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectId
       {showLogModal && selectedDoor && (
         <LogInspectionModal door={selectedDoor} onClose={closeLogModal} onSave={handleLogInspection} />
       )}
-      </div>
     </div>
   );
 };

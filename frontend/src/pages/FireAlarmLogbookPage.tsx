@@ -60,6 +60,35 @@ function toleranceWindow(nextDue: string | null | undefined, toleranceDays: numb
   return { start, end };
 }
 
+// Worst-case status across all 5 schedule tiers, for the list row's status
+// stripe/badge — a system is only as compliant as its least-compliant tier.
+function systemStatusKey(system: FireAlarmSystem): 'compliant' | 'attention' | 'overdue' {
+  const tiers = [
+    { field: system.nextWeeklyDue,     warnDays: 3,  toleranceDays: system.weeklyToleranceDays ?? 2 },
+    { field: system.nextMonthlyDue,    warnDays: 7,  toleranceDays: system.monthlyToleranceDays ?? 5 },
+    { field: system.nextQuarterlyDue,  warnDays: 14, toleranceDays: system.quarterlyToleranceDays ?? 15 },
+    { field: system.nextSixMonthlyDue, warnDays: 21, toleranceDays: system.sixMonthlyToleranceDays ?? 30 },
+    { field: system.nextAnnualDue,     warnDays: 30, toleranceDays: system.annualToleranceDays ?? 60 },
+  ];
+  const labels = tiers.map(t => complianceStatus(t.field, t.warnDays, t.toleranceDays).label);
+  if (labels.includes('Overdue')) return 'overdue';
+  if (labels.includes('Within Tolerance') || labels.includes('Due Soon')) return 'attention';
+  return 'compliant';
+}
+
+const SYS_STRIPE_CLS: Record<string, string> = {
+  compliant: 'bg-green-500',
+  attention: 'bg-amber-500',
+  overdue: 'bg-red-500',
+};
+
+function nearestDueDate(system: FireAlarmSystem): string | null {
+  const dates = [system.nextWeeklyDue, system.nextMonthlyDue, system.nextQuarterlyDue, system.nextSixMonthlyDue, system.nextAnnualDue]
+    .filter((d): d is string => !!d)
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  return dates[0] ?? null;
+}
+
 // ─── Modal base ───────────────────────────────────────────────────────────────
 
 const Modal: React.FC<{ title: string; onClose: () => void; children: React.ReactNode }> = ({ title, onClose, children }) => (
@@ -85,9 +114,9 @@ const ComplianceCard: React.FC<{ system: FireAlarmSystem }> = ({ system }) => {
     { label: 'Annual',      field: system.nextAnnualDue,      warnDays: 30, toleranceDays: system.annualToleranceDays ?? 60 },
   ];
   return (
-    <div className="bg-white rounded-xl border shadow-sm px-5 py-4 mb-4">
-      <h3 className="font-semibold text-gray-700 text-sm mb-3 flex items-center gap-1.5">
-        <CheckCircle size={14} className="text-green-600" /> Compliance Status
+    <div className="bg-white rounded-xl border border-brand-line px-5 py-4 mb-5">
+      <h3 className="font-semibold text-brand-ink text-sm mb-3 flex items-center gap-1.5">
+        <CheckCircle size={14} className="text-brand-red" /> Compliance Status
       </h3>
       <div className="grid grid-cols-5 gap-2">
         {items.map(item => {
@@ -97,20 +126,20 @@ const ComplianceCard: React.FC<{ system: FireAlarmSystem }> = ({ system }) => {
             ? `Acceptable window: ${fmtDate(window.start.toISOString())} – ${fmtDate(window.end.toISOString())}`
             : undefined;
           return (
-            <div key={item.label} className="text-center p-2 bg-gray-50 rounded-lg" title={title}>
-              <div className="text-xs font-semibold text-gray-500 mb-1.5">{item.label}</div>
+            <div key={item.label} className="text-center p-2 bg-brand-bg rounded-lg" title={title}>
+              <div className="text-xs font-semibold text-brand-ink-muted mb-1.5">{item.label}</div>
               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${status.cls}`}>
                 {status.label}
               </span>
               {item.field ? (
-                <div className="text-xs text-gray-400 mt-1 leading-tight">
+                <div className="text-xs text-brand-ink-faint mt-1 leading-tight tabular-nums">
                   Next<br />{fmtDate(item.field)}
                   {status.label === 'Within Tolerance' && window && (
                     <><br /><span className="text-amber-600">until {fmtDate(window.end.toISOString())}</span></>
                   )}
                 </div>
               ) : (
-                <div className="text-xs text-gray-300 mt-1">—</div>
+                <div className="text-xs text-brand-ink-faint mt-1">—</div>
               )}
             </div>
           );
@@ -196,7 +225,7 @@ const AddSystemModal: React.FC<{
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancel</button>
-          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark disabled:opacity-50">
             {saving ? 'Saving…' : 'Add System'}
           </button>
         </div>
@@ -269,7 +298,7 @@ const FaultLogModal: React.FC<{
                   severity === s
                     ? s === 'minor' ? 'bg-amber-500 text-white border-amber-500'
                       : s === 'major' ? 'bg-orange-600 text-white border-orange-600'
-                      : 'bg-red-600 text-white border-red-600'
+                      : 'bg-brand-red text-white border-brand-red'
                     : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -292,7 +321,7 @@ const FaultLogModal: React.FC<{
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancel</button>
-          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark disabled:opacity-50">
             {saving ? 'Saving…' : 'Log Fault'}
           </button>
         </div>
@@ -372,7 +401,7 @@ const EngineerVisitModal: React.FC<{
                   outcome === o
                     ? o === 'pass' ? 'bg-green-600 text-white border-green-600'
                       : o === 'advisory' ? 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-red-600 text-white border-red-600'
+                      : 'bg-brand-red text-white border-brand-red'
                     : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -387,7 +416,7 @@ const EngineerVisitModal: React.FC<{
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancel</button>
-          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark disabled:opacity-50">
             {saving ? 'Saving…' : 'Log Visit'}
           </button>
         </div>
@@ -595,7 +624,7 @@ const AddLogEntryModal: React.FC<{
                   outcome === o
                     ? o === 'pass' ? 'bg-green-600 text-white border-green-600'
                       : o === 'advisory' ? 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-red-600 text-white border-red-600'
+                      : 'bg-brand-red text-white border-brand-red'
                     : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
               >
@@ -618,7 +647,7 @@ const AddLogEntryModal: React.FC<{
 
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancel</button>
-          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark disabled:opacity-50">
             {saving ? 'Saving…' : 'Save Entry'}
           </button>
         </div>
@@ -673,7 +702,7 @@ const AddCallPointModal: React.FC<{
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancel</button>
-          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark disabled:opacity-50">
             {saving ? 'Saving…' : 'Add Call Point'}
           </button>
         </div>
@@ -690,6 +719,7 @@ const FireAlarmLogbookPage: React.FC = () => {
   const [sites, setSites] = useState<Site[]>([]);
   const [systems, setSystems] = useState<FireAlarmSystem[]>([]);
   const [selectedSystemId, setSelectedSystemId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [tab, setTab] = useState<Tab>('log');
   const [allLogEntries, setAllLogEntries] = useState<FireAlarmLogEntry[]>([]);
   const [callPoints, setCallPoints] = useState<FireAlarmCallPoint[]>([]);
@@ -883,116 +913,148 @@ const FireAlarmLogbookPage: React.FC = () => {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-gray-400">Loading…</div>;
+    return <div className="flex items-center justify-center h-64 text-brand-ink-muted">Loading…</div>;
   }
 
-  return (
-    <div className="p-4 md:p-6 min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs font-semibold px-2 py-0.5 rounded-full">
-              <Bell size={11} /> BS 5839-1:2025
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Fire Alarm Logbook</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Inspection and service records per fire alarm system</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <a href="/fire-alarm-import-template.csv" download className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 border border-red-300 rounded-lg hover:bg-red-50">
-            <Download size={13} /> Template
-          </a>
-          <button onClick={() => faSystemImportRef.current?.click()} disabled={faSystemImporting} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50">
-            <Upload size={13} /> {faSystemImporting ? 'Importing...' : 'Import CSV'}
-          </button>
-          <input ref={faSystemImportRef} type="file" accept=".csv" onChange={handleSystemCsvImport} className="hidden" />
-          <button
-            onClick={() => setShowAddSystem(true)}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            <Plus size={14} /> Add System
-          </button>
-        </div>
-      </div>
-      {faSystemImportResult && (
-        <div className={`mb-4 text-xs px-3 py-1.5 rounded-lg ${faSystemImportResult.errors > 0 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'}`}>
-          {faSystemImportResult.imported} imported{faSystemImportResult.errors > 0 ? `, ${faSystemImportResult.errors} skipped` : ' successfully'}
-        </div>
-      )}
+  const filteredSystems = systems.filter(sys => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    const site = sites.find(s => s.id === sys.siteId);
+    return sys.systemRef.toLowerCase().includes(q) || (sys.name ?? '').toLowerCase().includes(q) || (site?.name ?? '').toLowerCase().includes(q);
+  });
 
+  return (
+    <div className="flex h-full min-h-screen bg-brand-bg">
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center gap-2">
+        <div className="fixed top-4 right-4 z-50 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center gap-2 shadow-lg">
           <AlertTriangle size={14} /> {error}
           <button onClick={() => setError(null)} className="ml-auto"><X size={14} /></button>
         </div>
       )}
 
       {systems.length === 0 ? (
-        <div className="bg-white rounded-xl border shadow-sm p-12 text-center">
-          <Bell size={40} className="mx-auto text-gray-300 mb-3" />
-          <h2 className="font-semibold text-gray-700 mb-1">No fire alarm systems yet</h2>
-          <p className="text-sm text-gray-500 mb-4">Add your first fire alarm system to start the logbook.</p>
-          <button
-            onClick={() => setShowAddSystem(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
-          >
-            <Plus size={14} /> Add System
-          </button>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="bg-white rounded-xl border border-brand-line p-12 text-center">
+            <Bell size={40} className="mx-auto text-brand-ink-faint mb-3" />
+            <h2 className="font-semibold text-brand-ink mb-1">No fire alarm systems yet</h2>
+            <p className="text-sm text-brand-ink-muted mb-4">Add your first fire alarm system to start the logbook.</p>
+            <button
+              onClick={() => setShowAddSystem(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-red text-white rounded-lg text-sm hover:bg-brand-red-dark"
+            >
+              <Plus size={14} /> Add System
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="flex gap-4 min-h-[600px]">
-          {/* System selector sidebar */}
-          <div className="w-56 shrink-0">
-            <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-              <div className="px-3 py-2.5 bg-gray-50 border-b text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Systems
+        <>
+        {/* List panel */}
+        <aside className="w-80 shrink-0 border-r border-brand-line bg-white flex flex-col">
+          <div className="p-4 border-b border-brand-line">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="text-[13px] font-semibold text-brand-ink">Fire Alarm Systems</span>
+                <span className="text-xs text-brand-ink-muted"> · {systems.length} system{systems.length === 1 ? '' : 's'}</span>
               </div>
-              {systems.map(sys => {
-                const site = sites.find(s => s.id === sys.siteId);
-                return (
-                  <button
-                    key={sys.id}
-                    onClick={() => { setSelectedSystemId(sys.id); setTab('log'); }}
-                    className={`w-full text-left px-3 py-2.5 border-b last:border-b-0 transition-colors ${
-                      selectedSystemId === sys.id ? 'bg-red-50 border-l-2 border-l-red-600' : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="font-medium text-sm text-gray-900 truncate">{sys.systemRef}</span>
-                      <ChevronRight size={12} className="text-gray-400 shrink-0" />
-                    </div>
-                    {sys.name && <div className="text-xs text-gray-500 truncate">{sys.name}</div>}
-                    <div className="text-xs text-gray-400 truncate">{site?.name ?? sys.siteId}</div>
-                  </button>
-                );
-              })}
+              <button
+                onClick={() => setShowAddSystem(true)}
+                className="flex items-center gap-1 text-xs font-medium bg-brand-red text-white px-2.5 py-1.5 rounded-lg hover:bg-brand-red-dark"
+              >
+                <Plus size={13} /> Add
+              </button>
+            </div>
+            <div className="flex items-center gap-2 mb-3">
+              <a href="/fire-alarm-import-template.csv" download className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-brand-ink-muted border border-brand-line rounded-lg hover:border-brand-ink-faint">
+                <Download size={12} /> Template
+              </a>
+              <button onClick={() => faSystemImportRef.current?.click()} disabled={faSystemImporting} className="flex-1 flex items-center justify-center gap-1 text-xs font-medium text-brand-ink-muted border border-brand-line rounded-lg px-2 py-1.5 hover:border-brand-ink-faint disabled:opacity-50">
+                <Upload size={12} /> {faSystemImporting ? 'Importing…' : 'Import CSV'}
+              </button>
+            </div>
+            <input ref={faSystemImportRef} type="file" accept=".csv" onChange={handleSystemCsvImport} className="hidden" />
+            {faSystemImportResult && (
+              <div className={`text-xs px-3 py-1.5 rounded-lg mb-2 ${faSystemImportResult.errors > 0 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'}`}>
+                {faSystemImportResult.imported} imported{faSystemImportResult.errors > 0 ? `, ${faSystemImportResult.errors} skipped` : ' successfully'}
+              </div>
+            )}
+            <div className="relative">
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search systems…"
+                className="w-full border border-brand-line rounded-lg pl-8 pr-3 py-1.5 text-sm text-brand-ink outline-none focus:border-brand-red"
+              />
             </div>
           </div>
 
+          <div className="flex-1 overflow-y-auto">
+            {filteredSystems.length === 0 && (
+              <div className="p-6 text-center text-sm text-brand-ink-muted">No systems match your search</div>
+            )}
+            {filteredSystems.map(sys => {
+              const site = sites.find(s => s.id === sys.siteId);
+              const isSelected = selectedSystemId === sys.id;
+              const stripe = SYS_STRIPE_CLS[systemStatusKey(sys)];
+              return (
+                <button
+                  key={sys.id}
+                  onClick={() => { setSelectedSystemId(sys.id); setTab('log'); }}
+                  className={`w-full flex text-left px-4 py-2.5 border-l-[3px] transition-colors ${isSelected ? 'bg-brand-red-tint border-l-brand-red' : 'border-l-transparent hover:bg-brand-bg'}`}
+                >
+                  <span className={`w-1 rounded mr-3 shrink-0 ${stripe}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono text-[13px] font-semibold text-brand-ink truncate">{sys.systemRef}</div>
+                    <div className="text-xs text-brand-ink-muted truncate mt-0.5">{sys.name ?? site?.name ?? sys.siteId}</div>
+                    <div className="text-[11px] text-brand-ink-faint tabular-nums mt-1">Next due: {nearestDueDate(sys) ? fmtDate(nearestDueDate(sys)!) : '—'}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
           {/* Main content */}
-          <div className="flex-1 min-w-0">
+          <main className="flex-1 overflow-y-auto p-6 min-w-0">
             {selectedSystem && (
               <>
                 {/* System header */}
-                <div className="bg-white rounded-xl border shadow-sm px-5 py-4 mb-4">
+                <div className="bg-white rounded-xl border border-brand-line px-5 py-4 mb-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="font-bold text-gray-900 text-lg">
+                      <div className="font-mono text-xl font-bold text-brand-ink">
                         {selectedSystem.systemRef}
-                        {selectedSystem.name && <span className="font-normal text-gray-500 ml-2">— {selectedSystem.name}</span>}
-                      </h2>
-                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-sm text-gray-500">
-                        {sites.find(s => s.id === selectedSystem.siteId)?.name && (
-                          <span>Site: {sites.find(s => s.id === selectedSystem.siteId)?.name}</span>
-                        )}
-                        {selectedSystem.panelMake && <span>Panel: {selectedSystem.panelMake} {selectedSystem.panelModel}</span>}
-                        {selectedSystem.arcCompany && <span>ARC: {selectedSystem.arcCompany} ({selectedSystem.arcNumber})</span>}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-sm text-brand-ink-muted mt-0.5">
+                        {[sites.find(s => s.id === selectedSystem.siteId)?.name, selectedSystem.name].filter(Boolean).map((part, i, arr) => (
+                          <React.Fragment key={i}>
+                            <span>{part}</span>
+                            {i < arr.length - 1 && <span className="text-brand-ink-faint">›</span>}
+                          </React.Fragment>
+                        ))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                      <span>{selectedSystem._count?.callPoints ?? 0} call pts</span>
-                      <span>{selectedSystem._count?.logEntries ?? 0} entries</span>
+                    <div className="text-right shrink-0">
+                      <div className="text-[11px] text-brand-ink-muted">Next due (any tier)</div>
+                      <div className="text-base font-bold tabular-nums text-brand-ink">
+                        {nearestDueDate(selectedSystem) ? fmtDate(nearestDueDate(selectedSystem)!) : '—'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5 mt-3.5 mb-3.5">
+                    {selectedSystem.panelMake && <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-teal-50 text-teal-700">{selectedSystem.panelMake} {selectedSystem.panelModel}</span>}
+                    {selectedSystem.arcCompany && <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">ARC: {selectedSystem.arcCompany}</span>}
+                  </div>
+
+                  <div className="flex flex-wrap gap-6">
+                    <div>
+                      <div className="text-[11px] text-brand-ink-faint">Call points</div>
+                      <div className="text-[13px] font-medium text-brand-ink tabular-nums">{selectedSystem._count?.callPoints ?? 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-brand-ink-faint">Log entries</div>
+                      <div className="text-[13px] font-medium text-brand-ink tabular-nums">{selectedSystem._count?.logEntries ?? 0}</div>
                     </div>
                   </div>
                 </div>
@@ -1001,7 +1063,7 @@ const FireAlarmLogbookPage: React.FC = () => {
                 <ComplianceCard system={selectedSystem} />
 
                 {/* Tabs */}
-                <div className="flex flex-wrap gap-1 mb-4">
+                <div className="flex bg-white border border-brand-line rounded-xl overflow-hidden mb-5 flex-wrap">
                   {([
                     { key: 'log',        label: 'Log Entries',     icon: <FileText size={13} /> },
                     { key: 'callpoints', label: 'Call Points',     icon: <MapPin size={13} /> },
@@ -1012,8 +1074,8 @@ const FireAlarmLogbookPage: React.FC = () => {
                     <button
                       key={t.key}
                       onClick={() => setTab(t.key)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                        tab === t.key ? 'bg-red-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'
+                      className={`flex items-center gap-1.5 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                        tab === t.key ? 'border-brand-red text-brand-red' : 'border-transparent text-brand-ink-muted hover:text-brand-ink'
                       }`}
                     >
                       {t.icon} {t.label}
@@ -1026,13 +1088,13 @@ const FireAlarmLogbookPage: React.FC = () => {
 
                 {/* Log Entries Tab */}
                 {tab === 'log' && (
-                  <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-xl border border-brand-line overflow-hidden">
                     <div className="px-4 py-3 border-b">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-gray-800">Inspection Log</h3>
                         <button
                           onClick={() => setShowAddEntry(true)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark"
                         >
                           <Plus size={13} /> Add Entry
                         </button>
@@ -1057,8 +1119,8 @@ const FireAlarmLogbookPage: React.FC = () => {
                           return null;
                         })()}
                         {selectedSystem.nextWeeklyDue && (
-                          <span className="text-xs text-gray-500">
-                            Next test due: <span className="font-medium text-gray-700">{fmtDate(selectedSystem.nextWeeklyDue)}</span>
+                          <span className="text-xs text-brand-ink-faint">
+                            Next test due: <span className="font-medium text-brand-ink-muted">{fmtDate(selectedSystem.nextWeeklyDue)}</span>
                           </span>
                         )}
                         {faultEntries.length > 0 && (
@@ -1075,36 +1137,36 @@ const FireAlarmLogbookPage: React.FC = () => {
                     </div>
 
                     {logLoading ? (
-                      <div className="flex items-center justify-center h-32 text-gray-400 text-sm">Loading…</div>
+                      <div className="flex items-center justify-center h-32 text-brand-ink-faint text-sm">Loading…</div>
                     ) : inspectionEntries.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-32 text-gray-400 text-sm gap-2">
+                      <div className="flex flex-col items-center justify-center h-32 text-brand-ink-faint text-sm gap-2">
                         <Clock size={24} />
                         No log entries yet
                       </div>
                     ) : (
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="bg-gray-50 border-b">
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Date</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Type</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Conducted By</th>
-                            <th className="text-center px-4 py-2.5 font-medium text-gray-600">Outcome</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Notes</th>
+                          <tr className="bg-brand-bg border-b">
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Date</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Type</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Conducted By</th>
+                            <th className="text-center px-4 py-2.5 font-medium text-brand-ink-muted">Outcome</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Notes</th>
                             <th className="px-4 py-2.5" />
                           </tr>
                         </thead>
                         <tbody className="divide-y">
                           {inspectionEntries.map(entry => (
-                            <tr key={entry.id} className="hover:bg-gray-50">
-                              <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">{fmtDate(entry.conductedAt)}</td>
-                              <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">{ENTRY_TYPE_LABELS[entry.entryType] ?? entry.entryType}</td>
-                              <td className="px-4 py-2.5 text-gray-700">{entry.conductedBy}</td>
+                            <tr key={entry.id} className="hover:bg-brand-bg">
+                              <td className="px-4 py-2.5 text-brand-ink-muted whitespace-nowrap">{fmtDate(entry.conductedAt)}</td>
+                              <td className="px-4 py-2.5 text-brand-ink-muted whitespace-nowrap">{ENTRY_TYPE_LABELS[entry.entryType] ?? entry.entryType}</td>
+                              <td className="px-4 py-2.5 text-brand-ink-muted">{entry.conductedBy}</td>
                               <td className="px-4 py-2.5 text-center">
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${outcomeChip(entry.outcome)}`}>
                                   {entry.outcome}
                                 </span>
                               </td>
-                              <td className="px-4 py-2.5 text-gray-500 max-w-[200px] truncate">{entry.notes}</td>
+                              <td className="px-4 py-2.5 text-brand-ink-faint max-w-[200px] truncate">{entry.notes}</td>
                               <td className="px-4 py-2.5">
                                 <div className="flex items-center gap-1 justify-end">
                                   {CERT_TYPES.includes(entry.entryType) && (
@@ -1121,7 +1183,7 @@ const FireAlarmLogbookPage: React.FC = () => {
                                     onClick={() => handleDeleteEntry(entry.id)}
                                     disabled={deletingEntry === entry.id}
                                     title="Delete entry"
-                                    className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                                    className="p-1 text-brand-ink-faint hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
                                   >
                                     {deletingEntry === entry.id ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
                                   </button>
@@ -1137,22 +1199,22 @@ const FireAlarmLogbookPage: React.FC = () => {
 
                 {/* Call Points Tab */}
                 {tab === 'callpoints' && (
-                  <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-xl border border-brand-line overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b">
-                      <h3 className="font-semibold text-gray-800">Call Points</h3>
+                      <h3 className="font-semibold text-brand-ink">Call Points</h3>
                       <div className="flex gap-2">
                         <input ref={csvRef} type="file" accept=".csv" className="hidden" onChange={handleCsvImport} />
                         <button
                           onClick={() => csvRef.current?.click()}
                           disabled={csvImporting}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg hover:bg-brand-bg disabled:opacity-50"
                         >
                           {csvImporting ? <RefreshCw size={13} className="animate-spin" /> : <Upload size={13} />}
                           Import CSV
                         </button>
                         <button
                           onClick={() => setShowAddCp(true)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark"
                         >
                           <Plus size={13} /> Add
                         </button>
@@ -1183,9 +1245,9 @@ const FireAlarmLogbookPage: React.FC = () => {
                     )}
 
                     {cpLoading ? (
-                      <div className="flex items-center justify-center h-32 text-gray-400 text-sm">Loading…</div>
+                      <div className="flex items-center justify-center h-32 text-brand-ink-faint text-sm">Loading…</div>
                     ) : callPoints.length === 0 ? (
-                      <div className="p-8 text-center text-gray-400 text-sm space-y-2">
+                      <div className="p-8 text-center text-brand-ink-faint text-sm space-y-2">
                         <Bell size={24} className="mx-auto" />
                         <p>No call points yet.</p>
                         <p className="text-xs">Add individually or import a CSV with columns: pointRef, location, floor, zone</p>
@@ -1193,35 +1255,35 @@ const FireAlarmLogbookPage: React.FC = () => {
                     ) : (
                       <table className="w-full text-sm mt-3">
                         <thead>
-                          <tr className="bg-gray-50 border-b">
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Point Ref</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Location</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Floor</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Zone</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Last Tested</th>
+                          <tr className="bg-brand-bg border-b">
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Point Ref</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Location</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Floor</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Zone</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Last Tested</th>
                             <th className="px-4 py-2.5" />
                           </tr>
                         </thead>
                         <tbody className="divide-y">
                           {callPoints.map(cp => (
-                            <tr key={cp.id} className={`hover:bg-gray-50 ${cp.id === nextDueId ? 'bg-amber-50/60' : ''}`}>
-                              <td className="px-4 py-2.5 font-medium text-gray-900">
+                            <tr key={cp.id} className={`hover:bg-brand-bg ${cp.id === nextDueId ? 'bg-amber-50/60' : ''}`}>
+                              <td className="px-4 py-2.5 font-medium text-brand-ink">
                                 {cp.pointRef}
                                 {cp.id === nextDueId && (
                                   <span className="ml-1.5 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Next due</span>
                                 )}
                               </td>
-                              <td className="px-4 py-2.5 text-gray-600">{cp.location ?? '—'}</td>
-                              <td className="px-4 py-2.5 text-gray-600">{cp.floor ?? '—'}</td>
-                              <td className="px-4 py-2.5 text-gray-600">{cp.zone ?? '—'}</td>
-                              <td className="px-4 py-2.5 text-gray-500">
+                              <td className="px-4 py-2.5 text-brand-ink-muted">{cp.location ?? '—'}</td>
+                              <td className="px-4 py-2.5 text-brand-ink-muted">{cp.floor ?? '—'}</td>
+                              <td className="px-4 py-2.5 text-brand-ink-muted">{cp.zone ?? '—'}</td>
+                              <td className="px-4 py-2.5 text-brand-ink-faint">
                                 {cp.lastTestedAt ? fmtDate(cp.lastTestedAt) : <span className="text-red-500 text-xs">Never tested</span>}
                               </td>
                               <td className="px-4 py-2.5 text-right">
                                 <button
                                   onClick={() => handleDeleteCp(cp.id)}
                                   disabled={deletingCp === cp.id}
-                                  className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                  className="p-1 text-brand-ink-faint hover:text-red-600 hover:bg-red-50 rounded"
                                 >
                                   {deletingCp === cp.id ? <RefreshCw size={13} className="animate-spin" /> : <Trash2 size={13} />}
                                 </button>
@@ -1236,33 +1298,33 @@ const FireAlarmLogbookPage: React.FC = () => {
 
                 {/* Fault Log Tab */}
                 {tab === 'faults' && (
-                  <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-xl border border-brand-line overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b">
-                      <h3 className="font-semibold text-gray-800">Fault Log</h3>
+                      <h3 className="font-semibold text-brand-ink">Fault Log</h3>
                       <button
                         onClick={() => setShowFaultModal(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark"
                       >
                         <Plus size={13} /> Log Fault
                       </button>
                     </div>
 
                     {logLoading ? (
-                      <div className="flex items-center justify-center h-32 text-gray-400 text-sm">Loading…</div>
+                      <div className="flex items-center justify-center h-32 text-brand-ink-faint text-sm">Loading…</div>
                     ) : faultEntries.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-32 text-gray-400 text-sm gap-2">
+                      <div className="flex flex-col items-center justify-center h-32 text-brand-ink-faint text-sm gap-2">
                         <AlertTriangle size={24} />
                         No faults recorded
                       </div>
                     ) : (
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="bg-gray-50 border-b">
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Date</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Reported By</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Severity</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Description</th>
-                            <th className="text-center px-4 py-2.5 font-medium text-gray-600">Resolved</th>
+                          <tr className="bg-brand-bg border-b">
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Date</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Reported By</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Severity</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Description</th>
+                            <th className="text-center px-4 py-2.5 font-medium text-brand-ink-muted">Resolved</th>
                             <th className="px-4 py-2.5" />
                           </tr>
                         </thead>
@@ -1272,9 +1334,9 @@ const FireAlarmLogbookPage: React.FC = () => {
                             const sev = String(d.severity ?? '');
                             const resolved = Boolean(d.resolved);
                             return (
-                              <tr key={entry.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">{fmtDate(entry.conductedAt)}</td>
-                                <td className="px-4 py-2.5 text-gray-700">{entry.conductedBy}</td>
+                              <tr key={entry.id} className="hover:bg-brand-bg">
+                                <td className="px-4 py-2.5 text-brand-ink-muted whitespace-nowrap">{fmtDate(entry.conductedAt)}</td>
+                                <td className="px-4 py-2.5 text-brand-ink-muted">{entry.conductedBy}</td>
                                 <td className="px-4 py-2.5">
                                   {sev && (
                                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
@@ -1284,7 +1346,7 @@ const FireAlarmLogbookPage: React.FC = () => {
                                     }`}>{sev}</span>
                                   )}
                                 </td>
-                                <td className="px-4 py-2.5 text-gray-600 max-w-[240px] truncate">{entry.notes}</td>
+                                <td className="px-4 py-2.5 text-brand-ink-muted max-w-[240px] truncate">{entry.notes}</td>
                                 <td className="px-4 py-2.5 text-center">
                                   {resolved
                                     ? <CheckCircle size={15} className="text-green-500 mx-auto" />
@@ -1294,7 +1356,7 @@ const FireAlarmLogbookPage: React.FC = () => {
                                   <button
                                     onClick={() => handleDeleteEntry(entry.id)}
                                     disabled={deletingEntry === entry.id}
-                                    className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                    className="p-1 text-brand-ink-faint hover:text-red-600 hover:bg-red-50 rounded"
                                   >
                                     {deletingEntry === entry.id ? <RefreshCw size={13} className="animate-spin" /> : <Trash2 size={13} />}
                                   </button>
@@ -1310,33 +1372,33 @@ const FireAlarmLogbookPage: React.FC = () => {
 
                 {/* Engineer Visits Tab */}
                 {tab === 'engineer' && (
-                  <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                  <div className="bg-white rounded-xl border border-brand-line overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b">
-                      <h3 className="font-semibold text-gray-800">Engineer Visits</h3>
+                      <h3 className="font-semibold text-brand-ink">Engineer Visits</h3>
                       <button
                         onClick={() => setShowEngineerModal(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark"
                       >
                         <Plus size={13} /> Log Visit
                       </button>
                     </div>
 
                     {logLoading ? (
-                      <div className="flex items-center justify-center h-32 text-gray-400 text-sm">Loading…</div>
+                      <div className="flex items-center justify-center h-32 text-brand-ink-faint text-sm">Loading…</div>
                     ) : engineerEntries.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-32 text-gray-400 text-sm gap-2">
+                      <div className="flex flex-col items-center justify-center h-32 text-brand-ink-faint text-sm gap-2">
                         <Wrench size={24} />
                         No engineer visits recorded
                       </div>
                     ) : (
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="bg-gray-50 border-b">
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Date</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Engineer</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Company</th>
-                            <th className="text-center px-4 py-2.5 font-medium text-gray-600">Outcome</th>
-                            <th className="text-left px-4 py-2.5 font-medium text-gray-600">Work / Next Action</th>
+                          <tr className="bg-brand-bg border-b">
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Date</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Engineer</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Company</th>
+                            <th className="text-center px-4 py-2.5 font-medium text-brand-ink-muted">Outcome</th>
+                            <th className="text-left px-4 py-2.5 font-medium text-brand-ink-muted">Work / Next Action</th>
                             <th className="px-4 py-2.5" />
                           </tr>
                         </thead>
@@ -1344,16 +1406,16 @@ const FireAlarmLogbookPage: React.FC = () => {
                           {engineerEntries.map(entry => {
                             const d = (entry.data ?? {}) as Record<string, unknown>;
                             return (
-                              <tr key={entry.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-2.5 text-gray-700 whitespace-nowrap">{fmtDate(entry.conductedAt)}</td>
-                                <td className="px-4 py-2.5 text-gray-700">{entry.conductedBy}</td>
-                                <td className="px-4 py-2.5 text-gray-600">{String(d.company ?? '—')}</td>
+                              <tr key={entry.id} className="hover:bg-brand-bg">
+                                <td className="px-4 py-2.5 text-brand-ink-muted whitespace-nowrap">{fmtDate(entry.conductedAt)}</td>
+                                <td className="px-4 py-2.5 text-brand-ink-muted">{entry.conductedBy}</td>
+                                <td className="px-4 py-2.5 text-brand-ink-muted">{String(d.company ?? '—')}</td>
                                 <td className="px-4 py-2.5 text-center">
                                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${outcomeChip(entry.outcome)}`}>
                                     {entry.outcome}
                                   </span>
                                 </td>
-                                <td className="px-4 py-2.5 text-gray-600 max-w-[200px]">
+                                <td className="px-4 py-2.5 text-brand-ink-muted max-w-[200px]">
                                   <div className="truncate">{entry.notes || '—'}</div>
                                   {d.nextAction && (
                                     <div className="text-xs text-indigo-600 truncate">Next: {String(d.nextAction)}</div>
@@ -1363,7 +1425,7 @@ const FireAlarmLogbookPage: React.FC = () => {
                                   <button
                                     onClick={() => handleDeleteEntry(entry.id)}
                                     disabled={deletingEntry === entry.id}
-                                    className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                    className="p-1 text-brand-ink-faint hover:text-red-600 hover:bg-red-50 rounded"
                                   >
                                     {deletingEntry === entry.id ? <RefreshCw size={13} className="animate-spin" /> : <Trash2 size={13} />}
                                   </button>
@@ -1390,8 +1452,8 @@ const FireAlarmLogbookPage: React.FC = () => {
                 )}
               </>
             )}
-          </div>
-        </div>
+          </main>
+        </>
       )}
 
       {/* Modals */}
@@ -1472,57 +1534,57 @@ const SystemDetailsPanel: React.FC<{
   }
 
   return (
-    <div className="bg-white rounded-xl border shadow-sm p-5">
-      <h3 className="font-semibold text-gray-800 mb-4">System Details</h3>
+    <div className="bg-white rounded-xl border border-brand-line p-5">
+      <h3 className="font-semibold text-brand-ink mb-4">System Details</h3>
       {site && (
-        <p className="text-sm text-gray-500 mb-4">Site: <span className="font-medium text-gray-700">{site.name}</span></p>
+        <p className="text-sm text-brand-ink-faint mb-4">Site: <span className="font-medium text-brand-ink-muted">{site.name}</span></p>
       )}
       {err && <p className="text-sm text-red-600 bg-red-50 p-2 rounded mb-3">{err}</p>}
       <form onSubmit={submit} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-gray-600">System ID / Ref</label>
+            <label className="text-xs font-medium text-brand-ink-muted">System ID / Ref</label>
             <input value={form.systemRef} onChange={e => set('systemRef', e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600">Name</label>
+            <label className="text-xs font-medium text-brand-ink-muted">Name</label>
             <input value={form.name} onChange={e => set('name', e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className="text-xs font-medium text-gray-600">Panel Make</label>
+            <label className="text-xs font-medium text-brand-ink-muted">Panel Make</label>
             <input value={form.panelMake} onChange={e => set('panelMake', e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600">Panel Model</label>
+            <label className="text-xs font-medium text-brand-ink-muted">Panel Model</label>
             <input value={form.panelModel} onChange={e => set('panelModel', e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600">Panel Serial</label>
+            <label className="text-xs font-medium text-brand-ink-muted">Panel Serial</label>
             <input value={form.panelSerial} onChange={e => set('panelSerial', e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-medium text-gray-600">ARC Company</label>
+            <label className="text-xs font-medium text-brand-ink-muted">ARC Company</label>
             <input value={form.arcCompany} onChange={e => set('arcCompany', e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600">ARC Number</label>
+            <label className="text-xs font-medium text-brand-ink-muted">ARC Number</label>
             <input value={form.arcNumber} onChange={e => set('arcNumber', e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-600">Install Date</label>
+          <label className="text-xs font-medium text-brand-ink-muted">Install Date</label>
           <input type="date" value={form.installDate} onChange={e => set('installDate', e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm" />
         </div>
         <div>
-          <label className="text-xs font-medium text-gray-600">Notes</label>
+          <label className="text-xs font-medium text-brand-ink-muted">Notes</label>
           <textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm resize-none" />
         </div>
         <div className="flex items-center gap-3 pt-1">
-          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50">
+          <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-brand-red text-white rounded-lg hover:bg-brand-red-dark disabled:opacity-50">
             {saving ? 'Saving…' : 'Save Changes'}
           </button>
           {saved && (

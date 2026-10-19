@@ -2,13 +2,14 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Plus, Trash2, ClipboardList, Settings, AlertTriangle, CheckCircle,
   Clock, Plug, X, ChevronRight, Laptop, Monitor, Printer, Coffee,
-  Smartphone, Tv, Wrench, Wind, Zap, Upload, Download,
+  Smartphone, Tv, Wrench, Wind, Zap, Upload, Download, Search,
 } from 'lucide-react';
 import {
   patGetAppliances, patCreateAppliance, patUpdateAppliance, patDeleteAppliance,
   patGetTests, patCreateTest, patDeleteTest, fetchSites, importPATCsv,
 } from '../lib/api';
 import type { PATAppliance, PATTest, Site } from '../types';
+import ComplianceRing from '../components/ComplianceRing';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,19 @@ function patStatus(appliance: Pick<PATAppliance, 'nextTestDue' | 'tests'>): {
   if (days <= 30) return { label: 'Due Soon',   cls: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500',  icon: <Clock size={12} /> };
   return             { label: 'Compliant',   cls: 'bg-green-100 text-green-700',  dot: 'bg-green-500',  icon: <CheckCircle size={12} /> };
 }
+
+function patStatusKey(appliance: Pick<PATAppliance, 'nextTestDue' | 'tests'>): 'compliant' | 'attention' | 'overdue' {
+  const label = patStatus(appliance).label;
+  if (label === 'Overdue') return 'overdue';
+  if (label === 'Compliant') return 'compliant';
+  return 'attention';
+}
+
+const PAT_STRIPE_CLS: Record<string, string> = {
+  compliant: 'bg-green-500',
+  attention: 'bg-amber-500',
+  overdue: 'bg-red-500',
+};
 
 function applianceIcon(description: string): React.ReactNode {
   const d = description.toLowerCase();
@@ -272,40 +286,42 @@ const LogTestModal: React.FC<LogTestModalProps> = ({ appliance, onClose, onSave 
 // ─── Compliance Summary Card ──────────────────────────────────────────────────
 
 const PATComplianceCard: React.FC<{ appliances: PATAppliance[] }> = ({ appliances }) => {
-  const today = Date.now();
-  const latestFailed  = (a: PATAppliance) => a.tests?.[0]?.outcome === 'fail';
-  const nonCompliant  = appliances.filter(a => latestFailed(a));
-  const compliant     = appliances.filter(a => !latestFailed(a) && !!a.nextTestDue && new Date(a.nextTestDue).getTime() - today > 30 * 86_400_000);
-  const dueSoon       = appliances.filter(a => !latestFailed(a) && !!a.nextTestDue && new Date(a.nextTestDue).getTime() - today <= 30 * 86_400_000 && new Date(a.nextTestDue).getTime() > today);
-  const overdue       = appliances.filter(a => !latestFailed(a) && !!a.nextTestDue && new Date(a.nextTestDue).getTime() <= today);
-  const neverTested   = appliances.filter(a => !latestFailed(a) && !a.nextTestDue);
-
-  const upcoming = appliances
-    .filter(a => !latestFailed(a) && a.nextTestDue && new Date(a.nextTestDue).getTime() > today)
-    .sort((a, b) => new Date(a.nextTestDue!).getTime() - new Date(b.nextTestDue!).getTime())[0];
+  const total     = appliances.length;
+  const compliant = appliances.filter(a => patStatusKey(a) === 'compliant').length;
+  const attention = appliances.filter(a => patStatusKey(a) === 'attention').length;
+  const overdue   = appliances.filter(a => patStatusKey(a) === 'overdue').length;
+  const pct = total > 0 ? Math.round((compliant / total) * 100) : 0;
 
   return (
-    <div className="bg-white border-b px-6 py-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="flex items-center gap-5 bg-white border border-brand-line rounded-xl px-5 py-4 mb-5">
+      <ComplianceRing
+        size={56}
+        strokeWidth={5}
+        total={total}
+        centerLabel={<span className="text-[15px] font-bold">{pct}%</span>}
+        segments={[
+          { value: compliant, color: '#16A34A' },
+          { value: attention, color: '#D97706' },
+          { value: overdue, color: '#DC2626' },
+        ]}
+      />
+      <div className="flex flex-wrap gap-6">
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
-            <CheckCircle size={14} className="text-brand-red" /> PAT Compliance
-          </h3>
-          <div className="flex flex-wrap gap-3 text-sm">
-            <div className="text-gray-500">Total appliances: <span className="font-semibold text-gray-800">{appliances.length}</span></div>
-            <div className="flex items-center gap-1.5 text-green-700"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />Compliant: <span className="font-semibold">{compliant.length}</span></div>
-            <div className="flex items-center gap-1.5 text-amber-700"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />Due Soon: <span className="font-semibold">{dueSoon.length}</span></div>
-            <div className="flex items-center gap-1.5 text-red-700"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />Overdue: <span className="font-semibold">{overdue.length}</span></div>
-            {nonCompliant.length > 0 && <div className="flex items-center gap-1.5 text-orange-800"><span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />Non Compliant: <span className="font-semibold">{nonCompliant.length}</span></div>}
-            {neverTested.length > 0 && <div className="flex items-center gap-1.5 text-gray-500"><span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block" />Never Tested: <span className="font-semibold">{neverTested.length}</span></div>}
-          </div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{total}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1">Total appliances</div>
         </div>
-        {upcoming && (
-          <div className="text-sm text-gray-500 bg-gray-50 border rounded-lg px-3 py-2">
-            Next test due: <span className="font-semibold text-gray-800">{fmt(upcoming.nextTestDue)}</span>
-            <div className="text-xs text-gray-400 mt-0.5 truncate max-w-[200px]">{upcoming.applianceRef} — {upcoming.description}</div>
-          </div>
-        )}
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{compliant}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-600 inline-block" />Compliant</div>
+        </div>
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{attention}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-600 inline-block" />Needs attention</div>
+        </div>
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{overdue}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block" />Overdue</div>
+        </div>
       </div>
     </div>
   );
@@ -319,6 +335,7 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectId ?? null);
   const [tests, setTests] = useState<PATTest[]>([]);
   const [filterSiteId, setFilterSiteId] = useState<string>('all');
+  const [search, setSearch] = useState('');
   const [tab, setTab] = useState<Tab>('history');
   const [showAddAppliance, setShowAddAppliance] = useState(false);
   const [showLogTest, setShowLogTest] = useState(false);
@@ -423,38 +440,34 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
     }
   };
 
-  const filteredAppliances = appliances;
-
-  const outcomeBadge = (outcome: string) =>
-    outcome === 'pass'
-      ? <span className="px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700">PASS</span>
-      : <span className="px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">FAIL</span>;
+  const filteredAppliances = appliances.filter(a => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    return a.applianceRef.toLowerCase().includes(q) || a.description.toLowerCase().includes(q) || a.location.toLowerCase().includes(q) || (a.site?.name ?? '').toLowerCase().includes(q);
+  });
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
-      {/* Compliance summary */}
-      {!loading && appliances.length > 0 && <PATComplianceCard appliances={appliances} />}
-
-      <div className="flex flex-1 overflow-hidden">
-      {/* Left panel — Appliance list */}
-      <div className="w-72 bg-white border-r flex flex-col flex-shrink-0">
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Plug size={16} className="text-brand-red" /> Appliances
-            </h2>
+    <div className="flex h-full min-h-screen bg-brand-bg">
+      {/* List panel */}
+      <aside className="w-80 shrink-0 border-r border-brand-line bg-white flex flex-col">
+        <div className="p-4 border-b border-brand-line">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <span className="text-[13px] font-semibold text-brand-ink">Appliances</span>
+              <span className="text-xs text-brand-ink-muted"> · {appliances.length} appliance{appliances.length === 1 ? '' : 's'}</span>
+            </div>
             <button
               onClick={() => setShowAddAppliance(true)}
-              className="flex items-center gap-1 text-xs bg-brand-red text-white px-2.5 py-1.5 rounded-lg hover:bg-brand-red-dark"
+              className="flex items-center gap-1 text-xs font-medium bg-brand-red text-white px-2.5 py-1.5 rounded-lg hover:bg-brand-red-dark"
             >
               <Plus size={13} /> Add
             </button>
           </div>
           <div className="flex items-center gap-2 mb-3">
-            <a href="/pat-import-template.csv" download className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-brand-red border border-red-300 rounded-lg hover:bg-red-50">
+            <a href="/pat-import-template.csv" download className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-brand-ink-muted border border-brand-line rounded-lg hover:border-brand-ink-faint">
               <Download size={12} /> Template
             </a>
-            <button onClick={() => patImportRef.current?.click()} disabled={importing} className="flex-1 flex items-center justify-center gap-1 text-xs bg-red-100 text-brand-red-dark border border-red-300 px-2 py-1.5 rounded-lg hover:bg-red-200 disabled:opacity-50">
+            <button onClick={() => patImportRef.current?.click()} disabled={importing} className="flex-1 flex items-center justify-center gap-1 text-xs font-medium text-brand-ink-muted border border-brand-line rounded-lg px-2 py-1.5 hover:border-brand-ink-faint disabled:opacity-50">
               <Upload size={12} /> {importing ? 'Importing…' : 'Import CSV'}
             </button>
           </div>
@@ -465,118 +478,121 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
             </div>
           )}
           <select
-            className="w-full border rounded-lg px-3 py-1.5 text-sm"
+            className="w-full border border-brand-line rounded-lg px-2 py-1.5 text-sm text-brand-ink mb-2"
             value={filterSiteId}
             onChange={e => { setFilterSiteId(e.target.value); setSelectedId(null); }}
           >
             <option value="all">All Sites</option>
             {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-brand-ink-faint" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search appliances…"
+              className="w-full border border-brand-line rounded-lg pl-8 pr-3 py-1.5 text-sm text-brand-ink outline-none focus:border-brand-red"
+            />
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {loading && <p className="text-sm text-gray-400 p-4">Loading…</p>}
+          {loading && <p className="text-sm text-brand-ink-muted p-4">Loading…</p>}
           {error && <p className="text-sm text-red-500 p-4">{error}</p>}
           {!loading && filteredAppliances.length === 0 && (
-            <div className="p-6 text-center">
-              <Plug size={32} className="text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No appliances yet</p>
-              <p className="text-xs text-gray-400 mt-1">Add your first appliance to get started</p>
+            <div className="p-6 text-center text-sm text-brand-ink-muted">
+              <Plug size={32} className="text-brand-ink-faint mx-auto mb-2" />
+              {appliances.length === 0 ? 'No appliances yet' : 'No appliances match your search'}
             </div>
           )}
           {filteredAppliances.map(a => {
             const status = patStatus(a);
+            const stripe = PAT_STRIPE_CLS[patStatusKey(a)];
+            const isSelected = selectedId === a.id;
             return (
               <button
                 key={a.id}
                 onClick={() => setSelectedId(a.id)}
-                className={`w-full text-left px-4 py-3 border-b hover:bg-gray-50 flex items-start justify-between gap-2 ${selectedId === a.id ? 'bg-red-50 border-l-2 border-l-brand-red' : ''}`}
+                className={`w-full flex text-left px-4 py-2.5 border-l-[3px] transition-colors ${isSelected ? 'bg-brand-red-tint border-l-brand-red' : 'border-l-transparent hover:bg-brand-bg'}`}
               >
+                <span className={`w-1 rounded mr-3 shrink-0 ${stripe}`} />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`flex-shrink-0 text-gray-400 ${selectedId === a.id ? 'text-brand-red' : ''}`}>
-                      {applianceIcon(a.description)}
-                    </span>
-                    <span className="text-xs font-mono font-semibold text-brand-red-dark">{a.applianceRef}</span>
-                    {a.applianceClass && <span className="text-xs text-gray-400">Class {a.applianceClass}</span>}
+                  <div className="flex items-center gap-1.5">
+                    <span className={`shrink-0 text-brand-ink-faint ${isSelected ? 'text-brand-red' : ''}`}>{applianceIcon(a.description)}</span>
+                    <span className="font-mono text-[13px] font-semibold text-brand-ink truncate">{a.applianceRef}</span>
                   </div>
-                  <p className="text-sm font-medium text-gray-900 truncate mt-0.5">{a.description}</p>
-                  <p className="text-xs text-gray-500 truncate">{a.location}{a.site ? ` · ${a.site.name}` : ''}</p>
-                  {a.nextTestDue && (
-                    <p className="text-xs text-gray-400 mt-0.5">Due: <span className="font-medium">{fmt(a.nextTestDue)}</span></p>
-                  )}
-                </div>
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${status.cls}`}>
-                    {status.icon} {status.label}
-                  </span>
+                  <div className="text-xs text-brand-ink-muted truncate mt-0.5">{a.description} · {a.location}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${status.cls}`}>{status.label}</span>
+                    <span className="text-[11px] text-brand-ink-faint tabular-nums">Due: {fmt(a.nextTestDue)}</span>
+                  </div>
                 </div>
               </button>
             );
           })}
         </div>
-      </div>
+      </aside>
 
-      {/* Right panel */}
-      {!selectedAppliance ? (
-        <div className="flex-1 flex items-center justify-center text-center">
-          <div>
-            <Plug size={48} className="text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">Select an appliance</p>
-            <p className="text-sm text-gray-400 mt-1">or add a new one to get started</p>
+      {/* Detail panel */}
+      <main className="flex-1 overflow-y-auto p-6 min-w-0">
+        {!selectedAppliance ? (
+          <div className="h-full flex items-center justify-center text-brand-ink-muted">
+            <div className="text-center">
+              <Plug size={48} className="mx-auto mb-3 text-brand-ink-faint" />
+              <p className="text-sm">Select an appliance to view details</p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Appliance header */}
-          <div className="bg-white border-b px-6 py-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm font-bold text-brand-red-dark bg-red-50 px-2 py-0.5 rounded">
-                    {selectedAppliance.applianceRef}
-                  </span>
-                  {selectedAppliance.applianceClass && (
-                    <span className="text-xs text-gray-500">Class {selectedAppliance.applianceClass}</span>
-                  )}
-                  {(() => { const s = patStatus(selectedAppliance); return (
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${s.cls}`}>
-                      {s.icon} {s.label}
-                    </span>
-                  ); })()}
+        ) : (
+          <>
+            {!loading && appliances.length > 0 && <PATComplianceCard appliances={appliances} />}
+
+            {/* Detail header */}
+            <div className="bg-white border border-brand-line rounded-xl p-5 mb-5">
+              <div className="flex items-start justify-between gap-4 mb-3.5">
+                <div className="min-w-0">
+                  <div className="font-mono text-xl font-bold text-brand-ink">{selectedAppliance.applianceRef}</div>
+                  <div className="flex items-center gap-1.5 text-sm text-brand-ink-muted mt-0.5">
+                    {[selectedAppliance.site?.name, selectedAppliance.location].filter(Boolean).map((part, i, arr) => (
+                      <React.Fragment key={i}>
+                        <span>{part}</span>
+                        {i < arr.length - 1 && <span className="text-brand-ink-faint">›</span>}
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 mt-1">{selectedAppliance.description}</h1>
-                <p className="text-sm text-gray-500">
-                  {selectedAppliance.location}
-                  {selectedAppliance.site ? ` · ${selectedAppliance.site.name}` : ''}
-                </p>
-                <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                  <span>Last tested: <strong>{fmt(selectedAppliance.lastTestedAt)}</strong></span>
-                  <span>Next due: <strong>{fmt(selectedAppliance.nextTestDue)}</strong></span>
-                  <span>Tests logged: <strong>{selectedAppliance._count?.tests ?? tests.length}</strong></span>
+                <div className="text-right shrink-0">
+                  <div className="text-[11px] text-brand-ink-muted">Next test due</div>
+                  <div className="text-base font-bold tabular-nums text-brand-ink">{fmt(selectedAppliance.nextTestDue)}</div>
+                  <button onClick={() => handleDeleteAppliance(selectedAppliance.id)} className="text-[11px] text-red-400 hover:text-red-600 mt-1 inline-flex items-center gap-1" title="Delete appliance">
+                    <Trash2 size={11} /> Delete
+                  </button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                {tab === 'history' && (
-                  <button
-                    onClick={() => setShowLogTest(true)}
-                    className="flex items-center gap-1.5 bg-brand-red text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-brand-red-dark"
-                  >
-                    <Plus size={15} /> Log Test
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDeleteAppliance(selectedAppliance.id)}
-                  className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 border"
-                  title="Delete appliance"
-                >
-                  <Trash2 size={16} />
-                </button>
+
+              <div className="flex flex-wrap gap-1.5 mb-3.5">
+                {selectedAppliance.applianceClass && <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">Class {selectedAppliance.applianceClass}</span>}
+                {selectedAppliance.site && <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700">{selectedAppliance.site.name}</span>}
+              </div>
+
+              <div className="flex flex-wrap gap-6">
+                <div>
+                  <div className="text-[11px] text-brand-ink-faint">Last tested</div>
+                  <div className="text-[13px] font-medium text-brand-ink tabular-nums">{fmt(selectedAppliance.lastTestedAt)}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-brand-ink-faint">Description</div>
+                  <div className="text-[13px] font-medium text-brand-ink">{selectedAppliance.description}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-brand-ink-faint">Tests logged</div>
+                  <div className="text-[13px] font-medium text-brand-ink tabular-nums">{selectedAppliance._count?.tests ?? tests.length}</div>
+                </div>
               </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 mt-4 border-b -mb-4">
+            <div className="flex bg-white border border-brand-line border-b-0 rounded-t-xl overflow-hidden">
               {([
                 { key: 'history', label: 'Test History', icon: <ClipboardList size={14} /> },
                 { key: 'details', label: 'Appliance Details', icon: <Settings size={14} /> },
@@ -584,110 +600,120 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
                 <button
                   key={key}
                   onClick={() => setTab(key)}
-                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                    tab === key
-                      ? 'border-brand-red text-brand-red-dark'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  className={`flex items-center gap-1.5 py-3 px-5 text-sm font-medium border-b-2 transition-colors ${
+                    tab === key ? 'border-brand-red text-brand-red' : 'border-transparent text-brand-ink-muted hover:text-brand-ink'
                   }`}
                 >
                   {icon} {label}
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Tab content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {tab === 'history' && (
-              <div>
-                {testsLoading && <p className="text-sm text-gray-400">Loading…</p>}
-                {!testsLoading && tests.length === 0 && (
-                  <div className="text-center py-12">
-                    <ClipboardList size={40} className="text-gray-200 mx-auto mb-3" />
-                    <p className="text-gray-500">No test records yet</p>
-                    <p className="text-sm text-gray-400 mt-1">Click "Log Test" to record the first PAT test</p>
+            {/* Tab content */}
+            <div className="bg-white border border-brand-line rounded-b-xl p-5">
+              {tab === 'history' && (
+                <div>
+                  <div className="flex items-center justify-between mb-3.5">
+                    <h3 className="text-sm font-semibold text-brand-ink">{tests.length} test{tests.length === 1 ? '' : 's'}</h3>
+                    <button
+                      onClick={() => setShowLogTest(true)}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 bg-brand-red text-white rounded-lg text-xs font-semibold hover:bg-brand-red-dark"
+                    >
+                      <Plus size={14} /> Log Test
+                    </button>
                   </div>
-                )}
-                <div className="space-y-3">
-                  {tests.map(t => (
-                    <div key={t.id} className="bg-white border rounded-xl p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {outcomeBadge(t.outcome)}
-                            <span className="text-sm font-medium text-gray-900">{fmt(t.testedAt)}</span>
-                            <span className="text-xs text-gray-500">by {t.testedBy}</span>
-                            {t.reportRef && <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{t.reportRef}</span>}
+
+                  {testsLoading && <p className="text-sm text-brand-ink-muted">Loading…</p>}
+                  {!testsLoading && tests.length === 0 && (
+                    <div className="text-center py-10 text-brand-ink-muted">
+                      <ClipboardList size={32} className="mx-auto mb-2 text-brand-ink-faint" />
+                      <p className="text-sm">No test records yet</p>
+                    </div>
+                  )}
+                  <div className="flex flex-col">
+                    {tests.map((t, i) => {
+                      const isPass = t.outcome === 'pass';
+                      return (
+                        <div key={t.id} className={`flex items-start gap-3 py-2.5 ${i < tests.length - 1 ? 'border-b border-brand-line/60' : ''}`}>
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isPass ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                            {isPass ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className={`text-[13px] font-semibold ${isPass ? 'text-green-700' : 'text-red-700'}`}>{isPass ? 'Pass' : 'Fail'}</div>
+                            <div className="text-xs text-brand-ink-muted mt-0.5">
+                              by {t.testedBy}
+                              {t.earthOhms != null && ` · Earth: ${t.earthOhms}Ω`}
+                              {t.insulationMohms != null && ` · Insulation: ${t.insulationMohms}MΩ`}
+                              {t.reportRef && ` · ${t.reportRef}`}
+                            </div>
+                            {t.comments && <p className="text-xs text-brand-ink-faint mt-0.5">{t.comments}</p>}
                           </div>
-                          <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-gray-600">
-                            <span>Visual: <strong className={t.visualInspect === 'pass' ? 'text-green-700' : 'text-red-700'}>{t.visualInspect.toUpperCase()}</strong></span>
-                            {t.earthOhms != null && <span>Earth: <strong>{t.earthOhms}Ω</strong></span>}
-                            {t.insulationMohms != null && <span>Insulation: <strong>{t.insulationMohms}MΩ</strong></span>}
-                            <span>Functional: <strong className={t.functionalCheck === 'pass' ? 'text-green-700' : t.functionalCheck === 'fail' ? 'text-red-700' : 'text-gray-500'}>{t.functionalCheck.toUpperCase()}</strong></span>
-                            {t.nextTestDate && <span>Next test: <strong>{fmt(t.nextTestDate)}</strong></span>}
+                          <div className="text-[11px] text-brand-ink-faint text-right shrink-0 tabular-nums leading-snug">
+                            {fmt(t.testedAt)}
+                            {t.nextTestDate && <><br />Next due: {fmt(t.nextTestDate)}</>}
+                            <button
+                              onClick={() => handleDeleteTest(t.id)}
+                              className="block ml-auto mt-1 text-red-300 hover:text-red-500"
+                            >
+                              <Trash2 size={12} />
+                            </button>
                           </div>
-                          {t.comments && <p className="text-xs text-gray-500 mt-1 italic">{t.comments}</p>}
                         </div>
-                        <button
-                          onClick={() => handleDeleteTest(t.id)}
-                          className="p-1.5 text-gray-300 hover:text-red-500 rounded hover:bg-red-50 flex-shrink-0"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {tab === 'details' && (
+                <div className="max-w-md">
+                  <h3 className="font-medium text-brand-ink mb-4">Appliance Details</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">ID No.</label>
+                        <input className="w-full border rounded-lg px-3 py-2 text-sm"
+                          value={editForm.applianceRef ?? ''} onChange={e => setEditForm(f => ({ ...f, applianceRef: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                        <select className="w-full border rounded-lg px-3 py-2 text-sm"
+                          value={editForm.applianceClass ?? 'I'} onChange={e => setEditForm(f => ({ ...f, applianceClass: e.target.value }))}>
+                          <option value="I">Class I (Earthed)</option>
+                          <option value="II">Class II (Double Insulated)</option>
+                          <option value="III">Class III (SELV)</option>
+                        </select>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {tab === 'details' && (
-              <div className="max-w-lg">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ID No.</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                       <input className="w-full border rounded-lg px-3 py-2 text-sm"
-                        value={editForm.applianceRef ?? ''} onChange={e => setEditForm(f => ({ ...f, applianceRef: e.target.value }))} />
+                        value={editForm.description ?? ''} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-                      <select className="w-full border rounded-lg px-3 py-2 text-sm"
-                        value={editForm.applianceClass ?? 'I'} onChange={e => setEditForm(f => ({ ...f, applianceClass: e.target.value }))}>
-                        <option value="I">Class I (Earthed)</option>
-                        <option value="II">Class II (Double Insulated)</option>
-                        <option value="III">Class III (SELV)</option>
-                      </select>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                      <input className="w-full border rounded-lg px-3 py-2 text-sm"
+                        value={editForm.location ?? ''} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                      <textarea className="w-full border rounded-lg px-3 py-2 text-sm" rows={3}
+                        value={editForm.notes ?? ''} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} />
+                    </div>
+                    <button
+                      onClick={handleSaveDetails}
+                      disabled={editSaving}
+                      className="bg-brand-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-red-dark disabled:opacity-50"
+                    >
+                      {editSaving ? 'Saving…' : 'Save Changes'}
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <input className="w-full border rounded-lg px-3 py-2 text-sm"
-                      value={editForm.description ?? ''} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                    <input className="w-full border rounded-lg px-3 py-2 text-sm"
-                      value={editForm.location ?? ''} onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                    <textarea className="w-full border rounded-lg px-3 py-2 text-sm" rows={3}
-                      value={editForm.notes ?? ''} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} />
-                  </div>
-                  <button
-                    onClick={handleSaveDetails}
-                    disabled={editSaving}
-                    className="bg-brand-red text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-red-dark disabled:opacity-50"
-                  >
-                    {editSaving ? 'Saving…' : 'Save Changes'}
-                  </button>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              )}
+            </div>
+          </>
+        )}
+      </main>
 
       {showAddAppliance && (
         <AddApplianceModal sites={sites} onClose={() => setShowAddAppliance(false)} onSave={handleAddAppliance} />
@@ -695,7 +721,6 @@ const PATTestingPage: React.FC<{ initialSelectId?: string }> = ({ initialSelectI
       {showLogTest && selectedAppliance && (
         <LogTestModal appliance={selectedAppliance} onClose={() => setShowLogTest(false)} onSave={handleLogTest} />
       )}
-      </div>
     </div>
   );
 };
