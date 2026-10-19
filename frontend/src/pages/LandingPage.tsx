@@ -746,7 +746,7 @@ export default function LandingPage() {
           <div className="price-card featured reveal">
             <div className="price-tag">Most deployed</div><h3>Professional</h3><div className="desc">For growing organizations</div>
             <div className="price-num">£49<span>/month</span></div>
-            <ul className="price-list"><li>Up to 250 extinguishers</li><li>10 users</li><li>Advanced analytics</li><li>Custom branding</li><li>PDF/CSV exports</li><li>Priority email support</li></ul>
+            <ul className="price-list"><li>Up to 250 extinguishers</li><li>10 users</li><li>Advanced analytics</li><li>PDF/CSV exports</li><li>Priority email support</li></ul>
             <button type="button" className="btn-primary magnetic" style={{ textAlign: 'center' }} onClick={goToSignup}>Start Free Trial</button>
           </div>
           <div className="price-card reveal">

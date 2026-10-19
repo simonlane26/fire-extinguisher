@@ -29,7 +29,7 @@ export const PLAN_LIMITS: Record<SubscriptionPlan, PlanLimits> = {
     maxExtinguishers: -1,
     maxInspectionsPerMonth: 250,
     maxUsers: 10,
-    features: ['Advanced analytics', 'Custom branding', 'Export to PDF/CSV', 'Priority email support'],
+    features: ['Advanced analytics', 'Export to PDF/CSV', 'Priority email support'],
   },
   enterprise: {
     maxExtinguishers: -1,

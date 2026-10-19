@@ -173,7 +173,6 @@ export class StripeController {
             'Up to 250 extinguishers',
             '10 users',
             'Advanced analytics',
-            'Custom branding',
             'Export to PDF/CSV',
             'Priority email support',
           ],
