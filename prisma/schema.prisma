@@ -27,6 +27,7 @@ model Tenant {
   fireAlarmEnabled        Boolean           @default(false)
   patTestingEnabled        Boolean           @default(false)
   emergencyLightingEnabled Boolean           @default(false)
+  fireDoorsEnabled         Boolean           @default(false)
   createdAt                DateTime          @default(now())
   users                User[]
   sites                Site[]
@@ -47,6 +48,8 @@ model Tenant {
   patTests                PATTest[]
   emergencyLuminaires     EmergencyLuminaire[]
   emergencyLightTests     EmergencyLightTest[]
+  fireDoors               FireDoor[]
+  fireDoorInspections     FireDoorInspection[]
 
   @@index([subdomain])
   @@index([stripeCustomerId])
@@ -73,6 +76,7 @@ model Site {
   fireAlarmSystems FireAlarmSystem[]
   patAppliances       PATAppliance[]
   emergencyLuminaires EmergencyLuminaire[]
+  fireDoors           FireDoor[]
 
   @@index([tenantId])
   @@map("Site")
@@ -596,4 +600,77 @@ model EmergencyLightTest {
   @@index([tenantId])
   @@index([luminaireId])
   @@map("EmergencyLightTest")
+}
+
+// ─── Fire Doors ───────────────────────────────────────────────────────────────
+
+model FireDoor {
+  id                        String    @id @default(cuid())
+  tenantId                  String
+  siteId                    String
+  doorRef                   String    // e.g. "FD-001"
+  location                  String    // e.g. "2nd Floor Corridor"
+  doorType                  String    // "flat_entrance" | "communal_stairway" | "communal_corridor" | "communal_lobby" | "plant_room" | "service_riser" | "riser_cupboard" | "kitchen" | "hallway" | "dining_area" | "office" | "other"
+  fireRating                String?   // free text e.g. "FD30", "FD60"
+  manufacturer              String?
+  installationDate          DateTime?
+  hasIntumescentStrips      Boolean   @default(false)
+  hasSmokeSeal              Boolean   @default(false)
+  hasLetterbox              Boolean   @default(false)
+  hasAirTransferGrille      Boolean   @default(false)
+  hasGlazing                Boolean   @default(false)
+  inspectionFrequencyMonths Int       @default(12) // 3 for communal doors, 12 for flat entrance doors (Fire Safety (England) Regs 2022 Sched. 2)
+  nextInspectionDue         DateTime?
+  lastInspectedAt           DateTime?
+  notes                     String?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  tenant                    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  site                      Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  inspections                FireDoorInspection[]
+
+  @@index([tenantId])
+  @@index([siteId])
+  @@map("FireDoor")
+}
+
+model FireDoorInspection {
+  id                     String    @id @default(cuid())
+  tenantId               String
+  doorId                 String
+  inspectedBy            String
+  inspectedAt            DateTime
+  accessDenied           Boolean   @default(false)
+  accessDeniedReason     String?
+  // Core checks (all doors)
+  visualDamage           Boolean?
+  closesCompletely       Boolean?
+  closesFromAnyAngle     Boolean?
+  opensInTravelDirection Boolean?
+  frameGapOk             Boolean?
+  maxGapSizeMm           Float?
+  hingesSecure           Boolean?
+  hingeCount             Int?
+  selfCloserWorks        Boolean?
+  // Conditional checks (only relevant if the door's corresponding hasX flag is true)
+  intumescentStripIntact Boolean?
+  smokeSealIntact        Boolean?
+  letterboxCloses        Boolean?
+  airTransferGrilleOk    Boolean?
+  glazingIntact          Boolean?
+  signageCorrect         Boolean?
+  // Outcome
+  outcome                String    // "pass" | "fail" | "requires_attention"
+  defectsFound           String?
+  remedialAction         String?
+  actionPriority         String?   // "low" | "medium" | "high" | "urgent"
+  comments               String?
+  nextInspectionDate     DateTime?
+  createdAt              DateTime  @default(now())
+  tenant                 Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  door                   FireDoor  @relation(fields: [doorId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([doorId])
+  @@map("FireDoorInspection")
 }

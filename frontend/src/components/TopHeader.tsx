@@ -18,6 +18,7 @@ const PAGE_COPY: Record<ActiveTab, { title: string; desc: string }> = {
   'fire-alarm': { title: 'Fire Alarm Logbook', desc: 'BS 5839-1 testing, servicing and fault logs.' },
   'pat-testing': { title: 'PAT Testing', desc: 'Portable appliance test records and schedules.' },
   'emergency-lighting': { title: 'Emergency Lighting', desc: 'BS 5266-1 luminaire testing and compliance.' },
+  'fire-doors': { title: 'Fire Doors', desc: 'Fire door inspection records and compliance.' },
   'platform-admin': { title: 'Platform Admin', desc: 'Manage tenants across the platform.' },
 };
 

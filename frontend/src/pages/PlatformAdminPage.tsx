@@ -48,7 +48,7 @@ const PlatformAdminPage: React.FC = () => {
 
   useEffect(() => { load(); }, []);
 
-  async function toggleFeature(tenantId: string, feature: 'stockManagementEnabled' | 'fireAlarmEnabled' | 'patTestingEnabled' | 'emergencyLightingEnabled', value: boolean) {
+  async function toggleFeature(tenantId: string, feature: 'stockManagementEnabled' | 'fireAlarmEnabled' | 'patTestingEnabled' | 'emergencyLightingEnabled' | 'fireDoorsEnabled', value: boolean) {
     setUpdating(u => ({ ...u, [tenantId + feature]: true }));
     try {
       const updated = await platformUpdateFeatures(tenantId, { [feature]: value });
@@ -177,6 +177,12 @@ const PlatformAdminPage: React.FC = () => {
                         enabled={t.emergencyLightingEnabled}
                         loading={!!updating[t.id + 'emergencyLightingEnabled']}
                         onChange={v => toggleFeature(t.id, 'emergencyLightingEnabled', v)}
+                      />
+                      <FeatureToggle
+                        label="Fire Doors"
+                        enabled={t.fireDoorsEnabled}
+                        loading={!!updating[t.id + 'fireDoorsEnabled']}
+                        onChange={v => toggleFeature(t.id, 'fireDoorsEnabled', v)}
                       />
                     </div>
                   </td>

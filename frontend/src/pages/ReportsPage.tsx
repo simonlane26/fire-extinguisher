@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Users, Filter, MapPin, BellRing, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
-import { getAuthHeaders, fetchExtinguishers, fetchSites, faGetSystems, patGetAppliances, downloadPATTestReport, elGetLuminaires, downloadEmergencyLightingReport } from '../lib/api';
+import { FileText, Users, Filter, MapPin, BellRing, Lightbulb, DoorClosed, ChevronDown, ChevronUp } from 'lucide-react';
+import { getAuthHeaders, fetchExtinguishers, fetchSites, faGetSystems, patGetAppliances, downloadPATTestReport, elGetLuminaires, downloadEmergencyLightingReport, fdGetDoors, downloadFireDoorsReport } from '../lib/api';
 import type { Site, FireAlarmSystem } from '../types';
 
 // Determine API base URL based on environment
@@ -34,6 +34,7 @@ type Props = {
   fireAlarmEnabled?: boolean;
   patTestingEnabled?: boolean;
   emergencyLightingEnabled?: boolean;
+  fireDoorsEnabled?: boolean;
 };
 
 const FIRE_ALARM_DATE_RANGES = [
@@ -51,6 +52,7 @@ const ReportsPage: React.FC<Props> = ({
   fireAlarmEnabled = false,
   patTestingEnabled = false,
   emergencyLightingEnabled = false,
+  fireDoorsEnabled = false,
 }) => {
   const [generatingUsers, setGeneratingUsers] = useState(false);
   const [generatingByType, setGeneratingByType] = useState(false);
@@ -86,6 +88,12 @@ const ReportsPage: React.FC<Props> = ({
   const [elExporting, setElExporting] = useState(false);
   const [elHasLuminaires, setElHasLuminaires] = useState(false);
 
+  // Fire Doors export state
+  const [fdSelectedSite, setFdSelectedSite] = useState<string>('all');
+  const [fdDateRange, setFdDateRange] = useState<number>(365);
+  const [fdExporting, setFdExporting] = useState(false);
+  const [fdHasDoors, setFdHasDoors] = useState(false);
+
   // Batch Certificate state
   const [certSiteFilter, setCertSiteFilter] = useState<string>('all');
   const [certBuildingFilter, setCertBuildingFilter] = useState<string>('all');
@@ -116,6 +124,12 @@ const ReportsPage: React.FC<Props> = ({
       elGetLuminaires().then((l: any[]) => setElHasLuminaires(l.length > 0)).catch(() => {});
     }
   }, [emergencyLightingEnabled]);
+
+  useEffect(() => {
+    if (fireDoorsEnabled) {
+      fdGetDoors().then((d: any[]) => setFdHasDoors(d.length > 0)).catch(() => {});
+    }
+  }, [fireDoorsEnabled]);
 
   const fetchExtinguisherTypes = async () => {
     try {
@@ -828,6 +842,69 @@ const ReportsPage: React.FC<Props> = ({
           </button>
           {!elHasLuminaires && (
             <p className="text-xs text-gray-400 mt-2 text-center">Add luminaires in the Emergency Lighting tab first</p>
+          )}
+        </div>
+      )}
+
+      {/* Fire Doors Report */}
+      {fireDoorsEnabled && (
+        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-100">
+                <DoorClosed size={20} className="text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">Fire Doors Report</h3>
+                <p className="text-sm text-gray-500 mt-0.5">Fire Safety (England) Regulations 2022 compliant inspection log</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3 mb-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Site</label>
+              <select
+                title="Site filter"
+                value={fdSelectedSite}
+                onChange={e => setFdSelectedSite(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="all">All Sites</option>
+                {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Date Range</label>
+              <select
+                title="Date range"
+                value={fdDateRange}
+                onChange={e => setFdDateRange(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value={30}>Last 30 days</option>
+                <option value={90}>Last 3 months</option>
+                <option value={180}>Last 6 months</option>
+                <option value={365}>Last 12 months</option>
+                <option value={0}>All time</option>
+              </select>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              setFdExporting(true);
+              try { await downloadFireDoorsReport(fdSelectedSite !== 'all' ? fdSelectedSite : undefined, fdDateRange); }
+              catch { alert('Failed to generate fire doors report'); }
+              finally { setFdExporting(false); }
+            }}
+            disabled={fdExporting || !fdHasDoors}
+            className="w-full py-3 px-4 rounded-lg font-medium text-white transition-colors disabled:opacity-50"
+            style={{ backgroundColor: primaryColor }}
+          >
+            {fdExporting ? 'Generating…' : 'Generate Fire Doors Report (PDF)'}
+          </button>
+          {!fdHasDoors && (
+            <p className="text-xs text-gray-400 mt-2 text-center">Add fire doors in the Fire Doors tab first</p>
           )}
         </div>
       )}

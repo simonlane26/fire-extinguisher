@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Check, Crown, Zap, Building2, AlertCircle, BellRing, Lightbulb, Plug, Plus, Loader2 } from 'lucide-react';
+import { CreditCard, Check, Crown, Zap, Building2, AlertCircle, BellRing, Lightbulb, Plug, DoorClosed, Plus, Loader2 } from 'lucide-react';
 import { createAddonCheckoutSession } from '../lib/api';
 import type { Tenant } from '../types';
 
@@ -174,6 +174,8 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
     'fire-alarm':          'price_1TTkDZGRZTmazyiYbtWgLBXq',
     'emergency-lighting':  'price_1TTkEUGRZTmazyiYKgNAdH2R',
     'pat-testing':         'price_1TTkFEGRZTmazyiYFj04zTP9',
+    // TODO: replace with the real Stripe Price ID once created
+    'fire-doors':          'price_FIRE_DOORS_PLACEHOLDER',
   };
 
   const handleAddOn = async (module: string) => {
@@ -569,6 +571,36 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
               >
                 {addonLoading === 'pat-testing' && <Loader2 size={13} className="animate-spin" />}
                 {tenant.patTestingEnabled ? 'Active' : addonLoading === 'pat-testing' ? 'Redirecting…' : 'Add to Plan'}
+              </button>
+            </div>
+          </div>
+
+          {/* Fire Doors */}
+          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:border-amber-200 hover:bg-amber-50/30 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <DoorClosed className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-900">Fire Doors</div>
+                <div className="text-sm text-gray-500">Fire door register — inspection checklists, compliance tracking & PDF reports</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 shrink-0 ml-4">
+              <div className="text-right">
+                <div className="text-lg font-bold text-gray-900">+£12<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                <div className="text-xs text-gray-400">excl. VAT</div>
+              </div>
+              <button
+                onClick={() => handleAddOn('fire-doors')}
+                disabled={tenant.fireDoorsEnabled || addonLoading === 'fire-doors'}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg border-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                style={tenant.fireDoorsEnabled
+                  ? { borderColor: '#d1d5db', color: '#6b7280', background: '#f9fafb' }
+                  : { borderColor: safeColor, color: safeColor, background: 'white' }}
+              >
+                {addonLoading === 'fire-doors' && <Loader2 size={13} className="animate-spin" />}
+                {tenant.fireDoorsEnabled ? 'Active' : addonLoading === 'fire-doors' ? 'Redirecting…' : 'Add to Plan'}
               </button>
             </div>
           </div>

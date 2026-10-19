@@ -27,6 +27,7 @@ import { PlatformAdminModule } from './platform-admin/platform-admin.module';
 import { FireAlarmModule } from './fire-alarm/fire-alarm.module';
 import { PATTestingModule } from './pat-testing/pat-testing.module';
 import { EmergencyLightingModule } from './emergency-lighting/emergency-lighting.module';
+import { FireDoorsModule } from './fire-doors/fire-doors.module';
 import { LeadsModule } from './leads/leads.module';
 
 @Module({
@@ -61,6 +62,7 @@ import { LeadsModule } from './leads/leads.module';
     FireAlarmModule,
     PATTestingModule,
     EmergencyLightingModule,
+    FireDoorsModule,
     LeadsModule,
   ],
   controllers: [AppController],

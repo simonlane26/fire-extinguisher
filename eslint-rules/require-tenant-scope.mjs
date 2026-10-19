@@ -42,6 +42,9 @@ const EXEMPT_MODELS = [
   // emergency-lighting.service.ts: assertLuminaireOwner(tenantId, luminaireId) called first
   'emergencyLightTest',
 
+  // fire-doors.service.ts: assertDoorOwner(tenantId, doorId) called first
+  'fireDoorInspection',
+
   // Join table — queried by userId, user is already tenant-scoped
   'userSiteAccess',
 

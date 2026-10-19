@@ -1798,6 +1798,113 @@ export class ReportsService {
     return this.renderPdf(html);
   }
 
+  async buildFireDoorReport(params: {
+    tenant: { name: string; logoUrl?: string };
+    doors: {
+      doorRef: string; location: string; doorType: string; fireRating?: string | null;
+      inspections: {
+        inspectedBy: string; inspectedAt: string | Date;
+        outcome: string; defectsFound?: string | null; nextInspectionDate?: string | Date | null;
+      }[];
+    }[];
+    dateLabel: string;
+  }): Promise<Buffer> {
+    const { tenant, doors, dateLabel } = params;
+    const reportNo = `FD-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+
+    const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const fmt = (d: string | Date | null | undefined) =>
+      d ? new Date(d).toLocaleDateString('en-GB') : '—';
+    const badge = (v: string) =>
+      v === 'pass'
+        ? `<span style="color:#16a34a;font-weight:700;">PASS</span>`
+        : v === 'fail'
+        ? `<span style="color:#dc2626;font-weight:700;">FAIL</span>`
+        : `<span style="color:#d97706;font-weight:700;">ATTENTION</span>`;
+
+    const rows = doors.flatMap(door =>
+      door.inspections.length > 0
+        ? door.inspections.map(insp => ({ door, insp }))
+        : [{ door, insp: null as any }],
+    );
+
+    const tableRows = rows.map(({ door, insp }, i) => {
+      if (!insp) {
+        return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f9fafb'};">
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(door.doorRef)}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(door.location)}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;font-size:9px;">${esc(door.doorType.replace(/_/g, ' '))}</td>
+          <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(door.fireRating)}</td>
+          <td colspan="5" style="padding:5px 6px;border:1px solid #e5e7eb;color:#9ca3af;font-style:italic;">No inspections recorded</td>
+        </tr>`;
+      }
+      return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f9fafb'};">
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(door.doorRef)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(door.location)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;font-size:9px;">${esc(door.doorType.replace(/_/g, ' '))}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;">${esc(door.fireRating)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${fmt(insp.inspectedAt)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${esc(insp.inspectedBy)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${badge(insp.outcome)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;font-size:10px;">${esc(insp.defectsFound)}</td>
+        <td style="padding:5px 6px;border:1px solid #e5e7eb;text-align:center;">${fmt(insp.nextInspectionDate)}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11px; color: #111; margin: 0; padding: 0; }
+  .header { background: #78350f; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { margin: 0; font-size: 16px; font-weight: 700; }
+  .header .sub { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+  .meta { display: flex; gap: 24px; padding: 10px 20px; background: #fffbeb; border-bottom: 1px solid #fde68a; font-size: 11px; }
+  .meta span { font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; font-size: 10px; }
+  th { background: #78350f; color: #fff; padding: 6px 6px; border: 1px solid #78350f; text-align: left; font-size: 9.5px; }
+  .footer { margin-top: 20px; padding: 10px 20px; font-size: 9px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+</style></head><body>
+<div class="header">
+  <div>
+    <div class="sub">${esc(tenant.name)}</div>
+    <h1>Fire Door Inspection Report</h1>
+    <div class="sub">${dateLabel}</div>
+  </div>
+  <div style="text-align:right;">
+    <div><span>Report No:</span> ${esc(reportNo)}</div>
+    <div style="margin-top:4px;"><span>Date:</span> ${new Date().toLocaleDateString('en-GB')}</div>
+  </div>
+</div>
+<div class="meta">
+  <div>Total Doors: <span>${doors.length}</span></div>
+  <div>Passed: <span style="color:#16a34a;">${rows.filter(r => r.insp?.outcome === 'pass').length}</span></div>
+  <div>Failed: <span style="color:#dc2626;">${rows.filter(r => r.insp?.outcome === 'fail').length}</span></div>
+  <div>Not Yet Inspected: <span style="color:#6b7280;">${doors.filter(d => d.inspections.length === 0).length}</span></div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>Ref</th>
+      <th>Location</th>
+      <th>Type</th>
+      <th>Fire Rating</th>
+      <th>Date</th>
+      <th>Inspected By</th>
+      <th>Pass/Fail</th>
+      <th>Defects</th>
+      <th>Next Inspection</th>
+    </tr>
+  </thead>
+  <tbody>${tableRows}</tbody>
+</table>
+<div class="footer">
+  Generated in accordance with the Fire Safety (England) Regulations 2022, Schedule 2.
+  Generated ${new Date().toLocaleString('en-GB')} — Firexcheck.com
+</div>
+</body></html>`;
+
+    return this.renderPdf(html);
+  }
+
   // ─── Batch Inspection Certificate ────────────────────────────────────────
 
   async buildBatchCertificate(params: {

@@ -22,6 +22,7 @@ export class PlatformAdminController {
         fireAlarmEnabled: true,
         patTestingEnabled: true,
         emergencyLightingEnabled: true,
+        fireDoorsEnabled: true,
         createdAt: true,
         _count: {
           select: {
@@ -44,6 +45,7 @@ export class PlatformAdminController {
       fireAlarmEnabled?: boolean;
       patTestingEnabled?: boolean;
       emergencyLightingEnabled?: boolean;
+      fireDoorsEnabled?: boolean;
     },
   ) {
     return this.prisma.tenant.update({
@@ -53,6 +55,7 @@ export class PlatformAdminController {
         ...(body.fireAlarmEnabled !== undefined && { fireAlarmEnabled: body.fireAlarmEnabled }),
         ...(body.patTestingEnabled !== undefined && { patTestingEnabled: body.patTestingEnabled }),
         ...(body.emergencyLightingEnabled !== undefined && { emergencyLightingEnabled: body.emergencyLightingEnabled }),
+        ...(body.fireDoorsEnabled !== undefined && { fireDoorsEnabled: body.fireDoorsEnabled }),
       },
       select: {
         id: true,
@@ -61,6 +64,7 @@ export class PlatformAdminController {
         fireAlarmEnabled: true,
         patTestingEnabled: true,
         emergencyLightingEnabled: true,
+        fireDoorsEnabled: true,
       },
     });
   }

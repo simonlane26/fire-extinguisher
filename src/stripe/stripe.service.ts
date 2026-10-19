@@ -50,12 +50,17 @@ export const STRIPE_PRICE_IDS = {
   addon_fire_alarm:          'price_1TTkDZGRZTmazyiYbtWgLBXq',
   addon_emergency_lighting:  'price_1TTkEUGRZTmazyiYKgNAdH2R',
   addon_pat_testing:         'price_1TTkFEGRZTmazyiYFj04zTP9',
+  // TODO: replace with a real Stripe Price ID once created in the dashboard —
+  // this placeholder will not work until then.
+  addon_fire_doors:          'price_FIRE_DOORS_PLACEHOLDER',
 };
 
-export const ADDON_PRICE_MODULE_MAP: Record<string, 'fireAlarmEnabled' | 'emergencyLightingEnabled' | 'patTestingEnabled'> = {
+export const ADDON_PRICE_MODULE_MAP: Record<string, 'fireAlarmEnabled' | 'emergencyLightingEnabled' | 'patTestingEnabled' | 'fireDoorsEnabled'> = {
   'price_1TTkDZGRZTmazyiYbtWgLBXq': 'fireAlarmEnabled',
   'price_1TTkEUGRZTmazyiYKgNAdH2R': 'emergencyLightingEnabled',
   'price_1TTkFEGRZTmazyiYFj04zTP9': 'patTestingEnabled',
+  // TODO: replace with the real Stripe Price ID once created
+  'price_FIRE_DOORS_PLACEHOLDER': 'fireDoorsEnabled',
 };
 
 @Injectable()
@@ -323,7 +328,7 @@ export class StripeService {
     if (!tenantId) return;
 
     // Check if this checkout was for an add-on module
-    const addonModule = session.metadata?.addonModule as 'fireAlarmEnabled' | 'emergencyLightingEnabled' | 'patTestingEnabled' | undefined;
+    const addonModule = session.metadata?.addonModule as 'fireAlarmEnabled' | 'emergencyLightingEnabled' | 'patTestingEnabled' | 'fireDoorsEnabled' | undefined;
     if (addonModule) {
       await this.prisma.tenant.update({
         where: { id: tenantId },

@@ -857,5 +857,43 @@ export class ReportsController {
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
   }
+
+  // Fire Doors Report
+  @Get('fire-doors')
+  async generateFireDoorReport(
+    @CurrentUser() user: CurrentUserData,
+    @Res() res: Response,
+    @Query('siteId') siteId?: string,
+    @Query('days') daysStr?: string,
+  ) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: user.tenantId } });
+    if (!tenant) throw new Error('Tenant not found');
+
+    const days = daysStr ? parseInt(daysStr, 10) : 365;
+    const cutoff = days > 0 ? new Date(Date.now() - days * 86_400_000) : undefined;
+
+    const doors = await (this.prisma as any).fireDoor.findMany({
+      where: { tenantId: user.tenantId, ...(siteId && siteId !== 'all' ? { siteId } : {}) },
+      include: {
+        site: { select: { name: true } },
+        inspections: {
+          where: cutoff ? { inspectedAt: { gte: cutoff } } : undefined,
+          orderBy: { inspectedAt: 'desc' },
+        },
+      },
+      orderBy: [{ siteId: 'asc' }, { doorRef: 'asc' }],
+    });
+
+    const dateLabel = days === 0 ? 'All time' : days <= 31 ? `Last ${days} days` : days <= 92 ? 'Last 3 months' : days <= 183 ? 'Last 6 months' : 'Last 12 months';
+    const pdfBuffer = await this.reports.buildFireDoorReport({
+      tenant: { name: tenant.companyName, logoUrl: tenant.logoUrl ?? undefined },
+      doors: doors as any,
+      dateLabel,
+    });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="fire-doors-report-${new Date().toISOString().slice(0, 10)}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+  }
 }
 

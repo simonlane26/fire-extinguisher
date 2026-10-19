@@ -1,0 +1,5 @@
+doorRef,location,doorType,fireRating,manufacturer,site
+FD-001,Flat 1 Entrance,flat_entrance,FD30,Premdor,Main Site
+FD-002,2nd Floor Communal Corridor,communal_corridor,FD30,Premdor,Main Site
+FD-003,Ground Floor Stairwell,communal_stairway,FD60,Jeld-Wen,Main Site
+FD-004,Plant Room,plant_room,FD60,Jeld-Wen,Warehouse

@@ -507,4 +507,84 @@ export class ReminderScheduler {
     this.logger.log('🧪 Manually triggered emergency lighting overdue check');
     await this.checkEmergencyLightingOverdueAlerts();
   }
+
+  @Cron('0 10 * * *')
+  async checkFireDoorOverdueAlerts() {
+    this.logger.log('🚪 Checking for overdue fire door inspections...');
+
+    const emailStatus = this.emailService.getConfigurationStatus();
+    if (!emailStatus.configured) {
+      this.logger.warn(`⚠️  Skipping fire door alerts: ${emailStatus.message}`);
+      return;
+    }
+
+    try {
+      const today = new Date();
+
+      const overdueDoors = await (this.prisma.fireDoor as any).findMany({
+        where: {
+          nextInspectionDue: { lt: today },
+          tenant: { fireDoorsEnabled: true },
+        },
+        include: {
+          site: { select: { name: true } },
+          tenant: {
+            include: {
+              users: {
+                where: { status: 'active', role: { in: ['admin', 'manager'] } },
+              },
+            },
+          },
+        },
+      });
+
+      this.logger.log(`🚪 Found ${overdueDoors.length} overdue fire door(s)`);
+
+      let alertsSent = 0;
+      for (const door of overdueDoors) {
+        const dueDate: Date = door.nextInspectionDue;
+        const daysOverdue = Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (![1, 3, 7].includes(daysOverdue)) continue;
+
+        const users = door.tenant?.users ?? [];
+        for (const user of users) {
+          const sent = await this.emailService.sendFireDoorOverdueAlert({
+            siteName: door.site?.name ?? 'Unknown Site',
+            doorRef: door.doorRef,
+            location: door.location,
+            doorType: door.doorType,
+            daysOverdue,
+            overdueSince: dueDate,
+            recipientEmail: user.email,
+            recipientName: user.name,
+            companyName: door.tenant.companyName,
+          });
+          if (sent) alertsSent++;
+
+          try {
+            await this.notificationsService.sendToUser(user.id, {
+              title: '🚪 Fire Door Inspection Overdue',
+              body: `${door.doorRef} — ${door.location} at ${door.site?.name ?? 'Unknown'} (${daysOverdue}d overdue)`,
+              icon: '/icon-192x192.png',
+              tag: `fire-door-overdue-${door.id}`,
+            });
+          } catch (err) {
+            this.logger.warn(`Failed to send push to user ${user.id}: ${err.message}`);
+          }
+        }
+
+        this.logger.log(`📧 Fire door overdue alert sent for ${door.doorRef} (${daysOverdue}d overdue)`);
+      }
+
+      this.logger.log(`✅ Fire door overdue check complete. Sent ${alertsSent} emails.`);
+    } catch (error) {
+      this.logger.error('❌ Error checking fire door overdue alerts:', error);
+    }
+  }
+
+  async triggerFireDoorOverdueAlertsNow() {
+    this.logger.log('🧪 Manually triggered fire door overdue check');
+    await this.checkFireDoorOverdueAlerts();
+  }
 }

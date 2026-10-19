@@ -21,6 +21,7 @@ export type Tenant = {
   fireAlarmEnabled: boolean;
   patTestingEnabled: boolean;
   emergencyLightingEnabled: boolean;
+  fireDoorsEnabled: boolean;
 };
 
 export type Site = {
@@ -236,6 +237,7 @@ export type PlatformTenant = {
   fireAlarmEnabled: boolean;
   patTestingEnabled: boolean;
   emergencyLightingEnabled: boolean;
+  fireDoorsEnabled: boolean;
   createdAt: string;
   _count: { users: number; extinguishers: number; sites: number };
 };
@@ -322,5 +324,67 @@ export type EmergencyLightTest = {
   nextTestDate?: string | null;
   comments?: string;
   reportRef?: string;
+  createdAt: string;
+};
+
+export type FireDoorType =
+  | 'flat_entrance' | 'communal_stairway' | 'communal_corridor' | 'communal_lobby'
+  | 'plant_room' | 'service_riser' | 'riser_cupboard' | 'kitchen' | 'hallway'
+  | 'dining_area' | 'office' | 'other';
+
+export type FireDoor = {
+  id: string;
+  tenantId: string;
+  siteId: string;
+  site?: { id: string; name: string };
+  doorRef: string;
+  location: string;
+  doorType: FireDoorType;
+  fireRating?: string | null;
+  manufacturer?: string | null;
+  installationDate?: string | null;
+  hasIntumescentStrips: boolean;
+  hasSmokeSeal: boolean;
+  hasLetterbox: boolean;
+  hasAirTransferGrille: boolean;
+  hasGlazing: boolean;
+  inspectionFrequencyMonths: number;
+  nextInspectionDue?: string | null;
+  lastInspectedAt?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  _count?: { inspections: number };
+  inspections?: { id: string; outcome: string; inspectedAt: string }[];
+};
+
+export type FireDoorInspection = {
+  id: string;
+  tenantId: string;
+  doorId: string;
+  inspectedBy: string;
+  inspectedAt: string;
+  accessDenied: boolean;
+  accessDeniedReason?: string | null;
+  visualDamage?: boolean | null;
+  closesCompletely?: boolean | null;
+  closesFromAnyAngle?: boolean | null;
+  opensInTravelDirection?: boolean | null;
+  frameGapOk?: boolean | null;
+  maxGapSizeMm?: number | null;
+  hingesSecure?: boolean | null;
+  hingeCount?: number | null;
+  selfCloserWorks?: boolean | null;
+  intumescentStripIntact?: boolean | null;
+  smokeSealIntact?: boolean | null;
+  letterboxCloses?: boolean | null;
+  airTransferGrilleOk?: boolean | null;
+  glazingIntact?: boolean | null;
+  signageCorrect?: boolean | null;
+  outcome: 'pass' | 'fail' | 'requires_attention';
+  defectsFound?: string | null;
+  remedialAction?: string | null;
+  actionPriority?: 'low' | 'medium' | 'high' | 'urgent' | null;
+  comments?: string | null;
+  nextInspectionDate?: string | null;
   createdAt: string;
 };

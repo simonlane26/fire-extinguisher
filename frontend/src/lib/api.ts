@@ -1582,6 +1582,96 @@ export async function importFireAlarmCsv(file: File): Promise<{ success: boolean
   return res.json();
 }
 
+/* ─── Fire Doors ─────────────────────────────────────────────────────────── */
+
+export async function fdGetDoors(siteId?: string) {
+  const q = siteId && siteId !== 'all' ? `?siteId=${siteId}` : '';
+  const res = await fetch(`${API_BASE}/fire-doors/doors${q}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch fire doors');
+  return res.json();
+}
+
+export async function fdCreateDoor(data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/fire-doors/doors`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create fire door');
+  return res.json();
+}
+
+export async function fdUpdateDoor(id: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/fire-doors/doors/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update fire door');
+  return res.json();
+}
+
+export async function fdDeleteDoor(id: string) {
+  const res = await fetch(`${API_BASE}/fire-doors/doors/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete fire door');
+  return res.json();
+}
+
+export async function fdGetInspections(doorId: string) {
+  const res = await fetch(`${API_BASE}/fire-doors/doors/${doorId}/inspections`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch inspections');
+  return res.json();
+}
+
+export async function fdCreateInspection(doorId: string, data: Record<string, unknown>) {
+  const res = await fetch(`${API_BASE}/fire-doors/doors/${doorId}/inspections`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create inspection');
+  return res.json();
+}
+
+export async function fdDeleteInspection(id: string) {
+  const res = await fetch(`${API_BASE}/fire-doors/inspections/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Failed to delete inspection');
+  return res.json();
+}
+
+export async function importFireDoorsCsv(file: File): Promise<{ success: boolean; imported: number; errors: number; details?: any[] }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE}/fire-doors/doors/import/csv`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    body: formData,
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message || 'Import failed'); }
+  return res.json();
+}
+
+export async function downloadFireDoorsReport(siteId?: string, days = 365): Promise<void> {
+  const params = new URLSearchParams();
+  if (siteId && siteId !== 'all') params.set('siteId', siteId);
+  params.set('days', String(days));
+  const res = await fetch(`${API_BASE}/reports/fire-doors?${params}`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Failed to generate fire doors report');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fire-doors-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /* ─── Billing / Stripe ──────────────────────────────────────────────────── */
 
 export async function createAddonCheckoutSession(priceId: string): Promise<{ url: string }> {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertTriangle, XCircle, Flame, Building2, Wrench, ArrowRight, BellRing, Plug, Lightbulb } from 'lucide-react';
-import { fetchExtinguishers, faGetSystems, faGetLogEntries, patGetAppliances, elGetLuminaires } from '../lib/api';
-import type { Extinguisher, FireAlarmSystem, FireAlarmLogEntry, PATAppliance, EmergencyLuminaire } from '../types';
+import { CheckCircle, AlertTriangle, XCircle, Flame, Building2, Wrench, ArrowRight, BellRing, Plug, Lightbulb, DoorClosed } from 'lucide-react';
+import { fetchExtinguishers, faGetSystems, faGetLogEntries, patGetAppliances, elGetLuminaires, fdGetDoors } from '../lib/api';
+import type { Extinguisher, FireAlarmSystem, FireAlarmLogEntry, PATAppliance, EmergencyLuminaire, FireDoor } from '../types';
 
 // ─── Donut chart (hand-rolled — no charting library in this project) ──────────
 const DonutChart: React.FC<{ segments: { value: number; color: string }[]; total: number; label: string }> = ({ segments, total, label }) => {
@@ -61,6 +61,8 @@ type Props = {
   onNavigatePATTesting?: () => void;
   emergencyLightingEnabled?: boolean;
   onNavigateEmergencyLighting?: () => void;
+  fireDoorsEnabled?: boolean;
+  onNavigateFireDoors?: () => void;
 };
 
 type ComplianceStats = {
@@ -92,7 +94,7 @@ type BuildingBreakdown = {
   };
 };
 
-const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavigate, fireAlarmEnabled = false, onNavigateFireAlarm, patTestingEnabled = false, onNavigatePATTesting, emergencyLightingEnabled = false, onNavigateEmergencyLighting }) => {
+const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavigate, fireAlarmEnabled = false, onNavigateFireAlarm, patTestingEnabled = false, onNavigatePATTesting, emergencyLightingEnabled = false, onNavigateEmergencyLighting, fireDoorsEnabled = false, onNavigateFireDoors }) => {
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([]);
   const [loading, setLoading] = useState(true);
   const [faSystemStatuses, setFaSystemStatuses] = useState<FireAlarmSystemStatus[]>([]);
@@ -101,6 +103,8 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavi
   const [patLoading, setPATLoading] = useState(false);
   const [elLuminaires, setELLuminaires] = useState<EmergencyLuminaire[]>([]);
   const [elLoading, setELLoading] = useState(false);
+  const [fireDoors, setFireDoors] = useState<FireDoor[]>([]);
+  const [fdLoading, setFDLoading] = useState(false);
   const [stats, setStats] = useState<ComplianceStats>({
     total: 0,
     compliant: 0,
@@ -132,6 +136,13 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavi
       elGetLuminaires().then(setELLuminaires).catch(() => {}).finally(() => setELLoading(false));
     }
   }, [emergencyLightingEnabled]);
+
+  useEffect(() => {
+    if (fireDoorsEnabled) {
+      setFDLoading(true);
+      fdGetDoors().then(setFireDoors).catch(() => {}).finally(() => setFDLoading(false));
+    }
+  }, [fireDoorsEnabled]);
 
   const loadFireAlarmData = async () => {
     try {
@@ -805,6 +816,87 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavi
                               {latestTestFailed(l)
                                 ? <span className="text-orange-700">Non Compliant</span>
                                 : <span className="text-red-600">{Math.ceil(-(getScheduleDays(l) ?? 0))}d overdue</span>
+                              }
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+      {/* Fire Door Compliance */}
+      {fireDoorsEnabled && (
+        <div className="space-y-4 mt-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <DoorClosed size={20} className="text-amber-500" />
+              Fire Door Compliance
+            </h2>
+            {onNavigateFireDoors && (
+              <button onClick={onNavigateFireDoors} className="text-sm flex items-center gap-1 hover:underline" style={{ color: primaryColor }}>
+                Open Fire Doors <ArrowRight size={14} />
+              </button>
+            )}
+          </div>
+          {fdLoading ? (
+            <p className="text-sm text-gray-400">Loading fire door data…</p>
+          ) : (() => {
+            const today = Date.now();
+            const latestFailed = (door: FireDoor) =>
+              door.inspections && door.inspections.length > 0 && door.inspections[0].outcome !== 'pass';
+            const getScheduleDays = (door: FireDoor) =>
+              door.nextInspectionDue ? (new Date(door.nextInspectionDue).getTime() - today) / 86_400_000 : null;
+            const nonCompliant   = fireDoors.filter(d => latestFailed(d));
+            const compliant      = fireDoors.filter(d => !latestFailed(d) && (getScheduleDays(d) ?? -1) > 30);
+            const dueSoon        = fireDoors.filter(d => !latestFailed(d) && (getScheduleDays(d) ?? -1) <= 30 && (getScheduleDays(d) ?? -1) > 0);
+            const overdue        = fireDoors.filter(d => !latestFailed(d) && getScheduleDays(d) !== null && (getScheduleDays(d) as number) <= 0);
+            const neverInspected = fireDoors.filter(d => !latestFailed(d) && getScheduleDays(d) === null);
+            const attention      = [...nonCompliant, ...overdue].slice(0, 5);
+            return (
+              <div className="space-y-3">
+                <div className="grid grid-cols-5 gap-3">
+                  {[
+                    { label: 'Compliant',       count: compliant.length,      cls: 'text-green-700 bg-green-50 border-green-200' },
+                    { label: 'Due Soon',        count: dueSoon.length,        cls: 'text-amber-700 bg-amber-50 border-amber-200' },
+                    { label: 'Overdue',         count: overdue.length,        cls: 'text-red-700 bg-red-50 border-red-200' },
+                    { label: 'Non Compliant',   count: nonCompliant.length,   cls: 'text-orange-800 bg-orange-50 border-orange-200' },
+                    { label: 'Never Inspected', count: neverInspected.length, cls: 'text-gray-600 bg-gray-50 border-gray-200' },
+                  ].map(({ label, count, cls }) => (
+                    <div key={label} className={`border rounded-xl p-3 text-center ${cls}`}>
+                      <div className="text-2xl font-bold">{count}</div>
+                      <div className="text-xs mt-0.5">{label}</div>
+                    </div>
+                  ))}
+                </div>
+                {attention.length > 0 && (
+                  <div className="bg-white border border-red-100 rounded-xl overflow-hidden">
+                    <div className="px-4 py-2 bg-red-50 border-b border-red-100 text-xs font-semibold text-red-700 uppercase tracking-wide">
+                      Requires Attention
+                    </div>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-xs text-gray-500 border-b">
+                          <th className="px-4 py-2 text-left font-medium">Ref</th>
+                          <th className="px-4 py-2 text-left font-medium">Location</th>
+                          <th className="px-4 py-2 text-left font-medium">Site</th>
+                          <th className="px-4 py-2 text-right font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {attention.map(d => (
+                          <tr key={d.id} className="border-b last:border-0 hover:bg-gray-50">
+                            <td className="px-4 py-2 font-mono text-xs text-amber-700 font-semibold">{d.doorRef}</td>
+                            <td className="px-4 py-2 text-gray-500">{d.location}</td>
+                            <td className="px-4 py-2 text-gray-500">{d.site?.name ?? '—'}</td>
+                            <td className="px-4 py-2 text-right font-semibold">
+                              {latestFailed(d)
+                                ? <span className="text-orange-700">Non Compliant</span>
+                                : <span className="text-red-600">{Math.ceil(-(getScheduleDays(d) ?? 0))}d overdue</span>
                               }
                             </td>
                           </tr>

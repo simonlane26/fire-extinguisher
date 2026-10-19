@@ -1,7 +1,7 @@
 import React, { useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   Flame, TrendingUp, Building2, Package, FileText, CalendarDays, BarChart3,
-  BellRing, Plug, Lightbulb, QrCode, Users as UsersIcon, Crown,
+  BellRing, Plug, Lightbulb, DoorClosed, QrCode, Users as UsersIcon, Crown,
   Settings as SettingsIcon, HelpCircle, ShieldCheck, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import type { Tenant, PermissionKey } from '../types';
@@ -10,7 +10,7 @@ import './Sidebar.css';
 export type ActiveTab =
   | 'overview' | 'sites' | 'stock' | 'users' | 'settings' | 'qr-codes' | 'billing'
   | 'compliance' | 'calendar' | 'reports' | 'help' | 'quotes' | 'fire-alarm'
-  | 'pat-testing' | 'emergency-lighting' | 'platform-admin';
+  | 'pat-testing' | 'emergency-lighting' | 'fire-doors' | 'platform-admin';
 
 type NavItem = {
   tab: ActiveTab;
@@ -68,13 +68,14 @@ const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab, tenant, hasPermissi
         { tab: 'reports', label: 'Reports', icon: BarChart3 },
       ],
     },
-    ...(tenant.fireAlarmEnabled || tenant.patTestingEnabled || tenant.emergencyLightingEnabled
+    ...(tenant.fireAlarmEnabled || tenant.patTestingEnabled || tenant.emergencyLightingEnabled || tenant.fireDoorsEnabled
       ? [{
           label: 'Modules',
           items: [
             ...(tenant.fireAlarmEnabled ? [{ tab: 'fire-alarm' as ActiveTab, label: 'Fire Alarm', icon: BellRing }] : []),
             ...(tenant.patTestingEnabled ? [{ tab: 'pat-testing' as ActiveTab, label: 'PAT Testing', icon: Plug }] : []),
             ...(tenant.emergencyLightingEnabled ? [{ tab: 'emergency-lighting' as ActiveTab, label: 'Emergency Lighting', icon: Lightbulb }] : []),
+            ...(tenant.fireDoorsEnabled ? [{ tab: 'fire-doors' as ActiveTab, label: 'Fire Doors', icon: DoorClosed }] : []),
           ],
         }]
       : []),

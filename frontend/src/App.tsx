@@ -45,6 +45,7 @@ import CalendarPage from './pages/CalendarPage';
 import FireAlarmLogbookPage from './pages/FireAlarmLogbookPage';
 import PATTestingPage from './pages/PATTestingPage';
 import EmergencyLightingPage from './pages/EmergencyLightingPage';
+import FireDoorsPage from './pages/FireDoorsPage';
 import PlatformAdminPage from './pages/PlatformAdminPage';
 import QuotesListPage from './pages/QuotesListPage';
 import QuoteCreatePage from './pages/QuoteCreatePage';
@@ -102,6 +103,7 @@ const MOCK_TENANTS: Record<string, Tenant> = {
     fireAlarmEnabled: false,
     patTestingEnabled: false,
     emergencyLightingEnabled: false,
+    fireDoorsEnabled: false,
   },
 };
 
@@ -274,6 +276,7 @@ const FireExtinguisherApp: React.FC = () => {
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<{ id: string; name: string } | null>(null);
   const [patPendingId, setPATPendingId] = useState<string | undefined>(undefined);
   const [elPendingId, setELPendingId] = useState<string | undefined>(undefined);
+  const [fdPendingId, setFDPendingId] = useState<string | undefined>(undefined);
   const [extPendingId, setExtPendingId] = useState<string | undefined>(undefined);
 
   // Extinguishers state (seed with demo; will be replaced by API load)
@@ -1304,6 +1307,8 @@ useEffect(() => {
             onNavigatePATTesting={() => setActiveTab('pat-testing')}
             emergencyLightingEnabled={tenant.emergencyLightingEnabled}
             onNavigateEmergencyLighting={() => setActiveTab('emergency-lighting')}
+            fireDoorsEnabled={tenant.fireDoorsEnabled}
+            onNavigateFireDoors={() => setActiveTab('fire-doors')}
           />
         )}
 
@@ -1313,9 +1318,11 @@ useEffect(() => {
             fireAlarmEnabled={tenant.fireAlarmEnabled}
             patTestingEnabled={tenant.patTestingEnabled}
             emergencyLightingEnabled={tenant.emergencyLightingEnabled}
+            fireDoorsEnabled={tenant.fireDoorsEnabled}
             onNavigateToFireAlarm={() => setActiveTab('fire-alarm')}
             onNavigateToPAT={(id) => { setPATPendingId(id); setActiveTab('pat-testing'); }}
             onNavigateToEL={(id) => { setELPendingId(id); setActiveTab('emergency-lighting'); }}
+            onNavigateToFireDoors={(id) => { setFDPendingId(id); setActiveTab('fire-doors'); }}
             onNavigateToExtinguisher={(id) => { setExtPendingId(id); setActiveTab('overview'); }}
           />
         )}
@@ -1330,6 +1337,7 @@ useEffect(() => {
             fireAlarmEnabled={tenant.fireAlarmEnabled}
             patTestingEnabled={tenant.patTestingEnabled}
             emergencyLightingEnabled={tenant.emergencyLightingEnabled}
+            fireDoorsEnabled={tenant.fireDoorsEnabled}
           />
         )}
 
@@ -1344,6 +1352,9 @@ useEffect(() => {
 
         {/* Emergency Lighting tab */}
         {activeTab === 'emergency-lighting' && tenant.emergencyLightingEnabled && <EmergencyLightingPage initialSelectId={elPendingId} />}
+
+        {/* Fire Doors tab */}
+        {activeTab === 'fire-doors' && tenant.fireDoorsEnabled && <FireDoorsPage initialSelectId={fdPendingId} />}
 
         {/* Platform Admin tab */}
         {activeTab === 'platform-admin' && currentUser.isPlatformAdmin && <PlatformAdminPage />}

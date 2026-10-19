@@ -1,15 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, ChevronLeft, ChevronRight, MapPin, X, Plug, Lightbulb } from 'lucide-react';
-import { fetchExtinguishers, fetchSites, faGetSystems, patGetAppliances, elGetLuminaires } from '../lib/api';
-import type { Extinguisher, FireAlarmSystem, PATAppliance, EmergencyLuminaire, Site } from '../types';
+import { Bell, ChevronLeft, ChevronRight, MapPin, X, Plug, Lightbulb, DoorClosed } from 'lucide-react';
+import { fetchExtinguishers, fetchSites, faGetSystems, patGetAppliances, elGetLuminaires, fdGetDoors } from '../lib/api';
+import type { Extinguisher, FireAlarmSystem, PATAppliance, EmergencyLuminaire, FireDoor, Site } from '../types';
 
-type EventType = 'inspection' | 'maintenance' | 'expiry' | 'fire_alarm' | 'pat_test' | 'el_test';
+type EventType = 'inspection' | 'maintenance' | 'expiry' | 'fire_alarm' | 'pat_test' | 'el_test' | 'fire_door_due';
 
 type CalEvent =
-  | { date: string; type: Exclude<EventType, 'fire_alarm' | 'pat_test' | 'el_test'>; ext: Extinguisher }
+  | { date: string; type: Exclude<EventType, 'fire_alarm' | 'pat_test' | 'el_test' | 'fire_door_due'>; ext: Extinguisher }
   | { date: string; type: 'fire_alarm'; label: string; system: FireAlarmSystem }
   | { date: string; type: 'pat_test'; label: string; appliance: PATAppliance }
-  | { date: string; type: 'el_test'; label: string; luminaire: EmergencyLuminaire };
+  | { date: string; type: 'el_test'; label: string; luminaire: EmergencyLuminaire }
+  | { date: string; type: 'fire_door_due'; label: string; door: FireDoor };
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -26,6 +27,7 @@ function eventLabel(ev: CalEvent): string {
   if (ev.type === 'fire_alarm') return ev.label;
   if (ev.type === 'pat_test') return ev.label;
   if (ev.type === 'el_test') return ev.label;
+  if (ev.type === 'fire_door_due') return ev.label;
   if (ev.type === 'inspection') return 'Inspection';
   if (ev.type === 'maintenance') return 'Maintenance';
   return 'Expiry';
@@ -42,6 +44,7 @@ function chipStyle(type: EventType, dateStr: string): string {
   if (type === 'fire_alarm')  return 'bg-rose-100 text-rose-700 hover:bg-rose-200';
   if (type === 'pat_test')    return 'bg-red-100 text-brand-red-dark hover:bg-red-200';
   if (type === 'el_test')     return 'bg-amber-100 text-amber-700 hover:bg-amber-200';
+  if (type === 'fire_door_due') return 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200';
   if (type === 'inspection')  return 'bg-blue-100 text-blue-700 hover:bg-blue-200';
   if (type === 'maintenance') return 'bg-teal-100 text-teal-700 hover:bg-teal-200';
   return 'bg-gray-100 text-gray-600 hover:bg-gray-200';
@@ -58,6 +61,7 @@ function badgeStyle(type: EventType, dateStr: string): string {
   if (type === 'fire_alarm')  return 'bg-rose-100 text-rose-700';
   if (type === 'pat_test')    return 'bg-red-100 text-brand-red-dark';
   if (type === 'el_test')     return 'bg-amber-100 text-amber-700';
+  if (type === 'fire_door_due') return 'bg-indigo-100 text-indigo-700';
   if (type === 'inspection')  return 'bg-blue-100 text-blue-700';
   if (type === 'maintenance') return 'bg-teal-100 text-teal-700';
   return 'bg-gray-100 text-gray-600';
@@ -73,17 +77,21 @@ const CalendarPage: React.FC<{
   fireAlarmEnabled?: boolean;
   patTestingEnabled?: boolean;
   emergencyLightingEnabled?: boolean;
+  fireDoorsEnabled?: boolean;
   onNavigateToFireAlarm?: () => void;
   onNavigateToPAT?: (id: string) => void;
   onNavigateToEL?: (id: string) => void;
+  onNavigateToFireDoors?: (id: string) => void;
   onNavigateToExtinguisher?: (id: string) => void;
 }> = ({
   fireAlarmEnabled = false,
   patTestingEnabled = false,
   emergencyLightingEnabled = false,
+  fireDoorsEnabled = false,
   onNavigateToFireAlarm,
   onNavigateToPAT,
   onNavigateToEL,
+  onNavigateToFireDoors,
   onNavigateToExtinguisher,
 }) => {
   const today = new Date();
@@ -94,6 +102,7 @@ const CalendarPage: React.FC<{
   const [fireAlarmSystems, setFireAlarmSystems] = useState<FireAlarmSystem[]>([]);
   const [patAppliances, setPatAppliances] = useState<PATAppliance[]>([]);
   const [elLuminaires, setElLuminaires] = useState<EmergencyLuminaire[]>([]);
+  const [fireDoors, setFireDoors] = useState<FireDoor[]>([]);
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CalEvent | null>(null);
@@ -106,6 +115,7 @@ const CalendarPage: React.FC<{
     if (fireAlarmEnabled) fetches.push(faGetSystems());
     if (patTestingEnabled) fetches.push(patGetAppliances());
     if (emergencyLightingEnabled) fetches.push(elGetLuminaires());
+    if (fireDoorsEnabled) fetches.push(fdGetDoors());
     Promise.all(fetches)
       .then((results) => {
         const [exts, siteList, ...rest] = results;
@@ -114,10 +124,11 @@ const CalendarPage: React.FC<{
         let idx = 0;
         if (fireAlarmEnabled) setFireAlarmSystems(rest[idx++] as FireAlarmSystem[]);
         if (patTestingEnabled) setPatAppliances(rest[idx++] as PATAppliance[]);
-        if (emergencyLightingEnabled) setElLuminaires(rest[idx] as EmergencyLuminaire[]);
+        if (emergencyLightingEnabled) setElLuminaires(rest[idx++] as EmergencyLuminaire[]);
+        if (fireDoorsEnabled) setFireDoors(rest[idx] as FireDoor[]);
       })
       .finally(() => setLoading(false));
-  }, [fireAlarmEnabled, patTestingEnabled, emergencyLightingEnabled]);
+  }, [fireAlarmEnabled, patTestingEnabled, emergencyLightingEnabled, fireDoorsEnabled]);
 
   // Close popover on outside click
   useEffect(() => {
@@ -137,7 +148,7 @@ const CalendarPage: React.FC<{
   // Build events indexed by 'YYYY-MM-DD'
   const eventsByDay: Record<string, CalEvent[]> = {};
   for (const ext of filtered) {
-    const pairs: [string | undefined, Exclude<EventType, 'fire_alarm' | 'pat_test' | 'el_test'>][] = [
+    const pairs: [string | undefined, Exclude<EventType, 'fire_alarm' | 'pat_test' | 'el_test' | 'fire_door_due'>][] = [
       [ext.nextInspection,  'inspection'],
       [ext.nextMaintenance, 'maintenance'],
       [ext.expiryDate,      'expiry'],
@@ -211,6 +222,22 @@ const CalendarPage: React.FC<{
     }
   }
 
+  // Fire door next-inspection-due events
+  const filteredFireDoors = siteFilter === 'all'
+    ? fireDoors
+    : fireDoors.filter(d => d.siteId === siteFilter);
+  for (const door of filteredFireDoors) {
+    const ds = toDateStr(door.nextInspectionDue ?? undefined);
+    if (!ds) continue;
+    if (!eventsByDay[ds]) eventsByDay[ds] = [];
+    eventsByDay[ds].push({
+      date: ds,
+      type: 'fire_door_due',
+      label: `Fire Door Due: ${door.doorRef} — ${door.location}`,
+      door,
+    });
+  }
+
   // Calendar grid
   const startDow   = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -233,7 +260,7 @@ const CalendarPage: React.FC<{
 
   function handleChipClick(e: React.MouseEvent, ev: CalEvent) {
     e.stopPropagation();
-    const getKey = (e: CalEvent) => e.type === 'fire_alarm' ? e.system.id + e.label : e.type === 'pat_test' ? e.appliance.id : e.type === 'el_test' ? e.luminaire.id + e.label : e.ext.id;
+    const getKey = (e: CalEvent) => e.type === 'fire_alarm' ? e.system.id + e.label : e.type === 'pat_test' ? e.appliance.id : e.type === 'el_test' ? e.luminaire.id + e.label : e.type === 'fire_door_due' ? e.door.id : e.ext.id;
     const selKey = selected ? getKey(selected) : null;
     const evKey = getKey(ev);
     if (selKey && selected?.type === ev.type && selected?.date === ev.date && selKey === evKey) {
@@ -394,6 +421,8 @@ const CalendarPage: React.FC<{
                         <span className="flex items-center gap-0.5"><Plug size={9} className="shrink-0" /><span className="truncate">{ev.label}</span></span>
                       ) : ev.type === 'el_test' ? (
                         <span className="flex items-center gap-0.5"><Lightbulb size={9} className="shrink-0" /><span className="truncate">{ev.label}</span></span>
+                      ) : ev.type === 'fire_door_due' ? (
+                        <span className="flex items-center gap-0.5"><DoorClosed size={9} className="shrink-0" /><span className="truncate">{ev.label}</span></span>
                       ) : (
                         <><span className="font-medium">{eventLabel(ev)}</span><span className="opacity-75"> · {ev.ext.location}</span></>
                       )}
@@ -420,6 +449,7 @@ const CalendarPage: React.FC<{
           ...(fireAlarmEnabled ? [{ label: 'Fire Alarm Test', cls: 'bg-rose-100 border-rose-300' }] : []),
           ...(patTestingEnabled ? [{ label: 'PAT Test Due', cls: 'bg-red-100 border-red-300' }] : []),
           ...(emergencyLightingEnabled ? [{ label: 'EL Test Due', cls: 'bg-amber-100 border-amber-300' }] : []),
+          ...(fireDoorsEnabled ? [{ label: 'Fire Door Due', cls: 'bg-indigo-100 border-indigo-300' }] : []),
         ].map(({ label, cls }) => (
           <div key={label} className="flex items-center gap-1.5">
             <span className={`w-3 h-3 rounded-sm border ${cls}`} />
@@ -439,7 +469,7 @@ const CalendarPage: React.FC<{
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="min-w-0">
               <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full mb-1.5 font-medium ${badgeStyle(selected.type, selected.date)}`}>
-                {selected.type === 'fire_alarm' ? <Bell size={10} className="mr-1" /> : selected.type === 'pat_test' ? <Plug size={10} className="mr-1" /> : selected.type === 'el_test' ? <Lightbulb size={10} className="mr-1" /> : null}
+                {selected.type === 'fire_alarm' ? <Bell size={10} className="mr-1" /> : selected.type === 'pat_test' ? <Plug size={10} className="mr-1" /> : selected.type === 'el_test' ? <Lightbulb size={10} className="mr-1" /> : selected.type === 'fire_door_due' ? <DoorClosed size={10} className="mr-1" /> : null}
                 {eventLabel(selected)} Due
               </span>
               {selected.type === 'fire_alarm' ? (
@@ -448,6 +478,8 @@ const CalendarPage: React.FC<{
                 <div className="font-semibold text-gray-900 truncate">{selected.appliance.applianceRef} — {selected.appliance.description}</div>
               ) : selected.type === 'el_test' ? (
                 <div className="font-semibold text-gray-900 truncate">{selected.luminaire.luminaireRef} — {selected.luminaire.description}</div>
+              ) : selected.type === 'fire_door_due' ? (
+                <div className="font-semibold text-gray-900 truncate">{selected.door.doorRef} — {selected.door.location}</div>
               ) : (
                 <>
                   <div className="font-semibold text-gray-900 truncate">{selected.ext.type}</div>
@@ -500,6 +532,15 @@ const CalendarPage: React.FC<{
                   {selected.luminaire.site && <div className="text-xs text-gray-400">{selected.luminaire.site.name}</div>}
                 </div>
               </div>
+            ) : selected.type === 'fire_door_due' ? (
+              <div className="flex items-start gap-2 text-gray-600">
+                <MapPin size={13} className="shrink-0 mt-0.5" />
+                <div>
+                  <div>{selected.door.location}</div>
+                  {selected.door.doorType && <div className="text-xs text-gray-500">{selected.door.doorType.replace(/_/g, ' ')}</div>}
+                  {selected.door.site && <div className="text-xs text-gray-400">{selected.door.site.name}</div>}
+                </div>
+              </div>
             ) : (
               <div className="flex items-start gap-2 text-gray-600">
                 <MapPin size={13} className="shrink-0 mt-0.5" />
@@ -516,7 +557,7 @@ const CalendarPage: React.FC<{
               <span>{formatDate(selected.date)}</span>
             </div>
 
-            {selected.type !== 'fire_alarm' && selected.type !== 'pat_test' && selected.type !== 'el_test' && (
+            {selected.type !== 'fire_alarm' && selected.type !== 'pat_test' && selected.type !== 'el_test' && selected.type !== 'fire_door_due' && (
               <>
                 <div className="flex justify-between text-gray-600">
                   <span className="font-medium">Status</span>
@@ -538,8 +579,9 @@ const CalendarPage: React.FC<{
           {(
             (selected.type === 'pat_test' && onNavigateToPAT) ||
             (selected.type === 'el_test' && onNavigateToEL) ||
+            (selected.type === 'fire_door_due' && onNavigateToFireDoors) ||
             (selected.type === 'fire_alarm' && onNavigateToFireAlarm) ||
-            (selected.type !== 'fire_alarm' && selected.type !== 'pat_test' && selected.type !== 'el_test' && onNavigateToExtinguisher)
+            (selected.type !== 'fire_alarm' && selected.type !== 'pat_test' && selected.type !== 'el_test' && selected.type !== 'fire_door_due' && onNavigateToExtinguisher)
           ) && (
             <button
               type="button"
@@ -548,8 +590,9 @@ const CalendarPage: React.FC<{
                 setSelected(null);
                 if (ev.type === 'pat_test' && onNavigateToPAT) onNavigateToPAT(ev.appliance.id);
                 else if (ev.type === 'el_test' && onNavigateToEL) onNavigateToEL(ev.luminaire.id);
+                else if (ev.type === 'fire_door_due' && onNavigateToFireDoors) onNavigateToFireDoors(ev.door.id);
                 else if (ev.type === 'fire_alarm' && onNavigateToFireAlarm) onNavigateToFireAlarm();
-                else if (ev.type !== 'fire_alarm' && ev.type !== 'pat_test' && ev.type !== 'el_test' && onNavigateToExtinguisher) onNavigateToExtinguisher(ev.ext.id);
+                else if (ev.type !== 'fire_alarm' && ev.type !== 'pat_test' && ev.type !== 'el_test' && ev.type !== 'fire_door_due' && onNavigateToExtinguisher) onNavigateToExtinguisher(ev.ext.id);
               }}
               className="mt-3 w-full text-sm font-medium py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700 transition-colors"
             >
