@@ -158,7 +158,23 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+      if (response) return response;
+      return fetch(event.request).catch(() => {
+        // Network failed and nothing was cached for this request. Without
+        // this catch, the rejection was left unhandled (visible as
+        // "Uncaught (in promise) TypeError: Failed to fetch" and, for the
+        // app shell itself, surfaced to the page as a failed fetch/JSON
+        // parse). Respond gracefully instead: a minimal offline page for
+        // navigations, a clear 503 for everything else.
+        if (event.request.mode === 'navigate') {
+          return new Response(
+            '<!DOCTYPE html><html><body style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;padding:60px 20px;color:#1C1B18;">' +
+            '<h1>You’re offline</h1><p>Check your connection and try again.</p></body></html>',
+            { headers: { 'Content-Type': 'text/html' }, status: 503, statusText: 'Offline' }
+          );
+        }
+        return new Response('', { status: 503, statusText: 'Offline' });
+      });
     })
   );
 });
