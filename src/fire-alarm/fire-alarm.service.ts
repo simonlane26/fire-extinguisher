@@ -120,10 +120,15 @@ export class FireAlarmService {
   /** Returns call points sorted by lastTestedAt ASC (never tested first) */
   async getNextDueCallPoint(tenantId: string, systemId: string) {
     await this.assertSystemOwner(tenantId, systemId);
-    return this.prisma.fireAlarmCallPoint.findFirst({
+    const cp = await this.prisma.fireAlarmCallPoint.findFirst({
       where: { systemId },
       orderBy: [{ lastTestedAt: { sort: 'asc', nulls: 'first' } }, { pointRef: 'asc' }],
     });
+    // Nest's Express adapter sends a genuinely empty response body for a
+    // literal `null` return (not the JSON text "null"), which breaks any
+    // client calling res.json() on a 200. {} round-trips the same way for
+    // callers that only ever read `.id` off the result.
+    return cp ?? {};
   }
 
   // ─── Log Entries ──────────────────────────────────────────────────────────

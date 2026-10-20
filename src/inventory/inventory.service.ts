@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class InventoryService {
   }
 
   async findOneItem(tenantId: string, id: string) {
-    return this.prisma.inventoryItem.findFirst({
+    const item = await this.prisma.inventoryItem.findFirst({
       where: { id, tenantId },
       include: {
         usages: {
@@ -29,6 +29,11 @@ export class InventoryService {
         }
       }
     });
+    // A bare `null` return makes Nest's Express adapter send a genuinely
+    // empty response body (not the JSON text "null"), which breaks any
+    // client calling res.json() on what looks like a 200 response.
+    if (!item) throw new NotFoundException('Inventory item not found');
+    return item;
   }
 
   async createItem(tenantId: string, data: any) {
