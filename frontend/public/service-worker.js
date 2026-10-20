@@ -173,7 +173,15 @@ self.addEventListener('fetch', (event) => {
             { headers: { 'Content-Type': 'text/html' }, status: 503, statusText: 'Offline' }
           );
         }
-        return new Response('', { status: 503, statusText: 'Offline' });
+        // Valid (empty) JSON body, not '' — a caller that does
+        // `await fetch(...).then(r => r.json())` without checking `r.ok`
+        // first would otherwise hit "Unexpected end of JSON input" trying
+        // to parse an empty string.
+        return new Response('{}', {
+          headers: { 'Content-Type': 'application/json' },
+          status: 503,
+          statusText: 'Offline',
+        });
       });
     })
   );

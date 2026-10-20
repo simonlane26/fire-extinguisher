@@ -107,6 +107,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
       });
+      if (!response.ok) throw new Error(`Failed to load plans (${response.status})`);
       const data = await response.json();
       if (data.plans && typeof data.plans === 'object') {
         // Merge API data with defaults (API data takes priority for prices/priceIds)
@@ -149,6 +150,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         }),
       });
 
+      if (!response.ok) throw new Error(`Failed to create checkout session (${response.status})`);
       const data = await response.json();
 
       if (data.error) {
@@ -206,6 +208,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
         }),
       });
 
+      if (!response.ok) throw new Error(`Failed to open billing portal (${response.status})`);
       const data = await response.json();
 
       if (data.error) {

@@ -11,6 +11,7 @@ import {
 } from '../lib/api';
 import { fetchSites } from '../lib/api';
 import type { FireAlarmSystem, FireAlarmCallPoint, FireAlarmLogEntry, Site } from '../types';
+import ComplianceRing from '../components/ComplianceRing';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -144,6 +145,52 @@ const ComplianceCard: React.FC<{ system: FireAlarmSystem }> = ({ system }) => {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+};
+
+// Fleet-wide summary, matching the compliance ring on the other three module
+// pages — "how compliant is my whole set of systems", not just the one
+// selected below. A system's overall status is the worst of its 5 tiers
+// (systemStatusKey), since "compliant" has to mean every tier is in order.
+const FleetComplianceCard: React.FC<{ systems: FireAlarmSystem[] }> = ({ systems }) => {
+  const total     = systems.length;
+  const compliant = systems.filter(s => systemStatusKey(s) === 'compliant').length;
+  const attention = systems.filter(s => systemStatusKey(s) === 'attention').length;
+  const overdue   = systems.filter(s => systemStatusKey(s) === 'overdue').length;
+  const pct = total > 0 ? Math.round((compliant / total) * 100) : 0;
+
+  return (
+    <div className="flex items-center gap-5 bg-white border border-brand-line rounded-xl px-5 py-4 mb-5">
+      <ComplianceRing
+        size={56}
+        strokeWidth={5}
+        total={total}
+        centerLabel={<span className="text-[15px] font-bold">{pct}%</span>}
+        segments={[
+          { value: compliant, color: '#16A34A' },
+          { value: attention, color: '#D97706' },
+          { value: overdue, color: '#DC2626' },
+        ]}
+      />
+      <div className="flex flex-wrap gap-6">
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{total}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1">Total systems</div>
+        </div>
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{compliant}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-600 inline-block" />Compliant</div>
+        </div>
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{attention}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-600 inline-block" />Needs attention</div>
+        </div>
+        <div>
+          <div className="text-[22px] font-bold text-brand-ink leading-none tabular-nums">{overdue}</div>
+          <div className="text-[11px] text-brand-ink-muted mt-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-red-600 inline-block" />Overdue</div>
+        </div>
       </div>
     </div>
   );
@@ -1018,6 +1065,8 @@ const FireAlarmLogbookPage: React.FC = () => {
           <main className="flex-1 overflow-y-auto p-6 min-w-0">
             {selectedSystem && (
               <>
+                {systems.length > 0 && <FleetComplianceCard systems={systems} />}
+
                 {/* System header */}
                 <div className="bg-white rounded-xl border border-brand-line px-5 py-4 mb-5">
                   <div className="flex items-start justify-between gap-4">
