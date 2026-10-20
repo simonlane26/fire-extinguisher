@@ -9,7 +9,7 @@ export class FireAlarmService {
   // ─── Systems ──────────────────────────────────────────────────────────────
 
   async getSystems(tenantId: string, siteId?: string) {
-    return this.prisma.fireAlarmSystem.findMany({
+    const systems = await this.prisma.fireAlarmSystem.findMany({
       where: { tenantId, ...(siteId ? { siteId } : {}) },
       include: {
         site: { select: { id: true, name: true } },
@@ -17,6 +17,28 @@ export class FireAlarmService {
       },
       orderBy: [{ siteId: 'asc' }, { systemRef: 'asc' }],
     });
+    if (systems.length === 0) return systems;
+
+    // Latest outcome per (system, schedule tier), so the systems list can
+    // flag a failed/advisory test the same way the detail page does, not
+    // just whether the next test is overdue.
+    const inspectionTypes = ['weekly', 'monthly', 'quarterly', 'six_monthly', 'annual'];
+    const recentEntries = await this.prisma.fireAlarmLogEntry.findMany({
+      where: { systemId: { in: systems.map((s) => s.id) }, entryType: { in: inspectionTypes } },
+      orderBy: { conductedAt: 'desc' },
+      select: { systemId: true, entryType: true, outcome: true, conductedAt: true },
+    });
+    const latestByKey = new Map<string, { entryType: string; outcome: string; conductedAt: Date }>();
+    for (const e of recentEntries) {
+      const key = `${e.systemId}:${e.entryType}`;
+      if (!latestByKey.has(key)) latestByKey.set(key, e);
+    }
+    return systems.map((s) => ({
+      ...s,
+      latestEntriesByType: inspectionTypes
+        .map((t) => latestByKey.get(`${s.id}:${t}`))
+        .filter((e): e is { entryType: string; outcome: string; conductedAt: Date } => !!e),
+    }));
   }
 
   async createSystem(tenantId: string, dto: {

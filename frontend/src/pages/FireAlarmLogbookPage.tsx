@@ -74,7 +74,7 @@ function latestEntryForType(entries: FireAlarmLogEntry[], entryType: EntryType):
 // Date-based status, overridden when the most recent test for this tier
 // logged a fail or advisory outcome (mirrors the fail-overrides-status
 // pattern already used by Fire Doors/Emergency Lighting/PAT Testing).
-function tierStatus(nextDue: string | null | undefined, warnDays: number, toleranceDays: number, latestEntry: FireAlarmLogEntry | null) {
+function tierStatus(nextDue: string | null | undefined, warnDays: number, toleranceDays: number, latestEntry: { outcome: string } | null | undefined) {
   const dateStatus = complianceStatus(nextDue, warnDays, toleranceDays);
   if (latestEntry?.outcome === 'fail') {
     return { label: 'Fault Reported', cls: 'bg-red-100 text-red-700' };
@@ -86,18 +86,23 @@ function tierStatus(nextDue: string | null | undefined, warnDays: number, tolera
 }
 
 // Worst-case status across all 5 schedule tiers, for the list row's status
-// stripe/badge — a system is only as compliant as its least-compliant tier.
+// stripe/badge and the fleet ring — a system is only as compliant as its
+// least-compliant tier, and a tier whose latest test failed or was flagged
+// advisory counts as not-compliant even if the next test isn't due yet.
 function systemStatusKey(system: FireAlarmSystem): 'compliant' | 'attention' | 'overdue' {
-  const tiers = [
-    { field: system.nextWeeklyDue,     warnDays: 3,  toleranceDays: system.weeklyToleranceDays ?? 2 },
-    { field: system.nextMonthlyDue,    warnDays: 7,  toleranceDays: system.monthlyToleranceDays ?? 5 },
-    { field: system.nextQuarterlyDue,  warnDays: 14, toleranceDays: system.quarterlyToleranceDays ?? 15 },
-    { field: system.nextSixMonthlyDue, warnDays: 21, toleranceDays: system.sixMonthlyToleranceDays ?? 30 },
-    { field: system.nextAnnualDue,     warnDays: 30, toleranceDays: system.annualToleranceDays ?? 60 },
+  const tiers: { field: string | null | undefined; warnDays: number; toleranceDays: number; entryType: EntryType }[] = [
+    { field: system.nextWeeklyDue,     warnDays: 3,  toleranceDays: system.weeklyToleranceDays ?? 2,      entryType: 'weekly' },
+    { field: system.nextMonthlyDue,    warnDays: 7,  toleranceDays: system.monthlyToleranceDays ?? 5,     entryType: 'monthly' },
+    { field: system.nextQuarterlyDue,  warnDays: 14, toleranceDays: system.quarterlyToleranceDays ?? 15,  entryType: 'quarterly' },
+    { field: system.nextSixMonthlyDue, warnDays: 21, toleranceDays: system.sixMonthlyToleranceDays ?? 30, entryType: 'six_monthly' },
+    { field: system.nextAnnualDue,     warnDays: 30, toleranceDays: system.annualToleranceDays ?? 60,     entryType: 'annual' },
   ];
-  const labels = tiers.map(t => complianceStatus(t.field, t.warnDays, t.toleranceDays).label);
-  if (labels.includes('Overdue')) return 'overdue';
-  if (labels.includes('Within Tolerance') || labels.includes('Due Soon')) return 'attention';
+  const labels = tiers.map(t => {
+    const latest = system.latestEntriesByType?.find(e => e.entryType === t.entryType);
+    return tierStatus(t.field, t.warnDays, t.toleranceDays, latest).label;
+  });
+  if (labels.includes('Overdue') || labels.includes('Fault Reported')) return 'overdue';
+  if (labels.includes('Within Tolerance') || labels.includes('Due Soon') || labels.includes('Advisory')) return 'attention';
   return 'compliant';
 }
 

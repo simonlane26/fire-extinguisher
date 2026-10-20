@@ -198,6 +198,7 @@ export type FireAlarmSystem = {
   annualToleranceDays?: number;
   createdAt: string;
   _count?: { callPoints: number; logEntries: number };
+  latestEntriesByType?: { entryType: string; outcome: string; conductedAt: string }[];
 };
 
 export type FireAlarmCallPoint = {
