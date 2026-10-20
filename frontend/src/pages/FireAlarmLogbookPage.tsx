@@ -61,6 +61,30 @@ function toleranceWindow(nextDue: string | null | undefined, toleranceDays: numb
   return { start, end };
 }
 
+// Most recent log entry of a given tier's type (e.g. 'weekly'), so the
+// Compliance Status tile can reflect a bad test result, not just the
+// schedule date — a tier whose latest test failed is not "Compliant" just
+// because the next one isn't due yet.
+function latestEntryForType(entries: FireAlarmLogEntry[], entryType: EntryType): FireAlarmLogEntry | null {
+  const matches = entries.filter(e => e.entryType === entryType);
+  if (matches.length === 0) return null;
+  return matches.reduce((latest, e) => new Date(e.conductedAt) > new Date(latest.conductedAt) ? e : latest);
+}
+
+// Date-based status, overridden when the most recent test for this tier
+// logged a fail or advisory outcome (mirrors the fail-overrides-status
+// pattern already used by Fire Doors/Emergency Lighting/PAT Testing).
+function tierStatus(nextDue: string | null | undefined, warnDays: number, toleranceDays: number, latestEntry: FireAlarmLogEntry | null) {
+  const dateStatus = complianceStatus(nextDue, warnDays, toleranceDays);
+  if (latestEntry?.outcome === 'fail') {
+    return { label: 'Fault Reported', cls: 'bg-red-100 text-red-700' };
+  }
+  if (latestEntry?.outcome === 'advisory' && dateStatus.label === 'Compliant') {
+    return { label: 'Advisory', cls: 'bg-amber-100 text-amber-700' };
+  }
+  return dateStatus;
+}
+
 // Worst-case status across all 5 schedule tiers, for the list row's status
 // stripe/badge — a system is only as compliant as its least-compliant tier.
 function systemStatusKey(system: FireAlarmSystem): 'compliant' | 'attention' | 'overdue' {
@@ -106,13 +130,13 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
 
 // ─── Compliance Card ──────────────────────────────────────────────────────────
 
-const ComplianceCard: React.FC<{ system: FireAlarmSystem }> = ({ system }) => {
-  const items = [
-    { label: 'Weekly',      field: system.nextWeeklyDue,      warnDays: 3,  toleranceDays: system.weeklyToleranceDays ?? 2 },
-    { label: 'Monthly',     field: system.nextMonthlyDue,     warnDays: 7,  toleranceDays: system.monthlyToleranceDays ?? 5 },
-    { label: 'Quarterly',   field: system.nextQuarterlyDue,   warnDays: 14, toleranceDays: system.quarterlyToleranceDays ?? 15 },
-    { label: 'Six-Monthly', field: system.nextSixMonthlyDue,  warnDays: 21, toleranceDays: system.sixMonthlyToleranceDays ?? 30 },
-    { label: 'Annual',      field: system.nextAnnualDue,      warnDays: 30, toleranceDays: system.annualToleranceDays ?? 60 },
+const ComplianceCard: React.FC<{ system: FireAlarmSystem; entries: FireAlarmLogEntry[] }> = ({ system, entries }) => {
+  const items: { label: string; field: string | null | undefined; warnDays: number; toleranceDays: number; entryType: EntryType }[] = [
+    { label: 'Weekly',      field: system.nextWeeklyDue,      warnDays: 3,  toleranceDays: system.weeklyToleranceDays ?? 2,      entryType: 'weekly' },
+    { label: 'Monthly',     field: system.nextMonthlyDue,     warnDays: 7,  toleranceDays: system.monthlyToleranceDays ?? 5,     entryType: 'monthly' },
+    { label: 'Quarterly',   field: system.nextQuarterlyDue,   warnDays: 14, toleranceDays: system.quarterlyToleranceDays ?? 15,  entryType: 'quarterly' },
+    { label: 'Six-Monthly', field: system.nextSixMonthlyDue,  warnDays: 21, toleranceDays: system.sixMonthlyToleranceDays ?? 30, entryType: 'six_monthly' },
+    { label: 'Annual',      field: system.nextAnnualDue,      warnDays: 30, toleranceDays: system.annualToleranceDays ?? 60,     entryType: 'annual' },
   ];
   return (
     <div className="bg-white rounded-xl border border-brand-line px-5 py-4 mb-5">
@@ -121,18 +145,26 @@ const ComplianceCard: React.FC<{ system: FireAlarmSystem }> = ({ system }) => {
       </h3>
       <div className="grid grid-cols-5 gap-2">
         {items.map(item => {
-          const status = complianceStatus(item.field, item.warnDays, item.toleranceDays);
+          const latestEntry = latestEntryForType(entries, item.entryType);
+          const status = tierStatus(item.field, item.warnDays, item.toleranceDays, latestEntry);
           const window = item.field ? toleranceWindow(item.field, item.toleranceDays) : null;
-          const title = window
-            ? `Acceptable window: ${fmtDate(window.start.toISOString())} – ${fmtDate(window.end.toISOString())}`
-            : undefined;
+          const flaggedByEntry = latestEntry && (latestEntry.outcome === 'fail' || latestEntry.outcome === 'advisory') && status.label !== 'Overdue';
+          const title = flaggedByEntry
+            ? `${ENTRY_TYPE_LABELS[item.entryType]} on ${fmtDate(latestEntry!.conductedAt)}: ${latestEntry!.outcome}${latestEntry!.notes ? ` — ${latestEntry!.notes}` : ''}`
+            : window
+              ? `Acceptable window: ${fmtDate(window.start.toISOString())} – ${fmtDate(window.end.toISOString())}`
+              : undefined;
           return (
             <div key={item.label} className="text-center p-2 bg-brand-bg rounded-lg" title={title}>
               <div className="text-xs font-semibold text-brand-ink-muted mb-1.5">{item.label}</div>
               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${status.cls}`}>
                 {status.label}
               </span>
-              {item.field ? (
+              {flaggedByEntry ? (
+                <div className="text-xs text-red-600 mt-1 leading-tight tabular-nums">
+                  {fmtDate(latestEntry!.conductedAt)}
+                </div>
+              ) : item.field ? (
                 <div className="text-xs text-brand-ink-faint mt-1 leading-tight tabular-nums">
                   Next<br />{fmtDate(item.field)}
                   {status.label === 'Within Tolerance' && window && (
@@ -1109,7 +1141,7 @@ const FireAlarmLogbookPage: React.FC = () => {
                 </div>
 
                 {/* Compliance Card */}
-                <ComplianceCard system={selectedSystem} />
+                <ComplianceCard system={selectedSystem} entries={allLogEntries} />
 
                 {/* Tabs */}
                 <div className="flex bg-white border border-brand-line rounded-xl overflow-hidden mb-5 flex-wrap">
