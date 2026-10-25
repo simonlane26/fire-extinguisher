@@ -8,7 +8,6 @@ import {
   Eye,
   QrCode,
   Building2,
-  Crown,
   Shield,
   Flame,
   Download,
@@ -17,6 +16,11 @@ import {
   Filter,
   X,
   FileText,
+  ClipboardCheck,
+  Pencil,
+  MoreVertical,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 import QRScanner from './components/QRScanner';
@@ -220,21 +224,55 @@ const PLAN_INSPECTION_LIMITS: Record<Tenant['subscriptionPlan'], number> = {
 
 function computeKpis(list: Extinguisher[], plan: Tenant['subscriptionPlan'], monthlyInspections: number) {
   const total = list.length;
-  const active = list.filter((e) => e.status === 'Active').length;
-  const needs =
-    list.filter(
-      (e) => e.condition === 'Needs Attention' || e.status !== 'Active',
-    ).length;
   const limit = PLAN_INSPECTION_LIMITS[plan] || 10;
-  return { total, active, needs, planLimit: { used: monthlyInspections, limit } };
+  return { total, planLimit: { used: monthlyInspections, limit } };
+}
+
+// "CO2 · 2 kg" — type and capacity are separate free-text fields
+function formatExtType(ext: Extinguisher): string {
+  return ext.capacity ? `${ext.type} · ${ext.capacity}` : ext.type;
+}
+
+function daysBetween(dateStr: string): number {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(dateStr); d.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - today.getTime()) / 86_400_000);
+}
+
+// "4 months ago" / "3 days ago" / "today" — for Last Inspected
+function timeAgo(dateStr?: string): string {
+  if (!dateStr) return '—';
+  const diff = -daysBetween(dateStr);
+  if (diff <= 0) return 'today';
+  if (diff === 1) return '1 day ago';
+  if (diff < 30) return `${diff} days ago`;
+  if (diff < 60) return '1 month ago';
+  if (diff < 365) return `${Math.round(diff / 30)} months ago`;
+  const years = Math.round(diff / 365);
+  return years === 1 ? '1 year ago' : `${years} years ago`;
+}
+
+// "77 days" or "43 days overdue" — for Next Due
+function dueLabel(dateStr?: string): { text: string; overdue: boolean } {
+  if (!dateStr) return { text: '—', overdue: false };
+  const diff = daysBetween(dateStr);
+  if (diff < 0) return { text: `${Math.abs(diff)} days overdue`, overdue: true };
+  if (diff === 0) return { text: 'Due today', overdue: false };
+  return { text: `${diff} days`, overdue: false };
+}
+
+function daysRemainingInMonth(): number {
+  const now = new Date();
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  return lastDay - now.getDate();
 }
 
 type KpiProps = {
   label: string;
   value: React.ReactNode;
   icon: React.ReactNode;
-  bg: string;
   iconBg?: string;
+  iconColor?: string;
   hint?: React.ReactNode;
 };
 
@@ -242,26 +280,161 @@ const KpiCard: React.FC<KpiProps> = ({
   label,
   value,
   icon,
-  bg,
-  iconBg = 'bg-white/20',
+  iconBg = 'bg-brand-bg',
+  iconColor = 'text-brand-ink-muted',
   hint,
 }) => (
-  <div
-    className={`relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 shadow ring-1 ring-black/5 ${bg} text-white`}
-  >
-    <div className="flex items-start justify-between">
-      <div>
-        <p className="text-xs sm:text-sm opacity-80 inline-flex items-center">
-          {label}{hint}
-        </p>
-        <p className="mt-0.5 sm:mt-1 text-lg sm:text-xl md:text-2xl font-semibold">{value}</p>
-      </div>
-      <div className={`hidden sm:grid size-8 md:size-10 place-items-center rounded-lg md:rounded-xl ${iconBg}`}>
-        {icon}
-      </div>
+  <div className="bg-white border border-brand-line rounded-xl px-4 py-3.5 flex items-center gap-3">
+    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${iconBg} ${iconColor}`}>
+      {icon}
+    </div>
+    <div className="min-w-0">
+      <p className="text-xl font-bold text-brand-ink leading-none tabular-nums">{value}</p>
+      <p className="text-[11px] text-brand-ink-muted mt-1 inline-flex items-center gap-1">{label}{hint}</p>
     </div>
   </div>
 );
+
+const KpiProgressCard: React.FC<{ label: string; used: number; limit: number; hint?: React.ReactNode }> = ({ label, used, limit, hint }) => {
+  const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+  const barCls = used >= limit ? 'bg-red-500' : used >= limit * 0.8 ? 'bg-amber-500' : 'bg-brand-red';
+  return (
+    <div className="bg-white border border-brand-line rounded-xl px-4 py-3.5">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-brand-ink-muted inline-flex items-center gap-1">{label}{hint}</p>
+        <span className="text-xs font-semibold text-brand-ink tabular-nums">{used}/{limit}</span>
+      </div>
+      <div className="w-full h-1.5 bg-brand-bg rounded-full overflow-hidden mt-2">
+        <div className={`h-full rounded-full ${barCls}`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="text-[11px] text-brand-ink-faint mt-1.5">{pct}% complete · {daysRemainingInMonth()} days remaining</p>
+    </div>
+  );
+};
+
+const CONDITION_OPTIONS: Extinguisher['condition'][] = ['Excellent', 'Good', 'Fair', 'Needs Attention', 'Out of Service'];
+
+const QuickLogInspectionModal: React.FC<{
+  extinguisher: Extinguisher;
+  inspectorDefault?: string;
+  onClose: () => void;
+  onSave: (payload: Partial<Extinguisher>) => Promise<void>;
+}> = ({ extinguisher, inspectorDefault, onClose, onSave }) => {
+  const today = new Date().toISOString().split('T')[0];
+  const defaultNextDue = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    return d.toISOString().split('T')[0];
+  })();
+
+  const [condition, setCondition] = useState<Extinguisher['condition']>(extinguisher.condition);
+  const [inspector, setInspector] = useState(inspectorDefault ?? '');
+  const [date, setDate] = useState(today);
+  const [nextDue, setNextDue] = useState(defaultNextDue);
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    if (!inspector.trim()) { setError('Inspector name is required'); return; }
+    setError(null);
+    setSaving(true);
+    try {
+      await onSave({
+        condition,
+        status: condition === 'Out of Service' ? 'Out of Service' : 'Active',
+        inspector,
+        lastInspection: date,
+        nextInspection: nextDue,
+        notes: notes || extinguisher.notes,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to log inspection');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-brand-line">
+          <h2 className="font-semibold text-brand-ink">Log Inspection</h2>
+          <button onClick={onClose} className="text-brand-ink-faint hover:text-brand-ink"><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-brand-ink-muted">{extinguisher.location} — {formatExtType(extinguisher)}</p>
+          {error && <div className="p-3 text-sm text-red-700 border border-red-200 rounded bg-red-50">{error}</div>}
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Condition</label>
+            <select
+              value={condition}
+              onChange={(e) => setCondition(e.target.value as Extinguisher['condition'])}
+              className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
+            >
+              {CONDITION_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Inspector *</label>
+            <input
+              value={inspector}
+              onChange={(e) => setInspector(e.target.value)}
+              className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
+              placeholder="Inspector name"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Next due</label>
+              <input
+                type="date"
+                value={nextDue}
+                onChange={(e) => setNextDue(e.target.value)}
+                className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Notes</label>
+            <textarea
+              rows={2}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
+              placeholder="Optional"
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-brand-line">
+          <button onClick={onClose} disabled={saving} className="px-4 py-2 bg-brand-bg rounded-lg hover:bg-brand-line text-brand-ink">
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="px-4 py-2 text-white bg-brand-red rounded-lg hover:bg-brand-red-dark disabled:opacity-60"
+          >
+            {saving ? 'Saving...' : 'Log Inspection'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /* ------------------------------ Main App Shell ------------------------------- */
 const FireExtinguisherApp: React.FC = () => {
@@ -577,6 +750,23 @@ useEffect(() => {
   const [siteFilter, setSiteFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [pillFilter, setPillFilter] = useState<'all' | 'compliant' | 'dueSoon' | 'overdue' | 'outOfService'>('all');
+  const [extPage, setExtPage] = useState(1);
+  const EXT_PAGE_SIZE = 25;
+  const [showExtMenu, setShowExtMenu] = useState(false);
+  const extMenuRef = useRef<HTMLDivElement>(null);
+  const [quickLogTarget, setQuickLogTarget] = useState<Extinguisher | null>(null);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (extMenuRef.current && !extMenuRef.current.contains(e.target as Node)) setShowExtMenu(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
+  useEffect(() => {
+    setExtPage(1);
+  }, [searchQuery, siteFilter, buildingFilter, typeFilter, statusFilter, conditionFilter, pillFilter]);
 
   // CSV Export handler
   const handleExport = async () => {
@@ -650,6 +840,29 @@ useEffect(() => {
     { compliant: 0, dueSoon: 0, overdue: 0, outOfService: 0 } as Record<'compliant' | 'dueSoon' | 'overdue' | 'outOfService', number>,
   );
 
+  const BUCKET_BORDER_CLS: Record<ReturnType<typeof getComplianceBucket>, string> = {
+    compliant: 'border-l-green-500',
+    dueSoon: 'border-l-amber-500',
+    overdue: 'border-l-red-500',
+    outOfService: 'border-l-brand-ink-faint',
+  };
+
+  // Single merged Condition badge: out-of-service/overdue override the plain
+  // physical condition, since those are the more urgent facts about the unit.
+  const getRowBadge = (ext: Extinguisher): { label: string; cls: string } => {
+    const bucket = getComplianceBucket(ext);
+    if (bucket === 'outOfService') return { label: 'Out of Service', cls: 'bg-brand-bg text-brand-ink-muted' };
+    if (bucket === 'overdue') return { label: 'Overdue', cls: 'bg-red-100 text-red-700' };
+    if (ext.condition === 'Needs Attention') return { label: 'Needs Attention', cls: 'bg-amber-100 text-amber-700' };
+    if (bucket === 'dueSoon') return { label: 'Due Soon', cls: 'bg-amber-100 text-amber-700' };
+    return { label: ext.condition, cls: 'bg-green-100 text-green-700' };
+  };
+
+  // Stable human-readable labels (EXT-001...) keyed by position in the full,
+  // unfiltered list — so a unit's label doesn't shift as the user filters,
+  // sorts, or paginates.
+  const extDisplayIds = new Map(extinguishers.map((e, i) => [e.id, `EXT-${String(i + 1).padStart(3, '0')}`]));
+
   // Filter extinguishers
   const filteredExtinguishers = extinguishers.filter(item => {
     // Search filter
@@ -694,31 +907,10 @@ useEffect(() => {
     conditionFilter !== 'all',
   ].filter(Boolean).length;
 
-  // Helper functions for status and condition colors
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'active':
-        return 'text-green-600 font-medium';
-      case 'inactive':
-        return 'text-red-600 font-medium';
-      default:
-        return 'text-gray-900';
-    }
-  };
+  const extTotalPages = Math.max(1, Math.ceil(filteredExtinguishers.length / EXT_PAGE_SIZE));
+  const pagedExtinguishers = filteredExtinguishers.slice((extPage - 1) * EXT_PAGE_SIZE, extPage * EXT_PAGE_SIZE);
 
-  const getConditionColor = (condition: string) => {
-    const cond = condition?.toLowerCase();
-    if (cond === 'good' || cond === 'excellent') {
-      return 'text-green-600 font-medium';
-    } else if (cond === 'fair' || cond === 'needs attention') {
-      return 'text-orange-600 font-medium';
-    } else if (cond === 'out of service') {
-      return 'text-red-600 font-medium';
-    }
-    return 'text-gray-900';
-  };
-
-  const { total, active, needs, planLimit } = computeKpis(extinguishers, tenant.subscriptionPlan, monthlyInspections);
+  const { total, planLimit } = computeKpis(extinguishers, tenant.subscriptionPlan, monthlyInspections);
 
   // Helper: next ID
   const getNextExtinguisherId = (list: Extinguisher[]) => {
@@ -884,38 +1076,36 @@ useEffect(() => {
         {activeTab === 'overview' && (
         <section className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-4">
           <KpiCard
-            label="Total Extinguishers"
+            label="Total extinguishers"
             value={total}
-            icon={<Flame className="size-6" />}
-            bg="bg-gradient-to-br from-indigo-600 to-indigo-500"
+            icon={<Flame size={17} />}
+            iconBg="bg-brand-bg"
+            iconColor="text-brand-ink-muted"
           />
           <KpiCard
-            label="Active Units"
-            value={active}
-            icon={<CheckCircle className="size-6" />}
-            bg="bg-gradient-to-br from-emerald-600 to-emerald-500"
+            label="Compliant"
+            value={pillCounts.compliant}
+            icon={<CheckCircle size={17} />}
+            iconBg="bg-green-50"
+            iconColor="text-green-600"
           />
           <KpiCard
-            label="Needs Attention"
-            value={needs}
-            icon={<AlertTriangle className="size-6" />}
-            bg="bg-gradient-to-br from-amber-600 to-amber-500"
+            label="Overdue"
+            value={pillCounts.overdue}
+            icon={<AlertTriangle size={17} />}
+            iconBg="bg-red-50"
+            iconColor="text-brand-red"
             hint={
               <HintTooltip
                 storageKey="kpi_needs_attention"
-                content="Extinguishers flagged as 'Needs Attention' or with a non-Active status. Address these first to stay compliant."
+                content="Extinguishers past their next inspection date. Address these first to stay compliant."
               />
             }
           />
-          <KpiCard
-            label="Monthly Inspections"
-            value={
-              <span className={planLimit.used >= planLimit.limit * 0.9 ? 'text-yellow-200' : ''}>
-                {planLimit.used}/{planLimit.limit}
-              </span>
-            }
-            icon={<Crown className="size-6" />}
-            bg={planLimit.used >= planLimit.limit ? 'bg-gradient-to-br from-red-600 to-red-500' : planLimit.used >= planLimit.limit * 0.8 ? 'bg-gradient-to-br from-amber-600 to-amber-500' : 'bg-gradient-to-br from-sky-600 to-sky-500'}
+          <KpiProgressCard
+            label="Monthly inspections"
+            used={planLimit.used}
+            limit={planLimit.limit}
             hint={
               <HintTooltip
                 storageKey="kpi_monthly_inspections"
@@ -991,22 +1181,22 @@ useEffect(() => {
               </div>
             )}
 
-            {/* Toolbar: search + filters + primary action */}
+            {/* Toolbar: search + filters + primary actions */}
             <div className="flex flex-col gap-4 p-4 bg-white rounded-xl border border-brand-line">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute text-brand-inkFaint transform -translate-y-1/2 left-3 top-1/2" size={18} />
+                  <Search className="absolute text-brand-ink-faint transform -translate-y-1/2 left-3 top-1/2" size={18} />
                   <input
                     type="text"
                     placeholder="Search by location, building, type, serial number..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full py-2 pl-10 pr-4 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
+                    className="w-full py-2 pl-10 pr-4 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute text-brand-inkFaint transform -translate-y-1/2 right-3 top-1/2 hover:text-brand-ink"
+                      className="absolute text-brand-ink-faint transform -translate-y-1/2 right-3 top-1/2 hover:text-brand-ink"
                     >
                       <X size={18} />
                     </button>
@@ -1018,8 +1208,8 @@ useEffect(() => {
                   onClick={() => setShowFilters(!showFilters)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                     showFilters
-                      ? 'bg-brand-redTint border-brand-red text-brand-redDark'
-                      : 'bg-white border-brand-line text-brand-ink hover:border-brand-inkFaint'
+                      ? 'bg-brand-red-tint border-brand-red text-brand-red-dark'
+                      : 'bg-white border-brand-line text-brand-ink hover:border-brand-ink-faint'
                   }`}
                 >
                   <Filter size={16} />
@@ -1032,18 +1222,75 @@ useEffect(() => {
                 </button>
 
                 <button
+                  onClick={() => setShowQrScanner(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-brand-ink text-white hover:bg-brand-ink/90 transition-colors"
+                >
+                  <QrCode size={16} /> Scan QR
+                </button>
+
+                <button
                   onClick={() => setOpenAdd(true)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-brand-red text-white hover:bg-brand-redDark transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-brand-red text-white hover:bg-brand-red-dark transition-colors"
                 >
                   <Plus size={16} /> Add Extinguisher
                 </button>
+
+                <div className="relative" ref={extMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowExtMenu(v => !v)}
+                    className="flex items-center justify-center w-9 h-9 rounded-lg border border-brand-line text-brand-ink-muted hover:border-brand-ink-faint transition-colors"
+                    title="More actions"
+                    aria-label="More actions"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                  {showExtMenu && (
+                    <div className="absolute right-0 mt-2 w-52 bg-white border border-brand-line rounded-lg shadow-lg z-20 py-1">
+                      <button
+                        onClick={() => { handleExport(); setShowExtMenu(false); }}
+                        disabled={exporting || extinguishers.length === 0}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-ink hover:bg-brand-bg disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Download size={15} /> {exporting ? 'Exporting...' : 'Export CSV'}
+                      </button>
+                      <button
+                        onClick={() => { handleImportClick(); setShowExtMenu(false); }}
+                        disabled={importing}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-ink hover:bg-brand-bg disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Upload size={15} /> {importing ? 'Importing...' : 'Import CSV'}
+                      </button>
+                      <button
+                        onClick={() => { setShowSimpleForm(true); setShowExtMenu(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-ink hover:bg-brand-bg"
+                      >
+                        <FileText size={15} /> Simple Form
+                      </button>
+                      <button
+                        onClick={() => { setShowRoleSwitcher(true); setShowExtMenu(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-ink-muted hover:bg-brand-bg"
+                      >
+                        <Shield size={15} /> Switch Role
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
               </div>
 
               {/* Filter Dropdowns */}
               {showFilters && (
                 <div className="grid grid-cols-1 gap-3 pt-3 border-t border-brand-line md:grid-cols-2 lg:grid-cols-5">
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Site</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Site</label>
                     <select
                       value={siteFilter}
                       onChange={(e) => {
@@ -1052,7 +1299,7 @@ useEffect(() => {
                           setSelectedSiteFilter(null);
                         }
                       }}
-                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Sites</option>
                       {sites.map(s => (
@@ -1062,11 +1309,11 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Building</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Building</label>
                     <select
                       value={buildingFilter}
                       onChange={(e) => setBuildingFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Buildings</option>
                       {buildings.map(b => (
@@ -1076,11 +1323,11 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Type</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Type</label>
                     <select
                       value={typeFilter}
                       onChange={(e) => setTypeFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Types</option>
                       {types.map(t => (
@@ -1090,11 +1337,11 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Status</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Status</label>
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Statuses</option>
                       {statuses.map(s => (
@@ -1104,11 +1351,11 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block mb-1 text-sm font-medium text-brand-inkMuted">Condition</label>
+                    <label className="block mb-1 text-sm font-medium text-brand-ink-muted">Condition</label>
                     <select
                       value={conditionFilter}
                       onChange={(e) => setConditionFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-redTint focus:border-brand-red outline-none"
+                      className="w-full px-3 py-2 border border-brand-line rounded-lg focus:ring-2 focus:ring-brand-red-tint focus:border-brand-red outline-none"
                     >
                       <option value="all">All Conditions</option>
                       {conditions.map(c => (
@@ -1120,14 +1367,14 @@ useEffect(() => {
               )}
             </div>
 
-            {/* Status pills */}
+            {/* Status chips */}
             <div className="flex flex-wrap items-center gap-2">
               {([
                 { key: 'all', label: 'All', count: extinguishers.length, dot: null },
                 { key: 'compliant', label: 'Compliant', count: pillCounts.compliant, dot: 'bg-brand-green' },
                 { key: 'dueSoon', label: 'Due Soon', count: pillCounts.dueSoon, dot: 'bg-brand-amber' },
                 { key: 'overdue', label: 'Overdue', count: pillCounts.overdue, dot: 'bg-brand-red' },
-                { key: 'outOfService', label: 'Out of Service', count: pillCounts.outOfService, dot: 'bg-gray-400' },
+                { key: 'outOfService', label: 'Out of Service', count: pillCounts.outOfService, dot: 'bg-brand-ink-faint' },
               ] as const).map((pill) => {
                 const active = pillFilter === pill.key;
                 return (
@@ -1138,62 +1385,14 @@ useEffect(() => {
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                       active
                         ? 'bg-brand-ink text-white border-brand-ink'
-                        : 'bg-white text-brand-inkMuted border-brand-line hover:border-brand-inkFaint'
+                        : 'bg-white text-brand-ink-muted border-brand-line hover:border-brand-ink-faint'
                     }`}
                   >
                     {pill.dot && <span className={`w-1.5 h-1.5 rounded-full ${pill.dot}`} />}
-                    {pill.label} ({pill.count})
+                    {pill.label} <span className="opacity-70">{pill.count}</span>
                   </button>
                 );
               })}
-            </div>
-
-            {/* Secondary actions */}
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setShowQrScanner(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-ink hover:border-brand-inkFaint transition-colors"
-              >
-                <QrCode size={15} /> Scan QR
-              </button>
-
-              <button
-                onClick={handleExport}
-                disabled={exporting || extinguishers.length === 0}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-ink hover:border-brand-inkFaint transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Download size={15} /> {exporting ? '...' : 'Export CSV'}
-              </button>
-
-              <button
-                onClick={handleImportClick}
-                disabled={importing}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-ink hover:border-brand-inkFaint transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Upload size={15} /> {importing ? '...' : 'Import CSV'}
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-
-              <button
-                onClick={() => setShowSimpleForm(true)}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-ink hover:border-brand-inkFaint transition-colors"
-              >
-                <FileText size={15} /> Simple Form
-              </button>
-
-              <button
-                onClick={() => setShowRoleSwitcher(true)}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-brand-line text-brand-inkMuted hover:border-brand-inkFaint transition-colors"
-              >
-                <Shield size={15} /> Switch Role
-              </button>
             </div>
 
             {importResult && (
@@ -1207,62 +1406,97 @@ useEffect(() => {
               <table className="min-w-full">
                 <thead className="bg-brand-bg">
                   <tr>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
-                      ID / Serial
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-ink-muted uppercase tracking-wide md:px-6">
+                      ID
                     </th>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-ink-muted uppercase tracking-wide md:px-6">
                       Location
                     </th>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-ink-muted uppercase tracking-wide md:px-6">
                       Type
                     </th>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
-                      Status
-                    </th>
-                    <th className="hidden px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide sm:table-cell md:px-6">
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-ink-muted uppercase tracking-wide md:px-6">
                       Condition
                     </th>
-                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-inkMuted uppercase tracking-wide md:px-6">
+                    <th className="hidden px-3 py-3 text-xs font-medium text-left text-brand-ink-muted uppercase tracking-wide sm:table-cell md:px-6">
+                      Last Inspected
+                    </th>
+                    <th className="hidden px-3 py-3 text-xs font-medium text-left text-brand-ink-muted uppercase tracking-wide sm:table-cell md:px-6">
+                      Next Due
+                    </th>
+                    <th className="px-3 py-3 text-xs font-medium text-left text-brand-ink-muted uppercase tracking-wide md:px-6">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-brand-line">
-                  {filteredExtinguishers.map((ext) => (
-                    <tr key={ext.id} className="hover:bg-brand-bg/60">
-                      <td className="px-3 py-3 text-sm font-mono text-brand-inkMuted md:px-6">{ext.id}</td>
-                      <td className="px-3 py-3 md:px-6 md:py-4">
-                        <div className="text-sm text-brand-ink md:text-base">{ext.location}</div>
-                        <div className="text-xs text-brand-inkMuted md:text-sm">
-                          {ext.building}
-                          {ext.floor ? `, ${ext.floor}` : ''}
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 md:px-6 md:py-4">
-                        <div className="text-sm text-brand-ink md:text-base">{ext.type}</div>
-                        <div className="text-xs text-brand-inkMuted md:text-sm">{ext.capacity}</div>
-                      </td>
-                      <td className="px-3 py-3 md:px-6 md:py-4">
-                        <span className={getStatusColor(ext.status)}>{ext.status}</span>
-                      </td>
-                      <td className="hidden px-3 py-3 sm:table-cell md:px-6 md:py-4">
-                        <span className={getConditionColor(ext.condition)}>{ext.condition}</span>
-                      </td>
-                      <td className="px-3 py-3 md:px-6 md:py-4">
-                        <button
-                          onClick={() => openDetails(ext)}
-                          className="p-2 text-brand-inkMuted hover:text-brand-red hover:bg-brand-redTint rounded-lg transition-colors"
-                          title="View details"
-                          aria-label={`View ${ext.id}`}
-                        >
-                          <Eye size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {pagedExtinguishers.map((ext) => {
+                    const bucket = getComplianceBucket(ext);
+                    const badge = getRowBadge(ext);
+                    const due = dueLabel(ext.nextInspection);
+                    return (
+                      <tr key={ext.id} className={`border-l-4 ${BUCKET_BORDER_CLS[bucket]} hover:bg-brand-bg/60 ${bucket === 'overdue' ? 'bg-red-50/40' : ''}`}>
+                        <td className="px-3 py-3 md:px-6">
+                          <div className="text-sm font-mono font-semibold text-brand-ink">{extDisplayIds.get(ext.id)}</div>
+                          <div className="text-[11px] font-mono text-brand-ink-faint">{ext.id}</div>
+                        </td>
+                        <td className="px-3 py-3 md:px-6 md:py-4">
+                          <div className="text-sm text-brand-ink md:text-base">{ext.location}</div>
+                          <div className="text-xs text-brand-ink-muted md:text-sm">
+                            {ext.building}
+                            {ext.floor ? `, ${ext.floor}` : ''}
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 md:px-6 md:py-4">
+                          <div className="text-sm text-brand-ink md:text-base">{formatExtType(ext)}</div>
+                        </td>
+                        <td className="px-3 py-3 md:px-6 md:py-4">
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${badge.cls}`}>
+                            {badge.label}
+                          </span>
+                        </td>
+                        <td className="hidden px-3 py-3 sm:table-cell md:px-6 md:py-4">
+                          <div className="text-sm text-brand-ink">{ext.lastInspection ? new Date(ext.lastInspection).toLocaleDateString('en-GB') : '—'}</div>
+                          <div className="text-xs text-brand-ink-muted">{timeAgo(ext.lastInspection)}</div>
+                        </td>
+                        <td className="hidden px-3 py-3 sm:table-cell md:px-6 md:py-4">
+                          <div className="text-sm text-brand-ink">{ext.nextInspection ? new Date(ext.nextInspection).toLocaleDateString('en-GB') : '—'}</div>
+                          <div className={`text-xs ${due.overdue ? 'text-red-600 font-medium' : 'text-brand-ink-muted'}`}>{due.text}</div>
+                        </td>
+                        <td className="px-3 py-3 md:px-6 md:py-4">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setQuickLogTarget(ext)}
+                              className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              title="Log inspection"
+                              aria-label={`Log inspection for ${extDisplayIds.get(ext.id)}`}
+                            >
+                              <ClipboardCheck size={18} />
+                            </button>
+                            <button
+                              onClick={() => openDetails(ext)}
+                              className="p-2 text-brand-ink-muted hover:text-brand-red hover:bg-brand-red-tint rounded-lg transition-colors"
+                              title="View details"
+                              aria-label={`View ${extDisplayIds.get(ext.id)}`}
+                            >
+                              <Eye size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleEdit(ext)}
+                              className="p-2 text-brand-ink-muted hover:text-brand-red hover:bg-brand-red-tint rounded-lg transition-colors"
+                              title="Edit"
+                              aria-label={`Edit ${extDisplayIds.get(ext.id)}`}
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {filteredExtinguishers.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-10 text-center text-brand-inkMuted">
+                      <td colSpan={7} className="px-6 py-10 text-center text-brand-ink-muted">
                         No extinguishers yet. Click{' '}
                         <span className="font-medium text-brand-ink">Add Extinguisher</span> to get
                         started.
@@ -1271,7 +1505,56 @@ useEffect(() => {
                   )}
                 </tbody>
               </table>
+
+              {filteredExtinguishers.length > 0 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-brand-line text-sm text-brand-ink-muted">
+                  <span>
+                    Showing {(extPage - 1) * EXT_PAGE_SIZE + 1}–{Math.min(extPage * EXT_PAGE_SIZE, filteredExtinguishers.length)} of {filteredExtinguishers.length}
+                  </span>
+                  {extTotalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setExtPage(p => Math.max(1, p - 1))}
+                        disabled={extPage === 1}
+                        className="p-1.5 rounded-lg border border-brand-line disabled:opacity-40 disabled:cursor-not-allowed hover:border-brand-ink-faint"
+                        aria-label="Previous page"
+                      >
+                        <ChevronLeft size={15} />
+                      </button>
+                      {Array.from({ length: extTotalPages }, (_, i) => i + 1).map(p => (
+                        <button
+                          key={p}
+                          onClick={() => setExtPage(p)}
+                          className={`w-7 h-7 rounded-lg text-xs font-medium ${p === extPage ? 'bg-brand-ink text-white' : 'border border-brand-line text-brand-ink-muted hover:border-brand-ink-faint'}`}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setExtPage(p => Math.min(extTotalPages, p + 1))}
+                        disabled={extPage === extTotalPages}
+                        className="p-1.5 rounded-lg border border-brand-line disabled:opacity-40 disabled:cursor-not-allowed hover:border-brand-ink-faint"
+                        aria-label="Next page"
+                      >
+                        <ChevronRight size={15} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {quickLogTarget && (
+              <QuickLogInspectionModal
+                extinguisher={quickLogTarget}
+                inspectorDefault={currentUser.name}
+                onClose={() => setQuickLogTarget(null)}
+                onSave={async (payload) => {
+                  await handleUpdate(quickLogTarget.id, payload);
+                  setQuickLogTarget(null);
+                }}
+              />
+            )}
           </>
         )}
 
