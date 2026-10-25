@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, AlertTriangle, TrendingDown, CloudOff, Bell } from 'lucide-react';
+import {
+  Package, Plus, Minus, Edit2, Trash2, AlertTriangle, CloudOff,
+  CheckCircle2, PoundSterling, ChevronUp, ChevronDown, Search,
+} from 'lucide-react';
 import type { InventoryItem } from '../types';
 import {
   fetchInventoryItems,
@@ -24,6 +27,22 @@ const CATEGORIES = [
   'Other'
 ];
 
+type SortKey = 'partNumber' | 'partName' | 'category' | 'quantityInStock' | 'minStockLevel' | 'unitPrice' | 'value';
+
+function stockHealth(item: InventoryItem): 'critical' | 'approaching' | 'healthy' {
+  if (item.minStockLevel <= 0) return 'healthy';
+  const ratio = item.quantityInStock / item.minStockLevel;
+  if (ratio <= 1) return 'critical';
+  if (ratio <= 1.5) return 'approaching';
+  return 'healthy';
+}
+
+const HEALTH_BAR_CLS: Record<ReturnType<typeof stockHealth>, string> = {
+  critical: 'bg-red-500',
+  approaching: 'bg-amber-500',
+  healthy: 'bg-green-500',
+};
+
 const InventoryPage: React.FC = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
@@ -32,8 +51,12 @@ const InventoryPage: React.FC = () => {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
-  const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [isOffline, setIsOffline] = useState(!syncManager.getOnlineStatus());
+  const [sortKey, setSortKey] = useState<SortKey>('quantityInStock');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [adjustingId, setAdjustingId] = useState<string | null>(null);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -90,17 +113,109 @@ const InventoryPage: React.FC = () => {
     }
   };
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch =
-      item.partName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.partNumber.toLowerCase().includes(searchTerm.toLowerCase());
+  const categoryCounts = items.reduce<Record<string, number>>((acc, item) => {
+    const cat = item.category || 'Uncategorized';
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {});
+  const presentCategories = Object.keys(categoryCounts).sort();
 
-    const matchesCategory = !categoryFilter || item.category === categoryFilter;
+  const totalInStock = items.reduce((sum, item) => sum + item.quantityInStock, 0);
+  const totalStockValue = items.reduce((sum, item) => sum + item.quantityInStock * ((item.unitPrice ?? 0) / 100), 0);
 
-    const matchesLowStock = !showLowStockOnly || item.quantityInStock <= item.minStockLevel;
+  function itemValue(item: InventoryItem) {
+    return item.quantityInStock * ((item.unitPrice ?? 0) / 100);
+  }
 
-    return matchesSearch && matchesCategory && matchesLowStock;
-  });
+  const filteredItems = items
+    .filter(item => {
+      const matchesSearch =
+        item.partName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.partNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = !categoryFilter || (item.category || 'Uncategorized') === categoryFilter;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case 'partNumber': cmp = a.partNumber.localeCompare(b.partNumber); break;
+        case 'partName': cmp = a.partName.localeCompare(b.partName); break;
+        case 'category': cmp = (a.category || '').localeCompare(b.category || ''); break;
+        case 'quantityInStock': cmp = a.quantityInStock - b.quantityInStock; break;
+        case 'minStockLevel': cmp = a.minStockLevel - b.minStockLevel; break;
+        case 'unitPrice': cmp = (a.unitPrice ?? 0) - (b.unitPrice ?? 0); break;
+        case 'value': cmp = itemValue(a) - itemValue(b); break;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+
+  function handleSort(key: SortKey) {
+    if (key === sortKey) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  }
+
+  function SortHeader({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) {
+    const active = sortKey === sortKeyName;
+    return (
+      <button
+        onClick={() => handleSort(sortKeyName)}
+        className={`flex items-center gap-1 text-xs font-medium uppercase ${active ? 'text-brand-ink' : 'text-brand-ink-muted'} hover:text-brand-ink`}
+      >
+        {label}
+        {active && (sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />)}
+      </button>
+    );
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filteredItems.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredItems.map(i => i.id)));
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  async function adjustQuantity(item: InventoryItem, delta: number) {
+    const next = item.quantityInStock + delta;
+    if (next < 0) return;
+    setAdjustingId(item.id);
+    try {
+      await updateInventoryItem(item.id, { quantityInStock: next });
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update quantity');
+    } finally {
+      setAdjustingId(null);
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!confirm(`Delete ${selectedIds.size} selected item${selectedIds.size !== 1 ? 's' : ''}? This cannot be undone.`)) return;
+    setBulkDeleting(true);
+    try {
+      for (const id of selectedIds) {
+        await deleteInventoryItem(id);
+      }
+      setSelectedIds(new Set());
+      await loadData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete selected items');
+    } finally {
+      setBulkDeleting(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -110,11 +225,15 @@ const InventoryPage: React.FC = () => {
     );
   }
 
+  const worstLowStockItem = lowStockItems.length > 0
+    ? [...lowStockItems].sort((a, b) => (a.quantityInStock - a.minStockLevel) - (b.quantityInStock - b.minStockLevel))[0]
+    : null;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Offline Banner */}
       {isOffline && (
-        <div className="flex items-center gap-2 p-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-lg">
+        <div className="flex items-center gap-2 p-3 text-brand-ink-muted bg-brand-bg border border-brand-line rounded-lg">
           <CloudOff size={18} />
           <span className="text-sm">
             You're viewing cached inventory data. Changes will sync when back online.
@@ -122,144 +241,229 @@ const InventoryPage: React.FC = () => {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Stock Management</h1>
-          <p className="text-sm text-gray-600">Manage spare parts and consumables inventory</p>
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-white border border-brand-line rounded-xl px-4 py-3.5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-brand-bg flex items-center justify-center text-brand-ink-muted shrink-0"><Package size={17} /></div>
+          <div>
+            <div className="text-xl font-bold text-brand-ink leading-none tabular-nums">{items.length}</div>
+            <div className="text-[11px] text-brand-ink-muted mt-1">Unique parts</div>
+          </div>
         </div>
+        <div className="bg-white border border-brand-line rounded-xl px-4 py-3.5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center text-green-600 shrink-0"><CheckCircle2 size={17} /></div>
+          <div>
+            <div className="text-xl font-bold text-brand-ink leading-none tabular-nums">{totalInStock}</div>
+            <div className="text-[11px] text-brand-ink-muted mt-1">Total in stock</div>
+          </div>
+        </div>
+        <div className="bg-white border border-brand-line rounded-xl px-4 py-3.5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 shrink-0"><AlertTriangle size={17} /></div>
+          <div>
+            <div className="text-xl font-bold text-brand-ink leading-none tabular-nums">{lowStockItems.length}</div>
+            <div className="text-[11px] text-brand-ink-muted mt-1">Low stock</div>
+          </div>
+        </div>
+        <div className="bg-white border border-brand-line rounded-xl px-4 py-3.5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-brand-bg flex items-center justify-center text-brand-red shrink-0"><PoundSterling size={17} /></div>
+          <div>
+            <div className="text-xl font-bold text-brand-ink leading-none tabular-nums">£{totalStockValue.toFixed(2)}</div>
+            <div className="text-[11px] text-brand-ink-muted mt-1">Total stock value</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center justify-end">
         <button
           onClick={handleAdd}
           disabled={isOffline}
-          className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg ${
-            isOffline ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg font-medium ${
+            isOffline ? 'bg-gray-400 cursor-not-allowed' : 'bg-brand-red hover:bg-brand-red-dark'
           }`}
           title={isOffline ? 'Cannot add items while offline' : undefined}
         >
           <Plus size={18} />
-          Add Item
+          Add Part
         </button>
       </div>
 
       {/* Low Stock Alert */}
-      {lowStockItems.length > 0 && (
-        <div className="p-4 border-l-4 border-orange-500 rounded-lg bg-orange-50">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={20} className="text-orange-600" />
-            <h3 className="font-semibold text-orange-900 flex items-center gap-1.5">
-              Low Stock Alert
-              <Bell size={15} className="text-orange-500" />
-            </h3>
-          </div>
-          <p className="text-sm text-orange-800">
-            {lowStockItems.length} item{lowStockItems.length !== 1 ? 's' : ''} below minimum stock level
+      {worstLowStockItem && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+          </span>
+          <p className="text-sm text-red-800 flex-1">
+            <span className="font-semibold">{worstLowStockItem.partName}</span> ({worstLowStockItem.partNumber}) is at minimum level · {worstLowStockItem.quantityInStock} in stock, min level {worstLowStockItem.minStockLevel}
           </p>
           <button
-            onClick={() => setShowLowStockOnly(true)}
-            className="mt-2 text-sm font-medium text-orange-700 hover:text-orange-900"
+            onClick={() => { setSearchTerm(worstLowStockItem.partNumber); setCategoryFilter(''); }}
+            className="text-sm font-medium text-red-700 hover:text-red-900 shrink-0"
           >
-            View low stock items →
+            View item →
           </button>
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <input
-          type="text"
-          placeholder="Search by part name or number..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg"
-        />
-
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg"
-        >
-          <option value="">All Categories</option>
-          {CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
+      {/* Search + category chips */}
+      <div className="space-y-3">
+        <div className="relative max-w-sm">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-ink-faint" />
+          <input
+            type="text"
+            placeholder="Search by part name or number..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-sm border border-brand-line rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setCategoryFilter('')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
+              categoryFilter === '' ? 'bg-brand-ink text-white border-brand-ink' : 'border-brand-line text-brand-ink-muted hover:bg-brand-bg'
+            }`}
+          >
+            All <span className="opacity-70">{items.length}</span>
+          </button>
+          {presentCategories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
+                categoryFilter === cat ? 'bg-brand-ink text-white border-brand-ink' : 'border-brand-line text-brand-ink-muted hover:bg-brand-bg'
+              }`}
+            >
+              {cat} <span className="opacity-70">{categoryCounts[cat]}</span>
+            </button>
           ))}
-        </select>
-
-        <button
-          onClick={() => setShowLowStockOnly(!showLowStockOnly)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
-            showLowStockOnly
-              ? 'bg-orange-100 border-orange-300 text-orange-700'
-              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          <TrendingDown size={16} />
-          Low Stock Only
-        </button>
+        </div>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-brand-ink text-white rounded-lg">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <button
+            onClick={handleBulkDelete}
+            disabled={bulkDeleting || isOffline}
+            className="ml-auto flex items-center gap-1.5 text-sm font-medium text-red-300 hover:text-red-200 disabled:opacity-50"
+          >
+            <Trash2 size={14} /> {bulkDeleting ? 'Deleting...' : 'Delete selected'}
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="text-sm text-white/70 hover:text-white">
+            Clear
+          </button>
+        </div>
+      )}
+
       {/* Items Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white rounded-xl border border-brand-line overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-brand-bg">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Number</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Part Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">In Stock</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Min Level</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
-                <th className="px-6 py-3"></th>
+                <th className="px-4 py-3 w-8">
+                  <input
+                    type="checkbox"
+                    checked={filteredItems.length > 0 && selectedIds.size === filteredItems.length}
+                    onChange={toggleSelectAll}
+                    className="rounded border-brand-line"
+                  />
+                </th>
+                <th className="px-4 py-3 text-left"><SortHeader label="Part Number" sortKeyName="partNumber" /></th>
+                <th className="px-4 py-3 text-left"><SortHeader label="Part Name" sortKeyName="partName" /></th>
+                <th className="px-4 py-3 text-left"><SortHeader label="Category" sortKeyName="category" /></th>
+                <th className="px-4 py-3 text-left"><SortHeader label="In Stock" sortKeyName="quantityInStock" /></th>
+                <th className="px-4 py-3 text-left"><SortHeader label="Min Level" sortKeyName="minStockLevel" /></th>
+                <th className="px-4 py-3 text-left"><SortHeader label="Unit Price" sortKeyName="unitPrice" /></th>
+                <th className="px-4 py-3 text-left"><SortHeader label="Value" sortKeyName="value" /></th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-brand-line">
               {filteredItems.map((item) => {
-                const isLowStock = item.quantityInStock <= item.minStockLevel;
+                const health = stockHealth(item);
+                const isCritical = health === 'critical';
+                const barWidth = Math.min(100, Math.round((item.minStockLevel > 0 ? item.quantityInStock / item.minStockLevel : 2) * 40));
                 return (
-                  <tr key={item.id} className={`hover:bg-gray-50 ${isLowStock ? 'bg-orange-50' : ''}`}>
-                    <td className="px-6 py-4 font-mono text-sm">{item.partNumber}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Package size={16} className="text-gray-400" />
+                  <tr key={item.id} className={`group hover:bg-brand-bg ${isCritical ? 'bg-red-50/60' : ''}`}>
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(item.id)}
+                        onChange={() => toggleSelect(item.id)}
+                        className="rounded border-brand-line"
+                      />
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-brand-ink-muted">{item.partNumber}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 text-sm text-brand-ink font-medium">
+                        <Package size={14} className="text-brand-ink-faint shrink-0" />
                         {item.partName}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md bg-brand-bg text-brand-ink-muted">
                         {item.category || 'Uncategorized'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`font-semibold ${isLowStock ? 'text-orange-600' : 'text-gray-900'}`}>
-                        {item.quantityInStock}
-                        {isLowStock && <AlertTriangle size={14} className="inline ml-1" />}
-                      </span>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-semibold tabular-nums ${isCritical ? 'text-red-600' : 'text-brand-ink'}`}>
+                          {item.quantityInStock}
+                        </span>
+                        <div className="w-14 h-1.5 bg-brand-bg rounded-full overflow-hidden shrink-0">
+                          <div className={`h-full rounded-full ${HEALTH_BAR_CLS[health]}`} style={{ width: `${barWidth}%` }} />
+                        </div>
+                        <div className="hidden group-hover:flex items-center gap-0.5 ml-1">
+                          <button
+                            onClick={() => adjustQuantity(item, -1)}
+                            disabled={isOffline || adjustingId === item.id || item.quantityInStock <= 0}
+                            className="w-5 h-5 flex items-center justify-center rounded border border-brand-line text-brand-ink-muted hover:bg-white disabled:opacity-40"
+                            title="Decrease"
+                          >
+                            <Minus size={11} />
+                          </button>
+                          <button
+                            onClick={() => adjustQuantity(item, 1)}
+                            disabled={isOffline || adjustingId === item.id}
+                            className="w-5 h-5 flex items-center justify-center rounded border border-brand-line text-brand-ink-muted hover:bg-white disabled:opacity-40"
+                            title="Increase"
+                          >
+                            <Plus size={11} />
+                          </button>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">{item.minStockLevel}</td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-4 py-3 text-sm text-brand-ink-muted tabular-nums">{item.minStockLevel}</td>
+                    <td className="px-4 py-3 text-sm text-brand-ink-muted tabular-nums">
                       {item.unitPrice ? `£${(item.unitPrice / 100).toFixed(2)}` : '—'}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-4 py-3 text-sm text-brand-ink-muted tabular-nums">£{itemValue(item).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleEdit(item)}
                           disabled={isOffline}
-                          className={`p-2 rounded ${
-                            isOffline ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:bg-blue-50'
+                          className={`p-1.5 rounded ${
+                            isOffline ? 'text-brand-ink-faint cursor-not-allowed' : 'text-brand-ink-muted hover:bg-brand-bg hover:text-brand-ink'
                           }`}
                           title={isOffline ? 'Cannot edit while offline' : 'Edit'}
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={14} />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
                           disabled={isOffline}
-                          className={`p-2 rounded ${
-                            isOffline ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'
+                          className={`p-1.5 rounded ${
+                            isOffline ? 'text-brand-ink-faint cursor-not-allowed' : 'text-brand-ink-faint hover:bg-red-50 hover:text-red-600'
                           }`}
                           title={isOffline ? 'Cannot delete while offline' : 'Delete'}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -268,7 +472,7 @@ const InventoryPage: React.FC = () => {
               })}
               {filteredItems.length === 0 && (
                 <tr>
-                  <td className="px-6 py-8 text-sm text-center text-gray-500" colSpan={7}>
+                  <td className="px-6 py-8 text-sm text-center text-brand-ink-muted" colSpan={9}>
                     No inventory items found.
                   </td>
                 </tr>
