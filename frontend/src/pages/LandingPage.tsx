@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Linkedin, Facebook } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { requestComplianceChecklist } from '../lib/api';
@@ -819,6 +820,24 @@ export default function LandingPage() {
             >
               <img src="/vibechecked-badge.png" alt="Vibechecked — verified by vibecheck.it.com" width="110" height="40" />
             </a>
+            <span className="rev-social">
+              <a
+                href="https://www.linkedin.com/company/firexcheck/home/?viewAsMember=true"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="FirexCheck on LinkedIn"
+              >
+                <Linkedin size={14} />
+              </a>
+              <a
+                href="https://www.facebook.com/profile.php?id=61577536342287"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="FirexCheck on Facebook"
+              >
+                <Facebook size={14} />
+              </a>
+            </span>
             <span>Rev {new Date().getFullYear()}.{String(new Date().getMonth() + 1).padStart(2, '0')} · Cheshire, UK</span>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Linkedin, Facebook } from 'lucide-react';
 
 interface FooterProps {
   primaryColor?: string;
@@ -18,6 +19,30 @@ const Footer: React.FC<FooterProps> = ({ primaryColor = '#B8121F' }) => {
             <p className="text-sm text-gray-600">
               Professional fire extinguisher management system. Keep your premises safe and compliant.
             </p>
+            <div className="flex items-center gap-3 mt-4">
+              <a
+                href="https://www.linkedin.com/company/firexcheck/home/?viewAsMember=true"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="FirexCheck on LinkedIn"
+                className="flex items-center justify-center w-8 h-8 text-gray-500 transition-colors border border-gray-200 rounded-full hover:text-white hover:border-transparent"
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = ''; }}
+              >
+                <Linkedin size={15} />
+              </a>
+              <a
+                href="https://www.facebook.com/profile.php?id=61577536342287"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="FirexCheck on Facebook"
+                className="flex items-center justify-center w-8 h-8 text-gray-500 transition-colors border border-gray-200 rounded-full hover:text-white hover:border-transparent"
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = primaryColor; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = ''; }}
+              >
+                <Facebook size={15} />
+              </a>
+            </div>
           </div>
 
           {/* Legal */}
