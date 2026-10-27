@@ -84,7 +84,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
   const today = useMemo(() => new Date(), []);
   const todayISO = useMemo(() => iso(today), [today]);
 
-  const defaultNextInspection = useMemo(() => iso(addDays(today, 30)), [today]);
+  const defaultNextInspection = useMemo(() => iso(addYears(today, 1)), [today]);
   const defaultNextMaintenance = useMemo(() => iso(addDays(today, 365)), [today]);
 
   const [form, setForm] = useState<Partial<Extinguisher>>({
@@ -469,7 +469,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
           </div>
 
           {/* Service & secondary-cycle block */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className={`grid grid-cols-1 gap-4 ${complianceStandard === 'IS' ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
             <div>
               <label className="block mb-1 text-sm text-gray-600">Last {getSecondaryCycleLabel(complianceStandard, form.type)} Date</label>
               <input
@@ -494,18 +494,20 @@ const AddExtinguisherModal: React.FC<Props> = ({
                 Auto-calculated from the last {getSecondaryCycleLabel(complianceStandard, form.type).toLowerCase()} date
               </p>
             </div>
-            <div>
-              <label className="block mb-1 text-sm text-gray-600">Expiry Date</label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                value={form.expiryDate || ''}
-                onChange={(e) => handleChange('expiryDate', e.target.value)}
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Auto-calculated: CO2 = 10 years, Powder/Water/Foam/P50 = 20 years from install date
-              </p>
-            </div>
+            {complianceStandard !== 'IS' && (
+              <div>
+                <label className="block mb-1 text-sm text-gray-600">Expiry Date</label>
+                <input
+                  type="date"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  value={form.expiryDate || ''}
+                  onChange={(e) => handleChange('expiryDate', e.target.value)}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Auto-calculated: CO2 = 10 years, Powder/Water/Foam/P50 = 20 years from install date
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

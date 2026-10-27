@@ -445,7 +445,7 @@ const EditExtinguisherModal: React.FC<Props> = ({
               standard), lastInspection/nextInspection is the annual
               service — matching AddExtinguisherModal's convention, which
               these fields previously disagreed with. */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className={`grid grid-cols-1 gap-4 ${complianceStandard === 'IS' ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
             <div>
               <label className="block mb-1 text-sm text-gray-600">Last {getSecondaryCycleLabel(complianceStandard, form.type)} Date</label>
               <input
@@ -464,15 +464,17 @@ const EditExtinguisherModal: React.FC<Props> = ({
                 onChange={(e) => handleChange('nextMaintenance', e.target.value)}
               />
             </div>
-            <div>
-              <label className="block mb-1 text-sm text-gray-600">Expiry Date</label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                value={form.expiryDate || ''}
-                onChange={(e) => handleChange('expiryDate', e.target.value)}
-              />
-            </div>
+            {complianceStandard !== 'IS' && (
+              <div>
+                <label className="block mb-1 text-sm text-gray-600">Expiry Date</label>
+                <input
+                  type="date"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  value={form.expiryDate || ''}
+                  onChange={(e) => handleChange('expiryDate', e.target.value)}
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
