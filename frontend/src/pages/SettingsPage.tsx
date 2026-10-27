@@ -417,6 +417,34 @@ const SettingsPage: React.FC<Props> = ({ tenant, updateTenant, userRole }) => {
             </div>
           </section>
         )}
+
+        {/* Compliance Standard — admin/super_admin only */}
+        {isAdmin && (
+          <section className="p-4 bg-white border rounded-xl">
+            <h2 className="mb-2 text-lg font-semibold">Compliance Standard</h2>
+            <p className="mb-4 text-sm text-gray-500">
+              Sets the maintenance intervals used across your whole account — applies to every site, not per-site.
+            </p>
+            <div className="sm:max-w-xs">
+              <label className="block mb-1 text-sm font-medium">Standard</label>
+              <select
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                value={tenant.complianceStandard}
+                onChange={(e) => {
+                  const next = e.target.value as Tenant['complianceStandard'];
+                  if (next === tenant.complianceStandard) return;
+                  if (!window.confirm(
+                    'Changing the compliance standard changes the maintenance intervals used for every extinguisher in your account. Continue?'
+                  )) return;
+                  updateTenant({ complianceStandard: next });
+                }}
+              >
+                <option value="BS">BS 5306-3 (British Standard)</option>
+                <option value="IS">IS 291 (Irish Standard)</option>
+              </select>
+            </div>
+          </section>
+        )}
       </form>
     </div>
   );

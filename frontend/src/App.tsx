@@ -58,6 +58,7 @@ import RoleSwitcherModal from './components/RoleSwitcher';
 import Footer from './components/Footer';
 import { addExtinguisher, updateExtinguisher, fetchExtinguishers, fetchExtinguisherById, exportExtinguishersCsv, importExtinguishersCsv, updateUserRole, updateTenantSettings, updateOtherUserRole, getUsers, fetchSites, fetchMonthlyInspectionCount } from './lib/api';
 import { addExtinguisherOffline } from './lib/offline/offlineApi';
+import { getComplianceBucket as getComplianceBucketShared } from './lib/complianceRules';
 import { AuthContext, type AuthCtx } from './components/AuthWrapper';
 import type {
   Extinguisher,
@@ -108,6 +109,7 @@ const MOCK_TENANTS: Record<string, Tenant> = {
     patTestingEnabled: false,
     emergencyLightingEnabled: false,
     fireDoorsEnabled: false,
+    complianceStandard: 'BS',
   },
 };
 
@@ -822,14 +824,7 @@ useEffect(() => {
 
   // Compliance bucket for the status-pill filter row — mirrors the thresholds
   // used in ComplianceDashboard so "Due Soon"/"Overdue" mean the same thing everywhere.
-  const getComplianceBucket = (ext: Extinguisher): 'compliant' | 'dueSoon' | 'overdue' | 'outOfService' => {
-    if (ext.status !== 'Active' || ext.condition === 'Out of Service') return 'outOfService';
-    if (!ext.nextInspection) return 'compliant';
-    const diffDays = Math.ceil((new Date(ext.nextInspection).getTime() - Date.now()) / 86_400_000);
-    if (diffDays < 0) return 'overdue';
-    if (diffDays <= 30) return 'dueSoon';
-    return 'compliant';
-  };
+  const getComplianceBucket = (ext: Extinguisher) => getComplianceBucketShared(ext, tenant.complianceStandard);
 
   const pillCounts = extinguishers.reduce(
     (acc, ext) => {
@@ -1583,6 +1578,7 @@ useEffect(() => {
         {activeTab === 'compliance' && (
           <ComplianceDashboard
             primaryColor={tenant.primaryColor}
+            complianceStandard={tenant.complianceStandard}
             onNavigate={() => setActiveTab('overview')}
             fireAlarmEnabled={tenant.fireAlarmEnabled}
             onNavigateFireAlarm={() => setActiveTab('fire-alarm')}
@@ -1653,6 +1649,7 @@ useEffect(() => {
         onClose={() => setOpenAdd(false)}
         onCreate={handleCreate}
         primaryColor={tenant.primaryColor}
+        complianceStandard={tenant.complianceStandard}
       />
 
       <ExtinguisherDetails
@@ -1670,6 +1667,7 @@ useEffect(() => {
         extinguisher={editingExtinguisher}
         onUpdate={handleUpdate}
         primaryColor={tenant.primaryColor}
+        complianceStandard={tenant.complianceStandard}
       />
 
       {showQrScanner && (

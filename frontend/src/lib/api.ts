@@ -309,6 +309,8 @@ export async function updateTenantSettings(data: {
   primaryColor?: string;
   secondaryColor?: string;
   logoUrl?: string;
+  stockManagementEnabled?: boolean;
+  complianceStandard?: string;
 }): Promise<{ success: boolean; tenant: Tenant; user: AuthedUser & { tenant: Tenant } }> {
   const res = await fetch(`${API_BASE}/auth/update-tenant`, {
     method: 'PATCH',

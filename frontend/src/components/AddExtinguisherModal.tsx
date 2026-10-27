@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import type { Extinguisher, Site } from '../types';
 import { fetchSites, getAuthHeaders, fetchExtinguisherTypes } from '../lib/api';
+import { getSecondaryCycleYears, getSecondaryCycleLabel, getManufactureCutoffExceeded, type ComplianceStandard } from '../lib/complianceRules';
 
 // Determine API base URL based on environment
 const getApiBase = () => {
@@ -24,6 +25,7 @@ type Props = {
   onCreate: (payload: Partial<Extinguisher>) => Promise<void> | void;
   /** optional accent color for the primary button */
   primaryColor?: string;
+  complianceStandard?: ComplianceStandard;
 };
 
 const TYPES = [
@@ -77,6 +79,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
   onClose,
   onCreate,
   primaryColor = '#B8121F',
+  complianceStandard = 'BS',
 }) => {
   const today = useMemo(() => new Date(), []);
   const todayISO = useMemo(() => iso(today), [today]);
@@ -94,6 +97,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
     manufacturer: '',
     model: '',
     serialNumber: '',
+    manufactureDate: '',
     installDate: todayISO,
     expiryDate: '', // gets auto-set from installDate + type
     lastInspection: todayISO, // use "extended" wording in label below
@@ -175,16 +179,6 @@ const AddExtinguisherModal: React.FC<Props> = ({
     patch({ [key]: value } as Partial<Extinguisher>);
   };
 
-  // Helper to determine extended service interval
-  const getExtendedServiceYears = (type?: string) => {
-    if (!type) return 5;
-    const lowerType = type.toLowerCase();
-    // CO2 and P50 types: 10 years
-    if (lowerType.includes('co2') || lowerType.includes('p50')) return 10;
-    // Foam, Water, Powder: 5 years
-    return 5;
-  };
-
   // Keep expiry date up-to-date when install date or type changes
   const updateExpiry = (nextType = form.type, nextInstall = form.installDate) => {
     if (!nextInstall) return;
@@ -197,7 +191,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
   const updateNextMaintenance = (nextType = form.type, lastMaintenance = form.lastMaintenance) => {
     if (!lastMaintenance) return;
     const base = new Date(lastMaintenance);
-    const yearsToAdd = getExtendedServiceYears(nextType);
+    const yearsToAdd = getSecondaryCycleYears(complianceStandard, nextType);
     patch({ nextMaintenance: iso(addYears(base, yearsToAdd)) });
   };
 
@@ -474,10 +468,10 @@ const AddExtinguisherModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Service & Extended Inspection block */}
+          {/* Service & secondary-cycle block */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Last Extended Service Date</label>
+              <label className="block mb-1 text-sm text-gray-600">Last {getSecondaryCycleLabel(complianceStandard, form.type)} Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -485,11 +479,11 @@ const AddExtinguisherModal: React.FC<Props> = ({
                 onChange={(e) => handleLastMaintenance(e.target.value)}
               />
               <p className="mt-1 text-xs text-gray-500">
-                Next extended service auto-calculates: {getExtendedServiceYears(form.type)} years from this date
+                Next {getSecondaryCycleLabel(complianceStandard, form.type).toLowerCase()} auto-calculates: {getSecondaryCycleYears(complianceStandard, form.type)} years from this date
               </p>
             </div>
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Next Extended Service Date</label>
+              <label className="block mb-1 text-sm text-gray-600">Next {getSecondaryCycleLabel(complianceStandard, form.type)} Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -497,7 +491,7 @@ const AddExtinguisherModal: React.FC<Props> = ({
                 onChange={(e) => handleChange('nextMaintenance', e.target.value)}
               />
               <p className="mt-1 text-xs text-gray-500">
-                Auto-calculated from last extended service date
+                Auto-calculated from the last {getSecondaryCycleLabel(complianceStandard, form.type).toLowerCase()} date
               </p>
             </div>
             <div>
@@ -514,7 +508,21 @@ const AddExtinguisherModal: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block mb-1 text-sm text-gray-600">Manufacture Date</label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                value={form.manufactureDate || ''}
+                onChange={(e) => handleChange('manufactureDate', e.target.value)}
+              />
+              {complianceStandard === 'IS' && getManufactureCutoffExceeded(complianceStandard, form.type, form.manufactureDate) && (
+                <p className="mt-1 text-xs text-amber-600">
+                  10+ years since manufacture — no longer compliant with IS 291 clause 9.4.1
+                </p>
+              )}
+            </div>
             <div>
               <label className="block mb-1 text-sm text-gray-600">Last Service Date</label>
               <input

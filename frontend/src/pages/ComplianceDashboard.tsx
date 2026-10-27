@@ -3,6 +3,7 @@ import { CheckCircle, AlertTriangle, XCircle, Flame, Building2, Wrench, ArrowRig
 import { fetchExtinguishers, faGetSystems, faGetLogEntries, patGetAppliances, elGetLuminaires, fdGetDoors } from '../lib/api';
 import type { Extinguisher, FireAlarmSystem, FireAlarmLogEntry, PATAppliance, EmergencyLuminaire, FireDoor } from '../types';
 import ComplianceRing from '../components/ComplianceRing';
+import { getComplianceBucket, type ComplianceStandard } from '../lib/complianceRules';
 
 type FireAlarmSystemStatus = {
   system: FireAlarmSystem;
@@ -14,6 +15,7 @@ type FireAlarmSystemStatus = {
 
 type Props = {
   primaryColor?: string;
+  complianceStandard?: ComplianceStandard;
   onNavigate?: () => void;
   fireAlarmEnabled?: boolean;
   onNavigateFireAlarm?: () => void;
@@ -54,7 +56,7 @@ type BuildingBreakdown = {
   };
 };
 
-const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavigate, fireAlarmEnabled = false, onNavigateFireAlarm, patTestingEnabled = false, onNavigatePATTesting, emergencyLightingEnabled = false, onNavigateEmergencyLighting, fireDoorsEnabled = false, onNavigateFireDoors }) => {
+const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', complianceStandard = 'BS', onNavigate, fireAlarmEnabled = false, onNavigateFireAlarm, patTestingEnabled = false, onNavigatePATTesting, emergencyLightingEnabled = false, onNavigateEmergencyLighting, fireDoorsEnabled = false, onNavigateFireDoors }) => {
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([]);
   const [loading, setLoading] = useState(true);
   const [faSystemStatuses, setFaSystemStatuses] = useState<FireAlarmSystemStatus[]>([]);
@@ -146,10 +148,6 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavi
   };
 
   const calculateStats = (data: Extinguisher[]) => {
-    const today = new Date();
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
-
     let compliant = 0;
     let dueWithin30Days = 0;
     let overdue = 0;
@@ -157,10 +155,10 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavi
     const buildingStats: BuildingBreakdown = {};
 
     data.forEach((ext) => {
-      const nextInspection = ext.nextInspection ? new Date(ext.nextInspection) : null;
-      const isOverdue = nextInspection && nextInspection < today;
-      const isDueSoon = nextInspection && nextInspection >= today && nextInspection <= thirtyDaysFromNow;
-      const isCompliant = nextInspection && nextInspection > thirtyDaysFromNow;
+      const bucket = getComplianceBucket(ext, complianceStandard);
+      const isOverdue = bucket === 'overdue';
+      const isDueSoon = bucket === 'dueSoon';
+      const isCompliant = bucket === 'compliant';
 
       if (isOverdue) overdue++;
       else if (isDueSoon) dueWithin30Days++;
@@ -234,15 +232,14 @@ const ComplianceDashboard: React.FC<Props> = ({ primaryColor = '#B8121F', onNavi
     .slice(0, 5);
 
   const extStatusBadge = (ext: Extinguisher) => {
-    const today = new Date();
-    const next = ext.nextInspection ? new Date(ext.nextInspection) : null;
-    if (ext.status !== 'Active' || ext.condition === 'Out of Service') {
+    const bucket = getComplianceBucket(ext, complianceStandard);
+    if (bucket === 'outOfService') {
       return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Out of Service</span>;
     }
-    if (next && next < today) {
-      return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-brand-redTint text-brand-redDark">Overdue</span>;
+    if (bucket === 'overdue') {
+      return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-brand-red-tint text-brand-red-dark">Overdue</span>;
     }
-    if (next && (next.getTime() - today.getTime()) <= 30 * 86_400_000) {
+    if (bucket === 'dueSoon') {
       return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-brand-amber">Due Soon</span>;
     }
     return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-brand-green/10 text-brand-green">Compliant</span>;

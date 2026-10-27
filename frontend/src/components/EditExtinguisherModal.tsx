@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import type { Extinguisher, Site, InventoryItem } from '../types';
 import { fetchSites, fetchInventoryItems, recordPartUsage, getAuthHeaders, fetchExtinguisherTypes } from '../lib/api';
 import { Plus, Trash2 } from 'lucide-react';
+import { getSecondaryCycleLabel, getManufactureCutoffExceeded, type ComplianceStandard } from '../lib/complianceRules';
 
 // Determine API base URL based on environment
 const getApiBase = () => {
@@ -24,6 +25,7 @@ type Props = {
   extinguisher: Extinguisher | null;
   onUpdate: (id: string, payload: Partial<Extinguisher>) => Promise<void> | void;
   primaryColor?: string;
+  complianceStandard?: ComplianceStandard;
 };
 
 const TYPES = [
@@ -67,6 +69,7 @@ const EditExtinguisherModal: React.FC<Props> = ({
   extinguisher,
   onUpdate,
   primaryColor = '#B8121F',
+  complianceStandard = 'BS',
 }) => {
   const [form, setForm] = useState<Partial<Extinguisher>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -107,6 +110,7 @@ const EditExtinguisherModal: React.FC<Props> = ({
         manufacturer: extinguisher.manufacturer || '',
         model: extinguisher.model || '',
         serialNumber: extinguisher.serialNumber || '',
+        manufactureDate: formatDateForInput(extinguisher.manufactureDate),
         installDate: formatDateForInput(extinguisher.installDate),
         expiryDate: formatDateForInput(extinguisher.expiryDate),
         lastInspection: formatDateForInput(extinguisher.lastInspection),
@@ -435,10 +439,15 @@ const EditExtinguisherModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Service & Extended Inspection dates */}
+          {/* Service & secondary-cycle dates.
+              Note: lastMaintenance/nextMaintenance is the secondary cycle
+              (Extended Service / Overhaul / Discharge Test depending on
+              standard), lastInspection/nextInspection is the annual
+              service — matching AddExtinguisherModal's convention, which
+              these fields previously disagreed with. */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Last Service Date</label>
+              <label className="block mb-1 text-sm text-gray-600">Last {getSecondaryCycleLabel(complianceStandard, form.type)} Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -447,7 +456,7 @@ const EditExtinguisherModal: React.FC<Props> = ({
               />
             </div>
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Next Service Date</label>
+              <label className="block mb-1 text-sm text-gray-600">Next {getSecondaryCycleLabel(complianceStandard, form.type)} Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -468,7 +477,7 @@ const EditExtinguisherModal: React.FC<Props> = ({
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Last Extended Inspection</label>
+              <label className="block mb-1 text-sm text-gray-600">Last Service Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -477,7 +486,7 @@ const EditExtinguisherModal: React.FC<Props> = ({
               />
             </div>
             <div>
-              <label className="block mb-1 text-sm text-gray-600">Next Extended Inspection</label>
+              <label className="block mb-1 text-sm text-gray-600">Next Service Date</label>
               <input
                 type="date"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -493,6 +502,23 @@ const EditExtinguisherModal: React.FC<Props> = ({
                 value={form.installDate || ''}
                 onChange={(e) => handleChange('installDate', e.target.value)}
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block mb-1 text-sm text-gray-600">Manufacture Date</label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                value={form.manufactureDate || ''}
+                onChange={(e) => handleChange('manufactureDate', e.target.value)}
+              />
+              {complianceStandard === 'IS' && getManufactureCutoffExceeded(complianceStandard, form.type, form.manufactureDate) && (
+                <p className="mt-1 text-xs text-amber-600">
+                  10+ years since manufacture — no longer compliant with IS 291 clause 9.4.1
+                </p>
+              )}
             </div>
           </div>
 

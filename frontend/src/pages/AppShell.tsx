@@ -40,6 +40,7 @@ const AppShell: React.FC = () => {
           patTestingEnabled: false,
           emergencyLightingEnabled: false,
           fireDoorsEnabled: false,
+          complianceStandard: 'BS',
         }} userRole="admin" updateTenant={function (u: Partial<Tenant>): void {
           throw new Error('Function not implemented.');
         } } />}

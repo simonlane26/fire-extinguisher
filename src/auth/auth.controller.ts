@@ -183,9 +183,14 @@ export class AuthController {
       secondaryColor?: string;
       logoUrl?: string;
       stockManagementEnabled?: boolean;
+      complianceStandard?: string;
     },
   ) {
     const isAdmin = ['admin', 'super_admin'].includes(user.role);
+
+    if (body.complianceStandard !== undefined && !['BS', 'IS'].includes(body.complianceStandard)) {
+      throw new BadRequestException('Invalid compliance standard');
+    }
 
     // Update tenant in the database
     const updatedTenant = await this.prisma.tenant.update({
@@ -197,8 +202,9 @@ export class AuthController {
         ...(body.primaryColor !== undefined && { primaryColor: body.primaryColor }),
         ...(body.secondaryColor !== undefined && { secondaryColor: body.secondaryColor }),
         ...(body.logoUrl !== undefined && { logoUrl: body.logoUrl }),
-        // Only admins can change feature flags
+        // Only admins can change feature flags / compliance policy
         ...(isAdmin && body.stockManagementEnabled !== undefined && { stockManagementEnabled: body.stockManagementEnabled }),
+        ...(isAdmin && body.complianceStandard !== undefined && { complianceStandard: body.complianceStandard }),
       },
     });
 

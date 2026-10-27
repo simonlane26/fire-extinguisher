@@ -17,6 +17,7 @@ export class ExtinguishersService {
     const data: any = { ...dto, tenantId };
 
     // Convert date strings to DateTime objects
+    if (data.manufactureDate) data.manufactureDate = new Date(data.manufactureDate);
     if (data.installDate) data.installDate = new Date(data.installDate);
     if (data.expiryDate) data.expiryDate = new Date(data.expiryDate);
     if (data.lastInspection) data.lastInspection = new Date(data.lastInspection);
@@ -161,6 +162,7 @@ export class ExtinguishersService {
 
     // Convert date strings to DateTime objects
     const updateData: any = { ...dto };
+    if (updateData.manufactureDate) updateData.manufactureDate = new Date(updateData.manufactureDate);
     if (updateData.installDate) updateData.installDate = new Date(updateData.installDate);
     if (updateData.expiryDate) updateData.expiryDate = new Date(updateData.expiryDate);
     if (updateData.lastInspection) updateData.lastInspection = new Date(updateData.lastInspection);

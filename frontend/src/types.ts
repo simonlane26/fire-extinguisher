@@ -22,6 +22,7 @@ export type Tenant = {
   patTestingEnabled: boolean;
   emergencyLightingEnabled: boolean;
   fireDoorsEnabled: boolean;
+  complianceStandard: 'BS' | 'IS';
 };
 
 export type Site = {
@@ -57,6 +58,7 @@ export type Extinguisher = {
   manufacturer?: string;
   model?: string;
   serialNumber?: string;
+  manufactureDate?: string;
   installDate?: string;
   expiryDate?: string;
   lastInspection?: string;

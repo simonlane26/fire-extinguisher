@@ -28,6 +28,7 @@ model Tenant {
   patTestingEnabled        Boolean           @default(false)
   emergencyLightingEnabled Boolean           @default(false)
   fireDoorsEnabled         Boolean           @default(false)
+  complianceStandard       String            @default("BS")
   createdAt                DateTime          @default(now())
   users                User[]
   sites                Site[]
@@ -156,6 +157,7 @@ model Extinguisher {
   manufacturer    String?
   model           String?
   serialNumber    String?
+  manufactureDate DateTime?
   installDate     DateTime?
   expiryDate      DateTime?
   lastInspection  DateTime?

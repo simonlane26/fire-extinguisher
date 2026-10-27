@@ -18,6 +18,7 @@ export class CreateExtinguisherDto {
   @IsOptional() @IsString() @MaxLength(100) serviceType?: string;
   @IsOptional() @IsString() @MaxLength(100) inspector?: string;
   @IsOptional() @IsString() @MaxLength(2000) notes?: string;
+  @IsOptional() @IsDateString() manufactureDate?: string;
   @IsOptional() @IsDateString() installDate?: string;
   @IsOptional() @IsDateString() expiryDate?: string;
   @IsOptional() @IsDateString() lastInspection?: string;
