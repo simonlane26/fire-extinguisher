@@ -431,10 +431,12 @@ export default function LandingPage() {
         <div>
           <div className="eyebrow">For fire safety inspectors &amp; facilities teams</div>
           <h1>
-            <span className="line-mask"><span className="h1-line">Stop chasing paper logs</span></span>
-            <span className="line-mask"><span className="h1-line">for extinguisher inspections.</span></span>
+            <span className="line-mask"><span className="h1-line">FireXCheck is fire extinguisher</span></span>
+            <span className="line-mask"><span className="h1-line">inspection software that helps fire safety</span></span>
+            <span className="line-mask"><span className="h1-line">companies and facilities teams track,</span></span>
+            <span className="line-mask"><span className="h1-line">schedule, and prove compliance across every site.</span></span>
           </h1>
-          <p className="hero-sub">FirexCheck lets you scan a QR code on every extinguisher, log the inspection in seconds, and see every site&apos;s compliance status from one dashboard — no spreadsheets, no missed tags, no audit panic.</p>
+          <p className="hero-sub">No more spreadsheets, missed inspection dates, or scrambling before an audit. FireXCheck gives you one place to log inspections, manage tags, and generate reports that hold up when a fire marshal or auditor asks for them.</p>
           <form className="hero-capture" onSubmit={handleHeroSubmit}>
             <input
               type="email"
@@ -521,16 +523,38 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <div className="wrap">
+        <div className="section-head reveal">
+          <div className="eyebrow">Overview</div>
+          <h2>What FireXCheck does</h2>
+          <p>FireXCheck replaces paper tags, clipboards, and disconnected spreadsheets with a single system for managing fire extinguisher inspections.</p>
+        </div>
+        <ul className="price-list" style={{ maxWidth: 640, margin: '0 0 28px', fontSize: 15 }}>
+          <li>Log monthly, annual, and extended-service inspections in seconds</li>
+          <li>Track every extinguisher across every building, floor, or client site</li>
+          <li>Auto-generate compliance reports for BS 5306-3 and your site&apos;s own records</li>
+          <li>Get alerts before inspections are due — not after they&apos;re overdue</li>
+          <li>Give techs a mobile-friendly way to check in on-site, no paper required</li>
+        </ul>
+        <p style={{ color: 'var(--ink-muted)', fontSize: 14, maxWidth: 640 }}>
+          Whether you&apos;re an inspection company managing dozens of client sites or a facilities manager responsible for one building, FireXCheck keeps your inspection history organised, searchable, and audit-ready.
+        </p>
+      </div>
+
       <section className="problem-band">
         <div className="wrap problem-inner">
-          <div className="eyebrow">The Problem</div>
-          <h2>Paper logs and spreadsheets don&apos;t scale.</h2>
+          <div className="eyebrow">Why teams switch</div>
+          <h2>Why teams switch to FireXCheck.</h2>
           <p>
-            If you&apos;re managing extinguisher inspections across multiple sites, you already know the pain:
-            missed inspection dates, lost paper tags, no record when an auditor asks for proof, and zero
-            visibility into which locations are overdue.
+            Paper tags get lost. Spreadsheets get out of sync. Generic maintenance software wasn&apos;t built
+            for fire code requirements. FireXCheck was built specifically for fire extinguisher compliance —
+            so every feature maps to an actual inspection requirement, not a generic asset-management checklist.
           </p>
           <p className="problem-emphasis">One missed inspection isn&apos;t just a compliance risk — it&apos;s a liability.</p>
+          <div style={{ marginTop: 26 }}>
+            <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
+            <div style={{ marginTop: 12, fontSize: 12.5, color: '#C9C4BB' }}>No credit card required. Set up your first site in under 10 minutes.</div>
+          </div>
         </div>
       </section>
 
@@ -722,12 +746,12 @@ export default function LandingPage() {
       <div className="wrap">
         <div className="section-head reveal">
           <div className="eyebrow">Built For</div>
-          <h2>Fire safety professionals, not generalists</h2>
+          <h2>Built for the people who actually do this work</h2>
         </div>
         <div className="persona-row">
-          <div className="persona reveal"><div className="pnum">01</div><h3>Facilities Managers</h3><p>Manage fire safety compliance across all your buildings and asset types with ease.</p></div>
-          <div className="persona reveal"><div className="pnum">02</div><h3>Fire Safety Contractors</h3><p>Streamline inspections, generate client reports, and provide a better service.</p></div>
-          <div className="persona reveal"><div className="pnum">03</div><h3>Compliance Teams</h3><p>Maintain audit-ready records across extinguishers, alarms, lighting, and PAT — never miss a deadline.</p></div>
+          <div className="persona reveal"><div className="pnum">01</div><h3>Fire Safety Inspection Companies</h3><p>Manage multiple clients and sites from one dashboard. Stop re-keying the same data into three different tools.</p></div>
+          <div className="persona reveal"><div className="pnum">02</div><h3>Facilities Managers</h3><p>Know exactly what&apos;s due, what&apos;s overdue, and what&apos;s compliant — without chasing down a technician for a status update.</p></div>
+          <div className="persona reveal"><div className="pnum">03</div><h3>Compliance Officers</h3><p>Pull a clean, complete inspection history in seconds when an auditor or inspector asks for it.</p></div>
         </div>
       </div>
 
