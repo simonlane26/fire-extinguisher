@@ -37,7 +37,7 @@ const FAQ_DATA = [
   },
   {
     q: 'How often should fire extinguishers be inspected?',
-    a: 'Most jurisdictions require a monthly visual inspection and an annual maintenance check per NFPA 10. Some extinguisher types also need hydrostatic testing every 5-12 years depending on the unit. FireXCheck tracks all three cycles automatically per extinguisher, so nothing gets missed because someone forgot a spreadsheet formula.',
+    a: 'Under BS 5306-3, that\'s a monthly visual inspection and an annual maintenance check. Some extinguisher types also need an extended service every 5-10 years depending on the unit. FireXCheck tracks all three cycles automatically per extinguisher, so nothing gets missed because someone forgot a spreadsheet formula.',
   },
   {
     q: "What's the difference between a visual inspection and annual maintenance?",
@@ -421,6 +421,7 @@ export default function LandingPage() {
             <a className="nav-link" href="#pricing">Pricing</a>
             <a className="nav-link" href="#about">About</a>
             <Link className="nav-link" to="/compare">Compare</Link>
+            <Link className="nav-link" to="/faq">FAQ</Link>
             <button type="button" className="signin" onClick={goToSignup}>Sign In</button>
             <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
           </nav>
@@ -539,6 +540,32 @@ export default function LandingPage() {
         <p style={{ color: 'var(--ink-muted)', fontSize: 14, maxWidth: 640 }}>
           Whether you&apos;re an inspection company managing dozens of client sites or a facilities manager responsible for one building, FireXCheck keeps your inspection history organised, searchable, and audit-ready.
         </p>
+      </div>
+
+      <div className="wrap" style={{ paddingBottom: 40 }}>
+        <div className="section-head reveal">
+          <div className="eyebrow">Quick answers</div>
+          <h2>Common questions</h2>
+        </div>
+        <div className="faq-list">
+          <div className="faq-item">
+            <h3>How do I track fire extinguisher inspections across multiple sites?</h3>
+            <p>One dashboard for every location you manage. Each extinguisher gets a QR code; inspectors scan it, log the check, and the result syncs instantly — filterable by site or inspector.</p>
+          </div>
+          <div className="faq-item">
+            <h3>What standards does FireXCheck cover, and are my records compliant?</h3>
+            <p>FireXCheck is built around BS 5306-3 and IS 291, with the correct intervals and documentation applied automatically for your account&apos;s standard.</p>
+          </div>
+          <div className="faq-item">
+            <h3>Can FireXCheck remind my team when inspections are due?</h3>
+            <p>Yes — monthly and extended-service dates are tracked automatically, with overdue or due-soon items flagged on the dashboard the moment they slip.</p>
+          </div>
+          <div className="faq-item">
+            <h3>What kind of reports can I generate for compliance or clients?</h3>
+            <p>Exportable PDF and CSV reports by site, date range, or equipment status — ready to hand to an auditor, inspector, or property owner.</p>
+          </div>
+        </div>
+        <Link to="/faq" className="hero-secondary-link">See all FAQs →</Link>
       </div>
 
       <section className="problem-band">
@@ -833,6 +860,7 @@ export default function LandingPage() {
           <div className="also-included">
             <Link to="/compare/joblogic">Compare · vs Joblogic</Link>
             <Link to="/compare/uptick-ezmanagement">Compare · vs Uptick &amp; EZ Management</Link>
+            <Link to="/faq">FAQ</Link>
           </div>
           <div className="rev">
             <span>© {new Date().getFullYear()} FirexCheck — a product of IgnisTech Ltd.</span>

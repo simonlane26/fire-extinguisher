@@ -55,6 +55,12 @@ const ROUTES = [
     title: 'FirexCheck vs Uptick vs EZ Management | FirexCheck',
     description: 'How FirexCheck compares to Uptick and EZ Management’s ezServiceHUB, two UK fire & security compliance platforms.',
   },
+  {
+    path: '/faq',
+    out: 'faq.html',
+    title: 'Frequently Asked Questions | FirexCheck',
+    description: 'Everything you need to know about tracking fire extinguisher inspections with FirexCheck — standards covered, reminders, reports, and more.',
+  },
 ];
 
 function serveStatic() {
