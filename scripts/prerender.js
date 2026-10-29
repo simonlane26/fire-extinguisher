@@ -61,6 +61,12 @@ const ROUTES = [
     title: 'Frequently Asked Questions | FirexCheck',
     description: 'Everything you need to know about tracking fire extinguisher inspections with FirexCheck — standards covered, reminders, reports, and more.',
   },
+  {
+    path: '/compare/firexcheck-vs-servicetrade-vs-buildingreports',
+    out: 'compare/firexcheck-vs-servicetrade-vs-buildingreports.html',
+    title: 'FirexCheck vs ServiceTrade vs BuildingReports | FirexCheck',
+    description: 'A purpose-built fire extinguisher inspection tool vs ServiceTrade and BuildingReports — honest, fact-checked comparison.',
+  },
 ];
 
 function serveStatic() {

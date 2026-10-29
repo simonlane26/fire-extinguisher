@@ -13,6 +13,11 @@ const COMPARISONS = [
     title: 'FirexCheck vs Uptick vs EZ Management',
     desc: 'How FirexCheck compares to two UK fire & security compliance platforms, Uptick and EZ Management’s ezServiceHUB.',
   },
+  {
+    to: '/compare/firexcheck-vs-servicetrade-vs-buildingreports',
+    title: 'FirexCheck vs ServiceTrade vs BuildingReports',
+    desc: 'A purpose-built fire extinguisher inspection tool vs two broader field service and compliance reporting platforms.',
+  },
 ];
 
 export default function CompareIndexPage() {

@@ -31,6 +31,13 @@
     <priority>0.6</priority>
   </url>
 
+  <url>
+    <loc>https://firexcheck.com/compare/firexcheck-vs-servicetrade-vs-buildingreports</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- FAQ -->
   <url>
     <loc>https://firexcheck.com/faq</loc>

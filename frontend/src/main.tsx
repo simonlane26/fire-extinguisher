@@ -7,6 +7,7 @@ import CompareJoblogicPage from './pages/CompareJoblogicPage';
 import CompareUptickEzPage from './pages/CompareUptickEzPage';
 import CompareIndexPage from './pages/CompareIndexPage';
 import FaqPage from './pages/FaqPage';
+import CompareServiceTradeBuildingReportsPage from './pages/CompareServiceTradeBuildingReportsPage';
 import PublicVerificationPage from './pages/PublicVerificationPage';
 import SignupPage from './pages/SignupPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
@@ -28,6 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/compare/joblogic" element={<CompareJoblogicPage />} />
         <Route path="/compare/uptick-ezmanagement" element={<CompareUptickEzPage />} />
         <Route path="/faq" element={<FaqPage />} />
+        <Route path="/compare/firexcheck-vs-servicetrade-vs-buildingreports" element={<CompareServiceTradeBuildingReportsPage />} />
 
         {/* Public routes */}
         <Route path="/verify/:id" element={<PublicVerificationPage />} />

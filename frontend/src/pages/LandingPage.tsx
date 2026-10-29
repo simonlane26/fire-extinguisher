@@ -808,6 +808,7 @@ export default function LandingPage() {
             <button type="button" className="btn-outline magnetic" style={{ textAlign: 'center' }} onClick={goToSignup}>Book a Demo</button>
           </div>
         </div>
+        <Link to="/compare/firexcheck-vs-servicetrade-vs-buildingreports" className="hero-secondary-link">See how this compares to ServiceTrade &amp; BuildingReports →</Link>
       </div>
 
       <div className="wrap" id="faq">
@@ -860,6 +861,7 @@ export default function LandingPage() {
           <div className="also-included">
             <Link to="/compare/joblogic">Compare · vs Joblogic</Link>
             <Link to="/compare/uptick-ezmanagement">Compare · vs Uptick &amp; EZ Management</Link>
+            <Link to="/compare/firexcheck-vs-servicetrade-vs-buildingreports">Compare · vs ServiceTrade &amp; BuildingReports</Link>
             <Link to="/faq">FAQ</Link>
           </div>
           <div className="rev">
