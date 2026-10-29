@@ -728,6 +728,7 @@ export default function LandingPage() {
           <div className="module-tag reveal"><div className="module-std">BS 5839-1</div><h3>Fire Alarm Logbook</h3><div className="module-price">+£12<span>/mo excl. VAT</span></div></div>
           <div className="module-tag reveal"><div className="module-std">BS 5266-1</div><h3>Emergency Lighting</h3><div className="module-price">+£12<span>/mo excl. VAT</span></div></div>
           <div className="module-tag reveal"><div className="module-std">IET COP</div><h3>PAT Testing</h3><div className="module-price">+£15<span>/mo excl. VAT</span></div></div>
+          <div className="module-tag reveal"><div className="module-std">BS 8214</div><h3>Fire Doors</h3><div className="module-price">+£12<span>/mo excl. VAT</span></div></div>
         </div>
       </div>
 
