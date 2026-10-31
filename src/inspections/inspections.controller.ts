@@ -42,6 +42,17 @@ export class InspectionsController {
     return { count, month: now.getMonth() + 1, year: now.getFullYear() };
   }
 
+  @Get(':extinguisherId')
+  async getInspectionsForExtinguisher(
+    @CurrentUser() user: CurrentUserData,
+    @Param('extinguisherId') extinguisherId: string,
+  ) {
+    return this.prisma.inspection.findMany({
+      where: { tenantId: user.tenantId, extinguisherId },
+      orderBy: { serviceDate: 'desc' },
+    });
+  }
+
   @Post('photos/:extinguisherId')
   @UseInterceptors(FileInterceptor('file', {
     limits: {

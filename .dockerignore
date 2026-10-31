@@ -1,6 +1,8 @@
 # Dependencies
 node_modules
 frontend/node_modules
+mobile/node_modules
+mobile/.expo
 
 # Build outputs
 # dist - DO NOT IGNORE, needed for Railway deployment
