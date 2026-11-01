@@ -192,7 +192,7 @@ export class ReportsService {
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
           <div>
             <h1 style="margin:0">${escapeHtml(tenant.name)} – Service Report</h1>
-            <p style="margin:4px 0 0 0; font-size:12px; color:#7c3aed">Powered by Firexcheck.com</p>
+            <p style="margin:4px 0 0 0; font-size:12px; color:#B8121F">Powered by Firexcheck.com</p>
           </div>
           ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height:48px"/>` : ''}
         </div>
@@ -230,12 +230,12 @@ export class ReportsService {
       <head>
         <style>
           body { font-family: Arial, sans-serif; padding: 24px; }
-          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #7c3aed; padding-bottom: 16px; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #B8121F; padding-bottom: 16px; }
           .section { margin: 24px 0; }
           .info-grid { display: grid; grid-template-columns: 200px 1fr; gap: 8px; margin: 16px 0; }
           .info-label { font-weight: bold; color: #555; }
           table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-          th { background: #7c3aed; color: white; padding: 10px; text-align: left; }
+          th { background: #B8121F; color: white; padding: 10px; text-align: left; }
           td { border: 1px solid #ddd; padding: 8px; }
           tr:nth-child(even) { background: #f9f9f9; }
           .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; }
@@ -250,7 +250,7 @@ export class ReportsService {
         <div class="header">
           <div>
             <h1 style="margin: 0;">${escapeHtml(tenant.name)}</h1>
-            <h2 style="margin: 8px 0; color: #7c3aed;">Fire Extinguisher Lifecycle Report</h2>
+            <h2 style="margin: 8px 0; color: #B8121F;">Fire Extinguisher Lifecycle Report</h2>
             <p style="margin: 0; color: #666; font-size: 12px;">Generated: ${new Date().toLocaleDateString()}</p>
           </div>
           ${tenant.logoUrl ? `<img src="${escapeHtml(tenant.logoUrl)}" style="height: 60px;"/>` : ''}
@@ -410,15 +410,15 @@ export class ReportsService {
       <head>
         <style>
           body { font-family: Arial, sans-serif; padding: 48px; }
-          .certificate { border: 4px solid #7c3aed; padding: 40px; text-align: center; }
+          .certificate { border: 4px solid #B8121F; padding: 40px; text-align: center; }
           .header { margin-bottom: 32px; }
-          .title { font-size: 32px; font-weight: bold; color: #7c3aed; margin: 16px 0; }
+          .title { font-size: 32px; font-weight: bold; color: #B8121F; margin: 16px 0; }
           .subtitle { font-size: 18px; color: #555; margin: 8px 0; }
           .content { text-align: left; margin: 32px auto; max-width: 600px; }
           .info-row { display: flex; margin: 12px 0; }
           .info-label { font-weight: bold; width: 200px; color: #555; }
           .signature { margin-top: 64px; border-top: 2px solid #333; padding-top: 8px; width: 300px; display: inline-block; }
-          .stamp { margin-top: 32px; padding: 16px; border: 2px solid #7c3aed; display: inline-block; border-radius: 50%; }
+          .stamp { margin-top: 32px; padding: 16px; border: 2px solid #B8121F; display: inline-block; border-radius: 50%; }
           .extinguisher-photo { max-width: 400px; max-height: 300px; border-radius: 8px; margin: 16px 0; object-fit: cover; }
         </style>
       </head>
@@ -485,7 +485,7 @@ export class ReportsService {
           </div>
 
           <div class="stamp">
-            <div style="font-size: 14px; font-weight: bold; color: #7c3aed;">INSPECTED</div>
+            <div style="font-size: 14px; font-weight: bold; color: #B8121F;">INSPECTED</div>
             <div style="font-size: 12px;">${new Date(inspection.serviceDate).toLocaleDateString()}</div>
           </div>
 
@@ -660,20 +660,20 @@ export class ReportsService {
       <head>
         <style>
           body { font-family: Arial, sans-serif; padding: 24px; }
-          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #7c3aed; padding-bottom: 16px; }
-          h1 { margin: 0; color: #7c3aed; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #B8121F; padding-bottom: 16px; }
+          h1 { margin: 0; color: #B8121F; }
           .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
           .summary-card { background: #f3f4f6; padding: 16px; border-radius: 8px; text-align: center; }
-          .summary-card .number { font-size: 32px; font-weight: bold; color: #7c3aed; }
+          .summary-card .number { font-size: 32px; font-weight: bold; color: #B8121F; }
           .summary-card .label { font-size: 14px; color: #666; margin-top: 8px; }
           table { width: 100%; border-collapse: collapse; margin: 24px 0; }
-          th { background: #7c3aed; color: white; padding: 12px; text-align: left; font-size: 14px; }
+          th { background: #B8121F; color: white; padding: 12px; text-align: left; font-size: 14px; }
           td { border: 1px solid #ddd; padding: 10px; font-size: 13px; }
           tr:nth-child(even) { background: #f9f9f9; }
           .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
           .badge-active { background: #10b981; color: white; }
           .badge-inactive { background: #ef4444; color: white; }
-          .badge-admin { background: #7c3aed; color: white; }
+          .badge-admin { background: #1e3a5f; color: white; }
           .badge-manager { background: #3b82f6; color: white; }
           .badge-technician { background: #f59e0b; color: white; }
           .badge-viewer { background: #6b7280; color: white; }
@@ -739,7 +739,7 @@ export class ReportsService {
           </tbody>
         </table>
 
-        <h2 style="color: #7c3aed; margin-top: 40px;">Activity Details</h2>
+        <h2 style="color: #B8121F; margin-top: 40px;">Activity Details</h2>
         <table>
           <thead>
             <tr>
@@ -821,16 +821,16 @@ export class ReportsService {
       <head>
         <style>
           body { font-family: Arial, sans-serif; padding: 24px; }
-          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #7c3aed; padding-bottom: 16px; }
-          h1 { margin: 0; color: #7c3aed; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #B8121F; padding-bottom: 16px; }
+          h1 { margin: 0; color: #B8121F; }
           .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin: 24px 0; }
           .summary-card { background: #f3f4f6; padding: 16px; border-radius: 8px; text-align: center; }
-          .summary-card .number { font-size: 28px; font-weight: bold; color: #7c3aed; }
+          .summary-card .number { font-size: 28px; font-weight: bold; color: #B8121F; }
           .summary-card .label { font-size: 12px; color: #666; margin-top: 4px; }
           .type-section { margin: 32px 0; page-break-inside: avoid; }
-          .type-section h2 { color: #7c3aed; border-bottom: 2px solid #7c3aed; padding-bottom: 8px; }
+          .type-section h2 { color: #B8121F; border-bottom: 2px solid #B8121F; padding-bottom: 8px; }
           table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-          th { background: #7c3aed; color: white; padding: 10px; text-align: left; font-size: 13px; }
+          th { background: #B8121F; color: white; padding: 10px; text-align: left; font-size: 13px; }
           td { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
           tr:nth-child(even) { background: #f9f9f9; }
           .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
@@ -1951,22 +1951,22 @@ export class ReportsService {
 <head>
 <style>
   body { font-family: Arial, sans-serif; padding: 32px; }
-  .certificate { border: 4px solid #7c3aed; padding: 32px; }
-  .header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #7c3aed; padding-bottom: 20px; }
-  .title { font-size: 26px; font-weight: bold; color: #7c3aed; margin: 10px 0 4px; letter-spacing: 2px; }
+  .certificate { border: 4px solid #B8121F; padding: 32px; }
+  .header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #B8121F; padding-bottom: 20px; }
+  .title { font-size: 26px; font-weight: bold; color: #B8121F; margin: 10px 0 4px; letter-spacing: 2px; }
   .company { font-size: 17px; color: #333; margin: 4px 0; }
   .issued { font-size: 12px; color: #888; margin: 4px 0; }
-  .filter-bar { background: #f5f3ff; border: 1px solid #ddd8fe; border-radius: 6px; padding: 9px 16px; margin: 0 0 18px; font-size: 12px; color: #5b21b6; text-align: center; }
+  .filter-bar { background: #FBEAEA; border: 1px solid #F3D4D4; border-radius: 6px; padding: 9px 16px; margin: 0 0 18px; font-size: 12px; color: #8A0D17; text-align: center; }
   .intro { font-size: 13px; color: #444; margin: 0 0 16px; text-align: center; line-height: 1.6; }
-  .count-badge { display: inline-block; background: #7c3aed; color: white; border-radius: 20px; padding: 3px 14px; font-size: 12px; font-weight: bold; margin-bottom: 14px; }
+  .count-badge { display: inline-block; background: #B8121F; color: white; border-radius: 20px; padding: 3px 14px; font-size: 12px; font-weight: bold; margin-bottom: 14px; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
-  thead tr { background: #7c3aed; color: white; }
+  thead tr { background: #B8121F; color: white; }
   th { padding: 9px 7px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
   td { padding: 7px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
-  tr:nth-child(even) td { background: #faf7ff; }
+  tr:nth-child(even) td { background: #FBEAEA; }
   .footer-block { margin-top: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
   .signature { border-top: 2px solid #333; padding-top: 6px; width: 240px; }
-  .stamp { border: 2px solid #7c3aed; border-radius: 50%; width: 80px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #7c3aed; font-weight: bold; }
+  .stamp { border: 2px solid #B8121F; border-radius: 50%; width: 80px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #B8121F; font-weight: bold; }
   .cert-footer { margin-top: 16px; font-size: 10px; color: #bbb; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
 </style>
 </head>
