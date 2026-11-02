@@ -28,6 +28,26 @@ const STD_DATA = [
 
 const FAQ_DATA = [
   {
+    q: 'What is FireXCheck?',
+    a: 'FireXCheck is a web and mobile app that helps fire safety companies and facilities teams track fire extinguisher inspections, maintenance, and compliance records in one place.',
+  },
+  {
+    q: 'Who uses FireXCheck?',
+    a: 'Fire safety inspection companies, facilities managers, and compliance officers who need to prove extinguishers are inspected on schedule across one or multiple sites.',
+  },
+  {
+    q: 'How does FireXCheck work?',
+    a: 'You scan a tag or QR code on each extinguisher, log the inspection result, and FireXCheck automatically schedules the next check, flags anything overdue, and stores the record for audits.',
+  },
+  {
+    q: 'Does FireXCheck replace paper inspection tags?',
+    a: "No — it works alongside your physical tags. FireXCheck digitizes the record-keeping so you're never relying on handwriting or a spreadsheet to prove compliance.",
+  },
+  {
+    q: 'Is FireXCheck free to try?',
+    a: 'Yes — you can start a free trial with no credit card required.',
+  },
+  {
     q: 'What is fire extinguisher inspection software?',
     a: "Fire extinguisher inspection software replaces paper checklists and spreadsheets with a digital system for tracking inspections, maintenance schedules, and compliance records across one site or hundreds. FireXCheck lets inspectors log checks from a phone or tablet, auto-generates reminders before extinguishers fall out of compliance, and keeps a timestamped audit trail ready for fire marshals or insurance audits.",
   },
@@ -433,12 +453,12 @@ export default function LandingPage() {
         <div>
           <div className="eyebrow">For fire safety inspectors &amp; facilities teams</div>
           <h1>
-            <span className="line-mask"><span className="h1-line">FireXCheck is fire extinguisher</span></span>
-            <span className="line-mask"><span className="h1-line">inspection software that helps fire safety</span></span>
-            <span className="line-mask"><span className="h1-line">companies and facilities teams track,</span></span>
-            <span className="line-mask"><span className="h1-line">schedule, and prove compliance across every site.</span></span>
+            <span className="line-mask"><span className="h1-line">FireXCheck is software that tracks</span></span>
+            <span className="line-mask"><span className="h1-line">fire extinguisher inspections so you</span></span>
+            <span className="line-mask"><span className="h1-line">never fail an audit or miss a</span></span>
+            <span className="line-mask"><span className="h1-line">certificate again.</span></span>
           </h1>
-          <p className="hero-sub">No more spreadsheets, missed inspection dates, or scrambling before an audit. FireXCheck gives you one place to log inspections, manage tags, and generate reports that hold up when a fire marshal or auditor asks for them.</p>
+          <p className="hero-sub">Scan a tag, log the inspection, and FireXCheck automatically schedules the next one, flags overdue units, and keeps every record ready for your fire marshal or insurance auditor — across one site or a hundred.</p>
           <form className="hero-capture" onSubmit={handleHeroSubmit}>
             <input
               type="email"
@@ -451,7 +471,7 @@ export default function LandingPage() {
             />
             <button type="submit" className="btn-primary magnetic hero-capture-btn">Start Free Trial</button>
           </form>
-          <div className="hero-capture-sub">No credit card. Takes 20 seconds.</div>
+          <div className="hero-capture-sub">No credit card required. Set up your first site in under 10 minutes.</div>
           <a className="hero-secondary-link" href="#story">See how it works ↓</a>
           <div className="trust-line">Built for teams managing extinguishers across any number of sites.</div>
           <div className="std-row">
@@ -549,7 +569,7 @@ export default function LandingPage() {
         <div className="section-head reveal">
           <div className="eyebrow">Overview</div>
           <h2>What FireXCheck does</h2>
-          <p>FireXCheck replaces paper tags, clipboards, and disconnected spreadsheets with a single system for managing fire extinguisher inspections.</p>
+          <p>FireXCheck replaces the clipboard, the spreadsheet, and the &quot;did we actually check extinguisher #14 last month?&quot; panic. Scan a QR tag, log what you found, and the system handles the rest.</p>
         </div>
         <ul className="price-list" style={{ maxWidth: 640, margin: '0 0 28px', fontSize: 15 }}>
           <li>Log monthly, annual, and extended-service inspections in seconds</li>

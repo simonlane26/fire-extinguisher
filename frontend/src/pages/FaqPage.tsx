@@ -4,6 +4,18 @@ import './ComparePage.css';
 
 const FAQ_DATA = [
   {
+    q: 'What is FireXCheck?',
+    a: 'FireXCheck is a web and mobile app that helps fire safety companies and facilities teams track fire extinguisher inspections, maintenance, and compliance records in one place.',
+  },
+  {
+    q: 'Who uses FireXCheck?',
+    a: 'Fire safety inspection companies, facilities managers, and compliance officers who need to prove extinguishers are inspected on schedule across one or multiple sites.',
+  },
+  {
+    q: 'How does FireXCheck work?',
+    a: 'You scan a tag or QR code on each extinguisher, log the inspection result, and FireXCheck automatically schedules the next check, flags anything overdue, and stores the record for audits.',
+  },
+  {
     q: 'How do I track fire extinguisher inspections across multiple sites?',
     a: "FireXCheck gives you one dashboard for every location you manage — no more spreadsheets per building or texting site managers for updates. Each extinguisher gets a QR code or asset tag; inspectors scan it, log the check, and the result syncs instantly to your master account. You can filter by site or inspector and see at a glance which locations are compliant and which are overdue. If you're running inspections across 5 sites or 500, the workflow doesn't change.",
   },
@@ -24,8 +36,16 @@ const FAQ_DATA = [
     a: 'No. Inspectors use their phone camera to scan QR tags — no proprietary scanner, no extra device to buy or lose. You print and apply the tags once; everything after that runs through the FireXCheck app or browser.',
   },
   {
+    q: 'Does FireXCheck replace paper inspection tags?',
+    a: "No — it works alongside your physical tags. FireXCheck digitizes the record-keeping so you're never relying on handwriting or a spreadsheet to prove compliance.",
+  },
+  {
     q: 'Is FireXCheck built for single-site facilities too, or only multi-site companies?',
     a: 'Both. Single-site teams get a simple, no-clutter way to stay on top of inspections and ditch the paper log. Multi-site teams get the same simplicity, scaled — with site-level filtering and portfolio-wide visibility layered on top.',
+  },
+  {
+    q: 'Is FireXCheck free to try?',
+    a: 'Yes — you can start a free trial with no credit card required.',
   },
 ];
 
