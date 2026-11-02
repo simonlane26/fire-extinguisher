@@ -524,6 +524,26 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="promo-video-section">
+        <div className="wrap">
+          <div className="section-head reveal">
+            <div className="eyebrow">See it in action</div>
+            <h2>Watch FireXCheck in action</h2>
+            <p>A real walkthrough of scanning, inspecting and reporting on a live register — no slides, no mockups.</p>
+          </div>
+          <div className="promo-video-frame reveal">
+            <video
+              controls
+              preload="none"
+              poster="/images/landing/firexcheck-promo-poster.jpg"
+              className="promo-video"
+            >
+              <source src="/videos/landing/firexcheck-promo.mp4" type="video/mp4" />
+            </video>
+          </div>
+        </div>
+      </section>
+
       <div className="wrap">
         <div className="section-head reveal">
           <div className="eyebrow">Overview</div>
