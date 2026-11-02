@@ -229,6 +229,13 @@
 }
 .fxc-landing .promo-video{display:block; width:100%; height:auto; aspect-ratio:1280/636;}
 
+.fxc-landing .usecase-block{margin-bottom:46px;}
+.fxc-landing .usecase-block h2{font-family:var(--font-display); font-size:26px; font-weight:600; letter-spacing:-0.01em; margin-bottom:8px;}
+.fxc-landing .usecase-intro{color:var(--ink-muted); font-size:14px; max-width:560px;}
+.fxc-landing .usecase-block .persona-row{margin:20px 0 0;}
+.fxc-landing .usecase-block:last-child{margin-bottom:0;}
+.fxc-landing .usecase-block:last-child .persona-row{margin-bottom:90px;}
+
 .fxc-landing .persona-row{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin:30px 0 90px;}
 .fxc-landing .persona{border:1px solid var(--line); border-radius:5px; padding:26px; background:var(--panel); transition:transform .2s;}
 .fxc-landing .persona:hover{transform:translateY(-3px);}

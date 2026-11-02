@@ -833,12 +833,36 @@ export default function LandingPage() {
       <div className="wrap">
         <div className="section-head reveal">
           <div className="eyebrow">Built For</div>
-          <h2>Built for the people who actually do this work</h2>
         </div>
-        <div className="persona-row">
-          <div className="persona reveal"><div className="pnum">01</div><h3>Fire Safety Inspection Companies</h3><p>Manage multiple clients and sites from one dashboard. Stop re-keying the same data into three different tools.</p></div>
-          <div className="persona reveal"><div className="pnum">02</div><h3>Facilities Managers</h3><p>Know exactly what&apos;s due, what&apos;s overdue, and what&apos;s compliant — without chasing down a technician for a status update.</p></div>
-          <div className="persona reveal"><div className="pnum">03</div><h3>Compliance Officers</h3><p>Pull a clean, complete inspection history in seconds when an auditor or inspector asks for it.</p></div>
+
+        <div className="usecase-block reveal">
+          <h2>For Single-Site Facilities</h2>
+          <p className="usecase-intro">Running one building? Ditch the paper log and the spreadsheet without adding complexity you don&apos;t need.</p>
+          <div className="persona-row">
+            <div className="persona reveal"><div className="pnum">01</div><h3>Simple Inspection Logging</h3><p>Scan a QR tag, log what you found, done — no clipboard, no spreadsheet to keep in sync.</p></div>
+            <div className="persona reveal"><div className="pnum">02</div><h3>Automatic Reminders Before Dates Slip</h3><p>Monthly and extended-service dates are tracked for you, with alerts before anything&apos;s overdue.</p></div>
+            <div className="persona reveal"><div className="pnum">03</div><h3>Audit-Ready Reports in One Click</h3><p>Generate a compliance report the moment someone asks — no digging through folders or binders.</p></div>
+          </div>
+        </div>
+
+        <div className="usecase-block reveal">
+          <h2>For Multi-Site Operations</h2>
+          <p className="usecase-intro">Managing extinguishers across multiple buildings or client sites from one account — stop re-keying the same data into three different tools.</p>
+          <div className="persona-row">
+            <div className="persona reveal"><div className="pnum">01</div><h3>Centralized Inspection Dashboard Across Locations</h3><p>See every site&apos;s compliance status in one place — filter by site, building, or inspector.</p></div>
+            <div className="persona reveal"><div className="pnum">02</div><h3>Automated BS 5306-3 &amp; IS 291 Compliance Alerts</h3><p>Overdue and due-soon units are flagged automatically, using the correct intervals for your account&apos;s standard.</p></div>
+            <div className="persona reveal"><div className="pnum">03</div><h3>Site-by-Site Audit Trails</h3><p>Every inspection is timestamped and attributed, so any single site&apos;s history stands on its own under review.</p></div>
+          </div>
+        </div>
+
+        <div className="usecase-block reveal">
+          <h2>For Compliance Officers</h2>
+          <p className="usecase-intro">Prove compliance the moment someone asks — no reconstructing paper logs after the fact.</p>
+          <div className="persona-row">
+            <div className="persona reveal"><div className="pnum">01</div><h3>BS 5306-3 &amp; IS 291 Mapped Reporting</h3><p>Reports map directly to the standard your account is set to, so there&apos;s no manual cross-checking before handing one over.</p></div>
+            <div className="persona reveal"><div className="pnum">02</div><h3>Complete, Timestamped Inspection History</h3><p>Every check, every inspector, every date — stored and searchable, never lost to a binder.</p></div>
+            <div className="persona reveal"><div className="pnum">03</div><h3>Exportable PDF &amp; CSV Records for Auditors</h3><p>Hand over a clean export the moment a fire marshal or insurance auditor asks for one.</p></div>
+          </div>
         </div>
       </div>
 
