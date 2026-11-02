@@ -194,6 +194,7 @@ export default function CompareServiceTradeBuildingReportsPage() {
           <div className="also-included">
             <Link to="/compare/joblogic">Compare · vs Joblogic</Link>
             <Link to="/compare/uptick-ezmanagement">Compare · vs Uptick &amp; EZ Management</Link>
+            <Link to="/compare/firexcheck-vs-inspect-point">Compare · vs Inspect Point</Link>
           </div>
           <div className="rev">
             <span>© {new Date().getFullYear()} FirexCheck — a product of IgnisTech Ltd.</span>

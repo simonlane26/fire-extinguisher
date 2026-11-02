@@ -67,6 +67,12 @@ const ROUTES = [
     title: 'FirexCheck vs ServiceTrade vs BuildingReports | FirexCheck',
     description: 'A purpose-built fire extinguisher inspection tool vs ServiceTrade and BuildingReports — honest, fact-checked comparison.',
   },
+  {
+    path: '/compare/firexcheck-vs-inspect-point',
+    out: 'compare/firexcheck-vs-inspect-point.html',
+    title: 'FireXCheck vs Inspect Point: Which Fire Extinguisher Inspection Software Fits Your Team?',
+    description: 'Comparing FireXCheck and Inspect Point for fire extinguisher inspection tracking? See how pricing, setup time, and multi-site compliance stack up.',
+  },
 ];
 
 function serveStatic() {

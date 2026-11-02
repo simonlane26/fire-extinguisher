@@ -18,6 +18,11 @@ const COMPARISONS = [
     title: 'FirexCheck vs ServiceTrade vs BuildingReports',
     desc: 'A purpose-built fire extinguisher inspection tool vs two broader field service and compliance reporting platforms.',
   },
+  {
+    to: '/compare/firexcheck-vs-inspect-point',
+    title: 'FirexCheck vs Inspect Point',
+    desc: 'A fire extinguisher-focused register vs a full fire protection inspection platform for sprinkler, alarm and suppression contractors.',
+  },
 ];
 
 export default function CompareIndexPage() {
