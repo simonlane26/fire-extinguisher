@@ -45,6 +45,14 @@
     <priority>0.6</priority>
   </url>
 
+  <!-- Resources -->
+  <url>
+    <loc>https://firexcheck.com/resources/what-is-fire-extinguisher-inspection-software</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <!-- FAQ -->
   <url>
     <loc>https://firexcheck.com/faq</loc>

@@ -73,6 +73,12 @@ const ROUTES = [
     title: 'FireXCheck vs Inspect Point: Which Fire Extinguisher Inspection Software Fits Your Team?',
     description: 'Comparing FireXCheck and Inspect Point for fire extinguisher inspection tracking? See how pricing, setup time, and multi-site compliance stack up.',
   },
+  {
+    path: '/resources/what-is-fire-extinguisher-inspection-software',
+    out: 'resources/what-is-fire-extinguisher-inspection-software.html',
+    title: 'What Is Fire Extinguisher Inspection Software? | FireXCheck',
+    description: 'A plain-English guide to fire extinguisher inspection software — what it replaces, what to look for, and who actually needs it.',
+  },
 ];
 
 function serveStatic() {

@@ -33,6 +33,7 @@ export default function CompareServiceTradeBuildingReportsPage() {
             <a className="nav-link" href="/#pricing">Pricing</a>
             <Link className="nav-link" to="/compare">Compare</Link>
             <Link className="nav-link" to="/faq">FAQ</Link>
+            <Link className="nav-link" to="/resources/what-is-fire-extinguisher-inspection-software">Resources</Link>
             <button type="button" className="signin" onClick={goToSignup}>Sign In</button>
             <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
           </nav>
@@ -195,6 +196,7 @@ export default function CompareServiceTradeBuildingReportsPage() {
             <Link to="/compare/joblogic">Compare · vs Joblogic</Link>
             <Link to="/compare/uptick-ezmanagement">Compare · vs Uptick &amp; EZ Management</Link>
             <Link to="/compare/firexcheck-vs-inspect-point">Compare · vs Inspect Point</Link>
+            <Link to="/resources/what-is-fire-extinguisher-inspection-software">Resources · What Is Fire Extinguisher Inspection Software?</Link>
           </div>
           <div className="rev">
             <span>© {new Date().getFullYear()} FirexCheck — a product of IgnisTech Ltd.</span>

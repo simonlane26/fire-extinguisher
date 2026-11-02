@@ -422,6 +422,7 @@ export default function LandingPage() {
             <a className="nav-link" href="#about">About</a>
             <Link className="nav-link" to="/compare">Compare</Link>
             <Link className="nav-link" to="/faq">FAQ</Link>
+            <Link className="nav-link" to="/resources/what-is-fire-extinguisher-inspection-software">Resources</Link>
             <button type="button" className="signin" onClick={goToSignup}>Sign In</button>
             <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
           </nav>
@@ -586,6 +587,24 @@ export default function LandingPage() {
           </div>
         </div>
         <Link to="/faq" className="hero-secondary-link">See all FAQs →</Link>
+      </div>
+
+      <div className="wrap" style={{ paddingBottom: 60 }}>
+        <div className="section-head reveal">
+          <div className="eyebrow">Resources</div>
+          <h2>From the resource library</h2>
+        </div>
+        <Link
+          to="/resources/what-is-fire-extinguisher-inspection-software"
+          className="module-tag reveal"
+          style={{ display: 'block', maxWidth: 440, textDecoration: 'none' }}
+        >
+          <h3>What Is Fire Extinguisher Inspection Software?</h3>
+          <p style={{ color: 'var(--ink-muted)', fontSize: '13.5px', margin: '8px 0 14px' }}>
+            A plain-English guide to the category — what it replaces, what to look for, and who actually needs it.
+          </p>
+          <span className="hero-secondary-link" style={{ pointerEvents: 'none', marginBottom: 0 }}>Read the guide →</span>
+        </Link>
       </div>
 
       <section className="problem-band">
@@ -883,7 +902,9 @@ export default function LandingPage() {
             <Link to="/compare/joblogic">Compare · vs Joblogic</Link>
             <Link to="/compare/uptick-ezmanagement">Compare · vs Uptick &amp; EZ Management</Link>
             <Link to="/compare/firexcheck-vs-servicetrade-vs-buildingreports">Compare · vs ServiceTrade &amp; BuildingReports</Link>
+            <Link to="/compare/firexcheck-vs-inspect-point">Compare · vs Inspect Point</Link>
             <Link to="/faq">FAQ</Link>
+            <Link to="/resources/what-is-fire-extinguisher-inspection-software">Resources</Link>
           </div>
           <div className="rev">
             <span>© {new Date().getFullYear()} FirexCheck — a product of IgnisTech Ltd.</span>

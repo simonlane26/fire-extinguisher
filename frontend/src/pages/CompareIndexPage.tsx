@@ -41,6 +41,7 @@ export default function CompareIndexPage() {
             <a className="nav-link" href="/#pricing">Pricing</a>
             <Link className="nav-link" to="/compare">Compare</Link>
             <Link className="nav-link" to="/faq">FAQ</Link>
+            <Link className="nav-link" to="/resources/what-is-fire-extinguisher-inspection-software">Resources</Link>
             <button type="button" className="signin" onClick={goToSignup}>Sign In</button>
             <button type="button" className="btn-primary magnetic" onClick={goToSignup}>Start Free Trial</button>
           </nav>
