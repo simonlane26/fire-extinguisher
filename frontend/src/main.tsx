@@ -21,6 +21,11 @@ import FireExtinguisherTrackingSoftwarePage from './pages/FireExtinguisherTracki
 import FireExtinguisherComplianceSoftwarePage from './pages/FireExtinguisherComplianceSoftwarePage';
 import FireExtinguisherManagementSystemPage from './pages/FireExtinguisherManagementSystemPage';
 import FireExtinguisherBarcodeSoftwarePage from './pages/FireExtinguisherBarcodeSoftwarePage';
+import BlogIndexPage from './pages/BlogIndexPage';
+import BlogBs5306Page from './pages/BlogBs5306Page';
+import BlogInspectionChecklistPage from './pages/BlogInspectionChecklistPage';
+import BlogServicingFrequencyPage from './pages/BlogServicingFrequencyPage';
+import BlogComplianceMonitoringPage from './pages/BlogComplianceMonitoringPage';
 import PublicVerificationPage from './pages/PublicVerificationPage';
 import SignupPage from './pages/SignupPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
@@ -56,6 +61,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/fire-extinguisher-compliance-software" element={<FireExtinguisherComplianceSoftwarePage />} />
         <Route path="/fire-extinguisher-management-system" element={<FireExtinguisherManagementSystemPage />} />
         <Route path="/fire-extinguisher-barcode-software" element={<FireExtinguisherBarcodeSoftwarePage />} />
+        <Route path="/blog" element={<BlogIndexPage />} />
+        <Route path="/blog/what-is-bs-5306" element={<BlogBs5306Page />} />
+        <Route path="/blog/fire-extinguisher-inspection-checklist" element={<BlogInspectionChecklistPage />} />
+        <Route path="/blog/how-often-fire-extinguishers-serviced-uk" element={<BlogServicingFrequencyPage />} />
+        <Route path="/blog/fire-safety-compliance-monitoring" element={<BlogComplianceMonitoringPage />} />
 
         {/* Public routes */}
         <Route path="/verify/:id" element={<PublicVerificationPage />} />

@@ -145,6 +145,36 @@ const ROUTES = [
     title: 'FireXCheck vs Firebug EXT | FireXCheck',
     description: 'Firebug EXT is a barcode-based fire extinguisher inspection system requiring dedicated Android hardware. See how it compares to FireXCheck’s phone-based, BS 5306/IS 291-mapped approach.',
   },
+  {
+    path: '/blog',
+    out: 'blog.html',
+    title: 'Fire Safety Blog | FireXCheck',
+    description: 'Practical answers to the fire safety questions people actually search for — standards, servicing schedules, checklists, and compliance monitoring.',
+  },
+  {
+    path: '/blog/what-is-bs-5306',
+    out: 'blog/what-is-bs-5306.html',
+    title: 'What Is BS 5306-3? UK Fire Extinguisher Maintenance Standard Explained | FireXCheck',
+    description: 'What BS 5306-3 actually requires, who has to follow it, and whether it counts as law — without having to buy the official document.',
+  },
+  {
+    path: '/blog/fire-extinguisher-inspection-checklist',
+    out: 'blog/fire-extinguisher-inspection-checklist.html',
+    title: 'Fire Extinguisher Inspection Checklist (Free Template) | FireXCheck',
+    description: 'The full monthly visual-check list, ready to use today — plus how to get it emailed as a printable copy.',
+  },
+  {
+    path: '/blog/how-often-fire-extinguishers-serviced-uk',
+    out: 'blog/how-often-fire-extinguishers-serviced-uk.html',
+    title: 'How Often Do Fire Extinguishers Need Servicing in the UK? | FireXCheck',
+    description: 'The three different intervals that apply — monthly, annual, and 5- or 10-year — and why the long cycle depends on extinguisher type.',
+  },
+  {
+    path: '/blog/fire-safety-compliance-monitoring',
+    out: 'blog/fire-safety-compliance-monitoring.html',
+    title: 'Fire Safety Compliance Monitoring: What It Means and How It Works | FireXCheck',
+    description: 'Why monitoring is a different job from inspecting, who’s legally responsible for it, and where manual systems usually break down.',
+  },
 ];
 
 function serveStatic() {

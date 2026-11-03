@@ -131,6 +131,42 @@
     <priority>0.8</priority>
   </url>
 
+  <!-- Blog -->
+  <url>
+    <loc>https://firexcheck.com/blog</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/blog/what-is-bs-5306</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/blog/fire-extinguisher-inspection-checklist</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/blog/how-often-fire-extinguishers-serviced-uk</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/blog/fire-safety-compliance-monitoring</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <!-- FAQ -->
   <url>
     <loc>https://firexcheck.com/faq</loc>

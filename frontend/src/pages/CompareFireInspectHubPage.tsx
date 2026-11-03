@@ -32,6 +32,7 @@ export default function CompareFireInspectHubPage() {
             <a className="nav-link" href="/#modules2">Features</a>
             <a className="nav-link" href="/#pricing">Pricing</a>
             <Link className="nav-link" to="/compare">Compare</Link>
+            <Link className="nav-link" to="/blog">Blog</Link>
             <Link className="nav-link" to="/faq">FAQ</Link>
             <Link className="nav-link" to="/resources/what-is-fire-extinguisher-inspection-software">Resources</Link>
             <button type="button" className="signin" onClick={goToSignup}>Sign In</button>
