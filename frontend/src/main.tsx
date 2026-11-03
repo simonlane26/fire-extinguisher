@@ -9,7 +9,18 @@ import CompareIndexPage from './pages/CompareIndexPage';
 import FaqPage from './pages/FaqPage';
 import CompareServiceTradeBuildingReportsPage from './pages/CompareServiceTradeBuildingReportsPage';
 import CompareInspectPointPage from './pages/CompareInspectPointPage';
+import CompareInspectNTrackPage from './pages/CompareInspectNTrackPage';
+import CompareSafetyCulturePage from './pages/CompareSafetyCulturePage';
+import CompareGoAuditsPage from './pages/CompareGoAuditsPage';
+import CompareFireInspectHubPage from './pages/CompareFireInspectHubPage';
+import CompareMaintainXPage from './pages/CompareMaintainXPage';
+import CompareFirebugExtPage from './pages/CompareFirebugExtPage';
 import ResourceInspectionSoftwarePage from './pages/ResourceInspectionSoftwarePage';
+import FireExtinguisherInspectionSoftwarePage from './pages/FireExtinguisherInspectionSoftwarePage';
+import FireExtinguisherTrackingSoftwarePage from './pages/FireExtinguisherTrackingSoftwarePage';
+import FireExtinguisherComplianceSoftwarePage from './pages/FireExtinguisherComplianceSoftwarePage';
+import FireExtinguisherManagementSystemPage from './pages/FireExtinguisherManagementSystemPage';
+import FireExtinguisherBarcodeSoftwarePage from './pages/FireExtinguisherBarcodeSoftwarePage';
 import PublicVerificationPage from './pages/PublicVerificationPage';
 import SignupPage from './pages/SignupPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
@@ -33,7 +44,18 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/faq" element={<FaqPage />} />
         <Route path="/compare/firexcheck-vs-servicetrade-vs-buildingreports" element={<CompareServiceTradeBuildingReportsPage />} />
         <Route path="/compare/firexcheck-vs-inspect-point" element={<CompareInspectPointPage />} />
+        <Route path="/compare/firexcheck-vs-inspectntrack" element={<CompareInspectNTrackPage />} />
+        <Route path="/compare/firexcheck-vs-safetyculture" element={<CompareSafetyCulturePage />} />
+        <Route path="/compare/firexcheck-vs-goaudits" element={<CompareGoAuditsPage />} />
+        <Route path="/compare/firexcheck-vs-fire-inspect-hub" element={<CompareFireInspectHubPage />} />
+        <Route path="/compare/firexcheck-vs-maintainx" element={<CompareMaintainXPage />} />
+        <Route path="/compare/firexcheck-vs-firebug-ext" element={<CompareFirebugExtPage />} />
         <Route path="/resources/what-is-fire-extinguisher-inspection-software" element={<ResourceInspectionSoftwarePage />} />
+        <Route path="/fire-extinguisher-inspection-software" element={<FireExtinguisherInspectionSoftwarePage />} />
+        <Route path="/fire-extinguisher-tracking-software" element={<FireExtinguisherTrackingSoftwarePage />} />
+        <Route path="/fire-extinguisher-compliance-software" element={<FireExtinguisherComplianceSoftwarePage />} />
+        <Route path="/fire-extinguisher-management-system" element={<FireExtinguisherManagementSystemPage />} />
+        <Route path="/fire-extinguisher-barcode-software" element={<FireExtinguisherBarcodeSoftwarePage />} />
 
         {/* Public routes */}
         <Route path="/verify/:id" element={<PublicVerificationPage />} />

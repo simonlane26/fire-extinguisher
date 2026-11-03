@@ -34,8 +34,8 @@ const ROUTES = [
   {
     path: '/',
     out: 'index.html',
-    title: 'Fire Extinguisher Management System | Inspection & Compliance Tracking',
-    description: 'Track fire extinguisher inspections, compliance and maintenance across every site — QR-tagged assets, scheduled reminders, audit-ready reports.',
+    title: 'Fire Extinguisher Tracking Software | FireXCheck',
+    description: 'Track inspections, manage compliance and log maintenance for every extinguisher across all your sites. BS 5306 compliant. QR code scanning. Try free.',
   },
   {
     path: '/compare',
@@ -78,6 +78,72 @@ const ROUTES = [
     out: 'resources/what-is-fire-extinguisher-inspection-software.html',
     title: 'What Is Fire Extinguisher Inspection Software? | FireXCheck',
     description: 'A plain-English guide to fire extinguisher inspection software — what it replaces, what to look for, and who actually needs it.',
+  },
+  {
+    path: '/fire-extinguisher-inspection-software',
+    out: 'fire-extinguisher-inspection-software.html',
+    title: 'Fire Extinguisher Inspection Software | FireXCheck',
+    description: 'Digital fire extinguisher inspection software — scan a QR tag, log the check, and get audit-ready records mapped to BS 5306-3 and IS 291. Try free.',
+  },
+  {
+    path: '/fire-extinguisher-tracking-software',
+    out: 'fire-extinguisher-tracking-software.html',
+    title: 'Fire Extinguisher Tracking Software | FireXCheck',
+    description: 'Track every fire extinguisher across every site — location, inspection history, and due dates in one live dashboard. No spreadsheets. Try free.',
+  },
+  {
+    path: '/fire-extinguisher-compliance-software',
+    out: 'fire-extinguisher-compliance-software.html',
+    title: 'Fire Extinguisher Compliance Software | FireXCheck',
+    description: 'Stay compliant with BS 5306-3 and IS 291 automatically — scheduled inspections, overdue alerts, and audit-ready reports on demand. Try free.',
+  },
+  {
+    path: '/fire-extinguisher-management-system',
+    out: 'fire-extinguisher-management-system.html',
+    title: 'Fire Extinguisher Management System | FireXCheck',
+    description: 'Manage your entire fire extinguisher program — register, scheduling, inspections, and reporting — in one system. Try free, no credit card required.',
+  },
+  {
+    path: '/fire-extinguisher-barcode-software',
+    out: 'fire-extinguisher-barcode-software.html',
+    title: 'Fire Extinguisher Barcode Inspection Software | FireXCheck',
+    description: 'QR code fire extinguisher inspections from any phone camera — no dedicated scanner needed. Scan, log, and sync instantly. Try free.',
+  },
+  {
+    path: '/compare/firexcheck-vs-inspectntrack',
+    out: 'compare/firexcheck-vs-inspectntrack.html',
+    title: 'FireXCheck vs InspectNTrack | FireXCheck',
+    description: 'Comparing FireXCheck and InspectNTrack for fire extinguisher tracking? See how standards mapping, pricing transparency, and setup speed stack up.',
+  },
+  {
+    path: '/compare/firexcheck-vs-safetyculture',
+    out: 'compare/firexcheck-vs-safetyculture.html',
+    title: 'FireXCheck vs SafetyCulture (iAuditor) | FireXCheck',
+    description: 'Comparing FireXCheck and SafetyCulture (iAuditor) for fire extinguisher inspections? See why built-in BS 5306 compliance beats a blank checklist template.',
+  },
+  {
+    path: '/compare/firexcheck-vs-goaudits',
+    out: 'compare/firexcheck-vs-goaudits.html',
+    title: 'FireXCheck vs GoAudits | FireXCheck',
+    description: 'Comparing FireXCheck and GoAudits for fire extinguisher inspection tracking? See how a purpose-built extinguisher register stacks up against a general-purpose audit checklist tool.',
+  },
+  {
+    path: '/compare/firexcheck-vs-fire-inspect-hub',
+    out: 'compare/firexcheck-vs-fire-inspect-hub.html',
+    title: 'FireXCheck vs Fire Inspect Hub | FireXCheck',
+    description: 'Comparing FireXCheck and Fire Inspect Hub for fire extinguisher inspection software? See why standards fit (BS 5306-3/IS 291 vs NFPA) matters before you choose.',
+  },
+  {
+    path: '/compare/firexcheck-vs-maintainx',
+    out: 'compare/firexcheck-vs-maintainx.html',
+    title: 'FireXCheck vs MaintainX: Dedicated Fire Extinguisher Software or General CMMS? | FireXCheck',
+    description: 'MaintainX is a general CMMS for work orders and preventive maintenance. See how it compares to FireXCheck for teams whose job is fire extinguisher inspection and compliance specifically.',
+  },
+  {
+    path: '/compare/firexcheck-vs-firebug-ext',
+    out: 'compare/firexcheck-vs-firebug-ext.html',
+    title: 'FireXCheck vs Firebug EXT | FireXCheck',
+    description: 'Firebug EXT is a barcode-based fire extinguisher inspection system requiring dedicated Android hardware. See how it compares to FireXCheck’s phone-based, BS 5306/IS 291-mapped approach.',
   },
 ];
 

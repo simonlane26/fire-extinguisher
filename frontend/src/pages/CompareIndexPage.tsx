@@ -23,6 +23,36 @@ const COMPARISONS = [
     title: 'FirexCheck vs Inspect Point',
     desc: 'A fire extinguisher-focused register vs a full fire protection inspection platform for sprinkler, alarm and suppression contractors.',
   },
+  {
+    to: '/compare/firexcheck-vs-inspectntrack',
+    title: 'FireXCheck vs InspectNTrack',
+    desc: 'Barcode-based safety asset tracking vs a purpose-built fire extinguisher register mapped to BS 5306-3 and IS 291.',
+  },
+  {
+    to: '/compare/firexcheck-vs-safetyculture',
+    title: 'FireXCheck vs SafetyCulture (iAuditor)',
+    desc: 'A general-purpose checklist and audit platform vs built-in BS 5306/IS 291 compliance tracking for fire extinguishers specifically.',
+  },
+  {
+    to: '/compare/firexcheck-vs-goaudits',
+    title: 'FireXCheck vs GoAudits',
+    desc: 'A general digital audit/checklist tool vs a purpose-built fire extinguisher inspection and compliance register.',
+  },
+  {
+    to: '/compare/firexcheck-vs-fire-inspect-hub',
+    title: 'FireXCheck vs Fire Inspect Hub',
+    desc: 'An NFPA-oriented US inspection tool vs a UK/Irish register built around BS 5306-3 and IS 291.',
+  },
+  {
+    to: '/compare/firexcheck-vs-maintainx',
+    title: 'FireXCheck vs MaintainX',
+    desc: 'A general CMMS for work orders and preventive maintenance vs software built specifically for fire extinguisher inspection and compliance.',
+  },
+  {
+    to: '/compare/firexcheck-vs-firebug-ext',
+    title: 'FireXCheck vs Firebug EXT',
+    desc: 'A dedicated-handheld, barcode-based US inspection system vs FireXCheck’s phone-based, BS 5306/IS 291-mapped approach.',
+  },
 ];
 
 export default function CompareIndexPage() {

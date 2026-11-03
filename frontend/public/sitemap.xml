@@ -4,7 +4,7 @@
   <!-- Homepage -->
   <url>
     <loc>https://firexcheck.com/</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-11-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -45,12 +45,90 @@
     <priority>0.6</priority>
   </url>
 
+  <url>
+    <loc>https://firexcheck.com/compare/firexcheck-vs-inspectntrack</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/compare/firexcheck-vs-safetyculture</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/compare/firexcheck-vs-goaudits</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/compare/firexcheck-vs-fire-inspect-hub</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/compare/firexcheck-vs-maintainx</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/compare/firexcheck-vs-firebug-ext</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- Resources -->
   <url>
     <loc>https://firexcheck.com/resources/what-is-fire-extinguisher-inspection-software</loc>
     <lastmod>2026-11-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+
+  <!-- Keyword landing pages -->
+  <url>
+    <loc>https://firexcheck.com/fire-extinguisher-inspection-software</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/fire-extinguisher-tracking-software</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/fire-extinguisher-compliance-software</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/fire-extinguisher-management-system</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://firexcheck.com/fire-extinguisher-barcode-software</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 
   <!-- FAQ -->

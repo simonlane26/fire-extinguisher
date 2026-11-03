@@ -627,6 +627,30 @@ export default function LandingPage() {
         </Link>
       </div>
 
+      <div className="wrap" style={{ paddingBottom: 60 }}>
+        <div className="section-head reveal">
+          <div className="eyebrow">Explore by need</div>
+          <h2>What are you trying to solve?</h2>
+        </div>
+        <div className="module-row explore-row">
+          <Link to="/fire-extinguisher-inspection-software" className="module-tag reveal" style={{ textDecoration: 'none' }}>
+            <div className="module-std">Inspection</div><h3>Inspection Software</h3>
+          </Link>
+          <Link to="/fire-extinguisher-tracking-software" className="module-tag reveal" style={{ textDecoration: 'none' }}>
+            <div className="module-std">Tracking</div><h3>Tracking Software</h3>
+          </Link>
+          <Link to="/fire-extinguisher-compliance-software" className="module-tag reveal" style={{ textDecoration: 'none' }}>
+            <div className="module-std">Compliance</div><h3>Compliance Software</h3>
+          </Link>
+          <Link to="/fire-extinguisher-management-system" className="module-tag reveal" style={{ textDecoration: 'none' }}>
+            <div className="module-std">Management</div><h3>Management System</h3>
+          </Link>
+          <Link to="/fire-extinguisher-barcode-software" className="module-tag reveal" style={{ textDecoration: 'none' }}>
+            <div className="module-std">Barcode</div><h3>Barcode Inspection</h3>
+          </Link>
+        </div>
+      </div>
+
       <section className="problem-band">
         <div className="wrap problem-inner">
           <div className="eyebrow">Why teams switch</div>

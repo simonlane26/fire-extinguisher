@@ -297,8 +297,11 @@
 .fxc-landing.reduced-motion .h1-line{transform:none !important;}
 .fxc-landing.reduced-motion .check-item, .fxc-landing.reduced-motion .record-row, .fxc-landing.reduced-motion .site-row{opacity:1 !important;}
 
+.fxc-landing .explore-row{grid-template-columns:repeat(5,1fr);}
+
 @media (max-width:1080px){
   .fxc-landing .module-row{grid-template-columns:repeat(2,1fr);}
+  .fxc-landing .explore-row{grid-template-columns:repeat(3,1fr);}
 }
 
 @media (max-width:900px){
