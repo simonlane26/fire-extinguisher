@@ -430,7 +430,7 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    ['sf', 'sd'].forEach((variantId) => {
+    ['sf', 'sd', 'tbs'].forEach((variantId) => {
       const src = `https://b.sf-syn.com/badge_js?sf_id=4161817&variant_id=${variantId}`;
       if (document.querySelector(`script[src="${src}"]`)) return;
       const sc = document.createElement('script');
@@ -1002,6 +1002,9 @@ export default function LandingPage() {
             </div>
             <div className="sf-root" data-id="4161817" data-badge="users-love-us-new-white" data-variant-id="sd" style={{ width: 125 }}>
               <a href="https://slashdot.org/software/p/FireXCheck/" target="_blank" rel="noopener noreferrer">FireXCheck Reviews</a>
+            </div>
+            <div className="sf-root" data-id="4161817" data-badge="most-loved" data-variant-id="tbs" style={{ width: 125 }}>
+              <a href="https://topbusinesssoftware.com/products/FireXCheck/reviews/" target="_blank" rel="noopener noreferrer">FireXCheck Reviews</a>
             </div>
             <a
               href="https://alternativeto.net/software/firexcheck/?utm_source=badge&utm_medium=referral"
