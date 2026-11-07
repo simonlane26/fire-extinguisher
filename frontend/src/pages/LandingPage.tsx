@@ -997,6 +997,19 @@ export default function LandingPage() {
             <div className="sf-root" data-id="4161817" data-badge="light-default" data-variant-id="sf" style={{ width: 125 }}>
               <a href="https://sourceforge.net/software/product/FireXCheck/" target="_blank" rel="noopener noreferrer">FireXCheck Reviews</a>
             </div>
+            <a
+              href="https://alternativeto.net/software/firexcheck/?utm_source=badge&utm_medium=referral"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://alternativeto.net/static/badges/badge-compact-dark.svg"
+                alt="FireXCheck | AlternativeTo"
+                width={123}
+                height={41}
+                style={{ width: 123, height: 41, display: 'block' }}
+              />
+            </a>
             <span className="rev-social">
               <a
                 href="https://www.linkedin.com/company/firexcheck/home/?viewAsMember=true"
