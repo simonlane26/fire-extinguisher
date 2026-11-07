@@ -429,6 +429,15 @@ export default function LandingPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (document.querySelector('script[src*="sf-syn.com/badge_js"]')) return;
+    const sc = document.createElement('script');
+    sc.async = true;
+    sc.src = 'https://b.sf-syn.com/badge_js?sf_id=4161817&variant_id=sf';
+    const firstScript = document.getElementsByTagName('script')[0];
+    firstScript.parentNode?.insertBefore(sc, firstScript);
+  }, []);
+
   return (
     <div className="fxc-landing" ref={rootRef}>
       <header>
@@ -985,6 +994,9 @@ export default function LandingPage() {
             >
               <img src="/vibechecked-badge.png" alt="Vibechecked — verified by vibecheck.it.com" width="110" height="40" />
             </a>
+            <div className="sf-root" data-id="4161817" data-badge="light-default" data-variant-id="sf" style={{ width: 125 }}>
+              <a href="https://sourceforge.net/software/product/FireXCheck/" target="_blank" rel="noopener noreferrer">FireXCheck Reviews</a>
+            </div>
             <span className="rev-social">
               <a
                 href="https://www.linkedin.com/company/firexcheck/home/?viewAsMember=true"
