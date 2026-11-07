@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MessageSquare, X, Send } from 'lucide-react';
 
-const FEEDBACK_EMAIL = 'simon@firexcheck.com';
+const FEEDBACK_EMAIL = 'info@firexcheck.com';
 
 const PAGE_LABELS: Record<string, string> = {
   overview: 'Extinguishers',

@@ -609,7 +609,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ tenant, primaryColor }) => {
 
         </div>
         <p className="mt-4 text-xs text-gray-400">
-          Add-ons are billed monthly alongside your subscription. Contact <a href="mailto:support@firexcheck.com" className="underline">support@firexcheck.com</a> to add a module to your account.
+          Add-ons are billed monthly alongside your subscription. Contact <a href="mailto:info@firexcheck.com" className="underline">info@firexcheck.com</a> to add a module to your account.
         </p>
       </div>
 
