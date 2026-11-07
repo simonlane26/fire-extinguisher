@@ -430,12 +430,15 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    if (document.querySelector('script[src*="sf-syn.com/badge_js"]')) return;
-    const sc = document.createElement('script');
-    sc.async = true;
-    sc.src = 'https://b.sf-syn.com/badge_js?sf_id=4161817&variant_id=sf';
-    const firstScript = document.getElementsByTagName('script')[0];
-    firstScript.parentNode?.insertBefore(sc, firstScript);
+    ['sf', 'sd'].forEach((variantId) => {
+      const src = `https://b.sf-syn.com/badge_js?sf_id=4161817&variant_id=${variantId}`;
+      if (document.querySelector(`script[src="${src}"]`)) return;
+      const sc = document.createElement('script');
+      sc.async = true;
+      sc.src = src;
+      const firstScript = document.getElementsByTagName('script')[0];
+      firstScript.parentNode?.insertBefore(sc, firstScript);
+    });
   }, []);
 
   return (
@@ -996,6 +999,9 @@ export default function LandingPage() {
             </a>
             <div className="sf-root" data-id="4161817" data-badge="light-default" data-variant-id="sf" style={{ width: 125 }}>
               <a href="https://sourceforge.net/software/product/FireXCheck/" target="_blank" rel="noopener noreferrer">FireXCheck Reviews</a>
+            </div>
+            <div className="sf-root" data-id="4161817" data-badge="users-love-us-new-white" data-variant-id="sd" style={{ width: 125 }}>
+              <a href="https://slashdot.org/software/p/FireXCheck/" target="_blank" rel="noopener noreferrer">FireXCheck Reviews</a>
             </div>
             <a
               href="https://alternativeto.net/software/firexcheck/?utm_source=badge&utm_medium=referral"
