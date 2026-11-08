@@ -1019,6 +1019,19 @@ export default function LandingPage() {
                 style={{ width: 123, height: 41, display: 'block' }}
               />
             </a>
+            <a
+              href="https://programmerneeds.com/tools/firexcheck?utm_source=maker-site&utm_medium=badge&utm_campaign=firexcheck"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                src="https://programmerneeds.com/api/badge/firexcheck?v=10"
+                alt="Find FireXCheck on ProgrammerNeeds"
+                width={220}
+                height={54}
+                style={{ width: 220, height: 54, display: 'block' }}
+              />
+            </a>
             <span className="rev-social">
               <a
                 href="https://www.linkedin.com/company/firexcheck/home/?viewAsMember=true"
